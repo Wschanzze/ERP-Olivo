@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Partes Diarios de Campo | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Partes Diarios de Labor y Cosecha</h1>
+      <p class="text-sm text-slate-500 mt-1">Registro operativo de tareas, insumos consumidos y mano de obra imputada.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+          <th class="py-3.5 px-4">Parte #</th>
+          <th class="py-3.5 px-4">Fecha</th>
+          <th class="py-3.5 px-4">Finca / Cuadro</th>
+          <th class="py-3.5 px-4">Supervisor</th>
+          <th class="py-3.5 px-4">Insumos & Personal</th>
+          <th class="py-3.5 px-4 text-center">Estado</th>
+          <th class="py-3.5 px-4 text-right">Acción</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for p in partes %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 font-mono font-bold text-oliva-700">#{{ p.id }}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-600">{{ p.fecha|date:"d/m/Y" }}</td>
+          <td class="py-3 px-4">
+            <span class="font-semibold text-slate-900">{{ p.cuadro.codigo }}</span>
+            <span class="block text-xs text-slate-400">{{ p.finca.nombre }}</span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-700">{{ p.supervisor.get_full_name|default:p.supervisor.username }}</td>
+          <td class="py-3 px-4 text-xs text-slate-500">
+            <div>{{ p.insumos_utilizados.count }} insumos consumidos</div>
+            <div>{{ p.personal_asignado.count }} personas en cuadrilla</div>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {% if p.estado == 'CONFIRMADO_CERRADO' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ p.get_estado_display }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <a href="{% url 'parte_diario:parte_detail' p.id %}" class="text-xs font-semibold text-oliva-700 hover:text-oliva-900 underline">
+              Ver Detalle &rarr;
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay partes diarios registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

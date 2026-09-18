@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario y Depósitos | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Depósitos, Insumos y Maquinarias</h1>
+      <p class="text-sm text-slate-500 mt-1">Control de stock de agroquímicos, fertilizantes, combustibles y parque mecánico.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+          <th class="py-3.5 px-4">Código</th>
+          <th class="py-3.5 px-4">Insumo / Producto</th>
+          <th class="py-3.5 px-4">Categoría</th>
+          <th class="py-3.5 px-4">Unidad</th>
+          <th class="py-3.5 px-4 text-right">Stock Actual</th>
+          <th class="py-3.5 px-4 text-right">Costo PPP (ARS)</th>
+          <th class="py-3.5 px-4 text-right">Valorizado</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for ins in insumos %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 font-mono font-bold text-xs text-oliva-700">{{ ins.codigo }}</td>
+          <td class="py-3 px-4 font-semibold text-slate-900">{{ ins.nombre }}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">{{ ins.categoria.nombre }}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ ins.get_unidad_medida_display }}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold {% if ins.stock_bajo %}text-rose-600{% else %}text-slate-800{% endif %}">
+            {{ ins.stock_actual|floatformat:2 }}
+          </td>
+          <td class="py-3 px-4 text-right font-mono text-slate-600">${{ ins.costo_unitario_ars|floatformat:2 }}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${{ ins.valor_total_stock_ars|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay insumos cargados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

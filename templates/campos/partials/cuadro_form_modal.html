@@ -1,0 +1,116 @@
+<div class="flex justify-between items-center pb-4 border-b border-slate-200">
+  <div class="flex items-center space-x-2">
+    <div class="w-8 h-8 rounded-lg bg-oliva-100 flex items-center justify-center text-oliva-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+    </div>
+    <h3 class="text-lg font-bold text-slate-900">Alta de Cuadro de Olivo</h3>
+  </div>
+  <button @click="modalOpen = false" class="text-slate-400 hover:text-slate-600">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+</div>
+
+<form 
+  hx-post="{% url 'campos:cuadro_create' %}" 
+  hx-target="#cuadros-table-body" 
+  hx-swap="afterbegin"
+  hx-on::after-request="if(event.detail.successful) modalOpen = false"
+  class="mt-5 space-y-4"
+>
+  {% csrf_token %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
+    <!-- Finca -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Finca *</label>
+      <select name="finca" required class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        {% for f in form.fields.finca.queryset %}
+          <option value="{{ f.id }}">{{ f.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Código -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Código de Cuadro *</label>
+      <input type="text" name="codigo" required placeholder="Ej: C-ARAUCO-03" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Nombre -->
+    <div class="md:col-span-2">
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre / Denominación *</label>
+      <input type="text" name="nombre" required placeholder="Ej: Cuadro Este Arbequina Superintensivo" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Variedad de Olivo -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Variedad de Olivo *</label>
+      <select name="variedad_olivo" required class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        <option value="ARAUCO">Arauco (Criolla)</option>
+        <option value="ARBEQUINA">Arbequina</option>
+        <option value="PICUAL">Picual</option>
+        <option value="FRANTOIO">Frantoio</option>
+        <option value="MANZANILLA">Manzanilla</option>
+        <option value="CORATINA">Coratina</option>
+        <option value="CHANGLOT">Changlot Real</option>
+      </select>
+    </div>
+
+    <!-- Hectáreas Netas -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Hectáreas Netas *</label>
+      <input type="number" step="0.01" name="hectareas_netas" required placeholder="Ej: 25.5" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Año de Plantación -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Año de Plantación *</label>
+      <input type="number" name="ano_plantacion" required value="2020" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Densidad (plantas/ha) -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Densidad (Plantas / Ha)</label>
+      <input type="number" name="densidad_plantas_ha" value="400" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Marco de Plantación -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Marco de Plantación</label>
+      <input type="text" name="marco_plantacion" placeholder="Ej: 6x4 m" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Sistema de Riego -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Sistema de Riego</label>
+      <select name="sistema_riego" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        <option value="GOTEO">Goteo automatizado</option>
+        <option value="SURCO">Surco / Manto</option>
+        <option value="ASPERSION">Microaspersión</option>
+        <option value="SECANO">Secano</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Observaciones -->
+  <div>
+    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Observaciones Agronómicas</label>
+    <textarea name="observaciones" rows="2" placeholder="Notas sobre suelo, vigor, orientación de hileras..." class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500"></textarea>
+  </div>
+
+  <!-- Botones de Acción -->
+  <div class="pt-4 border-t border-slate-200 flex justify-end space-x-3">
+    <button type="button" @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800">
+      Cancelar
+    </button>
+    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-sm transition-colors">
+      Crear Cuadro
+    </button>
+  </div>
+</form>

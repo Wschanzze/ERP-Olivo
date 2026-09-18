@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tablero Ejecutivo Olivícola | ERP{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <!-- Encabezado de Inicio -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+        Tablero de Control Agroindustrial
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Monitor consolidado de producción olivícola, rendimientos de almazara, liquidez y jornales.
+      </p>
+    </div>
+
+    <!-- Indicador de Sincronización -->
+    <div class="flex items-center space-x-2 text-xs font-mono bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 shadow-sm">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>API DRF: /api/v1/dashboard/kpis/</span>
+    </div>
+  </div>
+
+  <!-- Montaje de la Isla React -->
+  <div 
+    id="react-dashboard-island" 
+    data-api-url="{% url 'dashboard-kpis' %}"
+  >
+    <!-- Fallback mientras carga el bundle de Vite -->
+    <div class="p-12 text-center bg-white rounded-2xl border border-slate-200">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-oliva-700 border-t-transparent mb-3"></div>
+      <p class="text-sm text-slate-600 font-medium">Iniciando componente interactivo del Tablero...</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Bundle compilado de React (Vite Island) -->
+<script type="module" src="{% static 'dist/assets/dashboard.js' %}"></script>
+{% endblock %}

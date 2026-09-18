@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Costos por Centro y Lote | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Control de Gestión y Costos Agrícolas</h1>
+      <p class="text-sm text-slate-500 mt-1">Imputación automática de mano de obra, insumos fitosanitarios, riego y maquinaria.</p>
+    </div>
+
+    <div class="bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Costo Total Acumulado</span>
+      <p class="text-2xl font-bold text-oliva-800 font-mono mt-0.5">${{ total_costos_ars|floatformat:2 }}</p>
+    </div>
+  </div>
+
+  <!-- Resumen de Costos por Categoría de Origen -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {% for cat in resumen_por_categoria %}
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+      <span class="text-xs font-semibold text-slate-500 uppercase">{{ cat.tipo_origen }}</span>
+      <p class="text-lg font-bold text-slate-900 font-mono mt-1">${{ cat.total|floatformat:2 }}</p>
+    </div>
+    {% empty %}
+    <div class="col-span-4 bg-white p-6 rounded-2xl border border-slate-200 text-center text-slate-500 text-sm">
+      No hay costos registrados aún. Al confirmar Partes Diarios con insumos o personal, los costos se imputan automáticamente aquí.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Tabla de Costos Recientes -->
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+      <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Asignaciones de Costo</h3>
+    </div>
+    <table class="w-full text-left border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">
+          <th class="py-3 px-4">Fecha</th>
+          <th class="py-3 px-4">Centro de Costo</th>
+          <th class="py-3 px-4">Finca / Cuadro</th>
+          <th class="py-3 px-4">Tipo Origen</th>
+          <th class="py-3 px-4">Descripción / Referencia</th>
+          <th class="py-3 px-4 text-right">Importe</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for c in costos %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 font-mono text-xs text-slate-600">{{ c.fecha|date:"d/m/Y" }}</td>
+          <td class="py-3 px-4 font-medium text-slate-900">{{ c.centro_de_costo.nombre }}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">{{ c.finca.nombre }}{% if c.cuadro %} - {{ c.cuadro.codigo }}{% endif %}</td>
+          <td class="py-3 px-4 text-xs">
+            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
+              {{ c.get_tipo_origen_display }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-600">{{ c.descripcion }}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${{ c.importe_ars|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="py-8 text-center text-slate-400 text-sm">Sin registros de costos.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

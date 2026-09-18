@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-[#F8FAF6]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ERP Olivícola | Sistema de Gestión Agroindustrial{% endblock %}</title>
+  
+  <!-- Tipografía Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN con Paleta Olivícola Personalizada -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            oliva: {
+              50: '#F5F7F2',
+              100: '#EAEFE3',
+              200: '#D5DFC9',
+              300: '#B6C7A2',
+              400: '#8FA872',
+              500: '#6B894B',
+              600: '#4E5F36',
+              700: '#3D4A2A',  /* Color de marca principal */
+              800: '#2A331D',
+              900: '#1B2312',
+              950: '#0F140A',
+            },
+            harvest: {
+              50: '#FEFDF8',
+              100: '#FDF9EB',
+              400: '#DFBA56',
+              500: '#C29B38',
+              600: '#9E7C28',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- HTMX 1.9.12 -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <!-- Alpine.js 3.14 -->
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+  <style>
+    /* Estilos de barra de scroll sobria */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(61, 74, 42, 0.3);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(61, 74, 42, 0.6);
+    }
+    [x-cloak] { display: none !important; }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body 
+  class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
+  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+  x-data="{ sidebarOpen: true, modalOpen: false, modalTitle: '', activeTab: 'caja' }"
+>
+
+  <div class="min-h-full flex">
+    
+    <!-- Barra Lateral Fija -->
+    {% include 'components/sidebar.html' %}
+
+    <!-- Contenedor Principal (ajustable según ancho de sidebar) -->
+    <div 
+      :class="sidebarOpen ? 'pl-64' : 'pl-20'" 
+      class="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out min-h-screen"
+    >
+      <!-- Cabecera Superior -->
+      {% include 'components/header.html' %}
+
+      <!-- Contenido Dinámico HTMX / Template -->
+      <main id="main-content" class="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Pie de Página Sobrio -->
+      <footer class="py-4 px-8 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center bg-white">
+        <span>&copy; 2026 {{ empresa_actual.razon_social|default:"Empresa Olivícola S.A." }} — Sistema ERP Agroindustrial</span>
+        <span class="font-mono text-[11px] text-slate-400">PostgreSQL 16 • Django ORM • Celery</span>
+      </footer>
+    </div>
+
+  </div>
+
+  <!-- Contenedor Universal para Formularios Modales HTMX -->
+  <div 
+    id="modal-container"
+    x-show="modalOpen" 
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity"
+    @click.self="modalOpen = false"
+  >
+    <div 
+      class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 relative overflow-hidden transform transition-all"
+      id="modal-body"
+    >
+      <!-- Se inyecta contenido HTMX aquí -->
+    </div>
+  </div>
+
+  <!-- Notificaciones Toasts -->
+  {% include 'components/messages.html' %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,24 @@
+<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+  <table class="w-full text-left border-collapse text-sm">
+    <thead>
+      <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+        <th class="py-3.5 px-4">Código</th>
+        <th class="py-3.5 px-4">Finca / Denominación</th>
+        <th class="py-3.5 px-4">Variedad de Olivo</th>
+        <th class="py-3.5 px-4">Sup. Neta</th>
+        <th class="py-3.5 px-4">Plantación / Densidad</th>
+        <th class="py-3.5 px-4">Sistema Riego</th>
+        <th class="py-3.5 px-4 text-center">Estado</th>
+      </tr>
+    </thead>
+    <tbody id="cuadros-table-body" class="divide-y divide-slate-100">
+      {% for cuadro in cuadros %}
+        {% include 'campos/partials/cuadro_row.html' with cuadro=cuadro %}
+      {% empty %}
+      <tr>
+        <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No se encontraron cuadros para el filtro seleccionado.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

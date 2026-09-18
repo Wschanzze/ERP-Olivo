@@ -1,0 +1,27 @@
+<tr class="hover:bg-slate-50 transition-colors">
+  <td class="py-3 px-4 font-mono font-bold text-xs text-oliva-700 whitespace-nowrap">{{ cuadro.codigo }}</td>
+  <td class="py-3 px-4">
+    <div class="font-semibold text-slate-900">{{ cuadro.nombre }}</div>
+    <span class="text-xs text-slate-400">{{ cuadro.finca.nombre }}</span>
+  </td>
+  <td class="py-3 px-4 whitespace-nowrap">
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-oliva-100 text-oliva-800">
+      {{ cuadro.get_variedad_olivo_display }}
+    </span>
+  </td>
+  <td class="py-3 px-4 font-mono font-semibold text-slate-900 whitespace-nowrap">{{ cuadro.hectareas_netas }} ha</td>
+  <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
+    <div>Año {{ cuadro.ano_plantacion }}</div>
+    <div class="text-slate-400 font-mono">{{ cuadro.densidad_plantas_ha }} pl/ha ({{ cuadro.total_estimado_plantas|floatformat:0 }} plantas)</div>
+  </td>
+  <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
+    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+      {{ cuadro.get_sistema_riego_display }}
+    </span>
+  </td>
+  <td class="py-3 px-4 text-center whitespace-nowrap">
+    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {% if cuadro.activo %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-500{% endif %}">
+      {% if cuadro.activo %}Activo{% else %}Inactivo{% endif %}
+    </span>
+  </td>
+</tr>

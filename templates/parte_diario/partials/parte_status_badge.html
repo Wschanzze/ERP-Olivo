@@ -1,0 +1,3 @@
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {% if parte.estado == 'CONFIRMADO_CERRADO' %}bg-emerald-100 text-emerald-800 border border-emerald-200{% else %}bg-amber-100 text-amber-800 border border-amber-200{% endif %}">
+  {{ parte.get_estado_display }}
+</span>

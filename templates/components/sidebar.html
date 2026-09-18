@@ -1,0 +1,132 @@
+<!-- Sidebar Fija Oscura (Verde Oliva #28321B a #3D4A2A) -->
+<aside 
+  :class="sidebarOpen ? 'w-64' : 'w-20'" 
+  class="fixed inset-y-0 left-0 z-30 flex flex-col bg-[#222B17] text-[#E5EBDD] transition-all duration-300 ease-in-out border-r border-[#344024] shadow-xl select-none"
+>
+  <!-- Logo / Branding Corporativo -->
+  <div class="flex items-center justify-between h-16 px-4 bg-[#1B2312] border-b border-[#344024]">
+    <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 overflow-hidden">
+      <!-- Ícono de Olivo / Hoja -->
+      <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-[#3D4A2A] flex items-center justify-center text-[#D2DE32] shadow-inner font-bold text-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      </div>
+      <div x-show="sidebarOpen" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200">
+        <span class="font-bold text-sm tracking-wider text-white uppercase">ERP Olivícola</span>
+        <span class="text-[10px] text-[#A2B38F] font-mono tracking-tighter">AGRO & ALMAZARA</span>
+      </div>
+    </a>
+    <button 
+      @click="sidebarOpen = !sidebarOpen" 
+      class="p-1.5 rounded-md hover:bg-[#344024] text-[#A2B38F] hover:text-white transition-colors"
+      title="Colapsar menú"
+    >
+      <svg class="w-5 h-5 transition-transform duration-200" :class="!sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navegación de Módulos Odoo-style -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+    
+    <!-- Inicio / Tablero -->
+    <a 
+      href="{% url 'dashboard:index' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'dashboard' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Tablero Ejecutivo</span>
+    </a>
+
+    <!-- Campos y Cuadros -->
+    <a 
+      href="{% url 'campos:cuadros_list' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'campos' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Campos y Cuadros</span>
+    </a>
+
+    <!-- Partes Diarios y OTs -->
+    <a 
+      href="{% url 'parte_diario:partes_list' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'parte_diario' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Partes Diarios</span>
+    </a>
+
+    <!-- Personal y Asistencia -->
+    <a 
+      href="{% url 'personal:asistencia_diaria' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Personal y Cuadrillas</span>
+    </a>
+
+    <!-- Liquidación de Haberes -->
+    <a 
+      href="{% url 'liquidacion:periodos_list' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'liquidacion' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Liquidación Sueldos</span>
+    </a>
+
+    <!-- Finanzas y Tesorería -->
+    <a 
+      href="{% url 'finanzas:dashboard' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Finanzas & Cuentas</span>
+    </a>
+
+    <!-- Costos y Gestión -->
+    <a 
+      href="{% url 'costos:dashboard' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'costos' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Costos por Centro</span>
+    </a>
+
+    <!-- Inventario y Depósito -->
+    <a 
+      href="{% url 'inventario:insumos_list' %}" 
+      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group {% if request.resolver_match.app_name == 'inventario' %}bg-[#3D4A2A] text-white shadow-sm border border-[#52633A]{% else %}text-[#C8D6BC] hover:bg-[#2C381D] hover:text-white{% endif %}"
+    >
+      <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#A8BA94] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Depósitos & Insumos</span>
+    </a>
+
+  </nav>
+
+  <!-- Pie de Barra / Versión y Entorno -->
+  <div class="p-3 bg-[#1B2312] border-t border-[#344024] flex items-center justify-between">
+    <div x-show="sidebarOpen" class="text-[11px] text-[#869971]">
+      <p class="font-semibold text-[#A2B38F]">v1.0.0 PostgreSQL 16</p>
+      <p>Django 5.1 + Celery</p>
+    </div>
+    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" title="Conexión en línea"></div>
+  </div>
+</aside>

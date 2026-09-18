@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Campos y Cuadros de Olivo | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <!-- Encabezado -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Catastro de Cuadros y Olivares</h1>
+      <p class="text-sm text-slate-500 mt-1">Superficie, variedades de olivo (Arauco, Arbequina, Picual), densidad de plantación y marcos de riego.</p>
+    </div>
+
+    <button 
+      @click="modalOpen = true"
+      hx-get="{% url 'campos:cuadro_create' %}"
+      hx-target="#modal-body"
+      class="inline-flex items-center px-4 py-2.5 bg-oliva-700 hover:bg-oliva-800 text-white font-medium text-sm rounded-xl shadow-sm transition-colors"
+    >
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      Nuevo Cuadro
+    </button>
+  </div>
+
+  <!-- Filtros Reactivos con HTMX -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-bold text-slate-600 uppercase">Filtrar Variedad:</span>
+      <select 
+        name="variedad" 
+        hx-get="{% url 'campos:cuadros_list' %}" 
+        hx-target="#cuadros-table-container" 
+        hx-trigger="change"
+        class="text-xs border-slate-300 rounded-lg py-1.5 focus:border-oliva-500 focus:ring-oliva-500"
+      >
+        <option value="">Todas las Variedades</option>
+        <option value="ARAUCO">Arauco (Criolla)</option>
+        <option value="ARBEQUINA">Arbequina</option>
+        <option value="PICUAL">Picual</option>
+        <option value="FRANTOIO">Frantoio</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Contenedor de la Tabla con HTMX Target -->
+  <div id="cuadros-table-container">
+    {% include 'campos/partials/cuadros_table.html' %}
+  </div>
+
+</div>
+{% endblock %}

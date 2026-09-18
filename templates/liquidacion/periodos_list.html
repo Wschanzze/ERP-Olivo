@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Liquidación de Sueldos y Jornales | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Liquidación de Sueldos y Jornales Rurales</h1>
+      <p class="text-sm text-slate-500 mt-1">Cálculo de haberes automatizado vía Celery desde las planillas de asistencia.</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+          <th class="py-3.5 px-4">Período</th>
+          <th class="py-3.5 px-4">Mes / Año</th>
+          <th class="py-3.5 px-4">Desde / Hasta</th>
+          <th class="py-3.5 px-4 text-center">Estado</th>
+          <th class="py-3.5 px-4 text-right">Acción</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for per in periodos %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-4 font-semibold text-slate-900">{{ per.get_tipo_display }}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-600">{{ per.mes }}/{{ per.ano }}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ per.fecha_inicio|date:"d/m/Y" }} &rarr; {{ per.fecha_fin|date:"d/m/Y" }}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+              {{ per.get_estado_display }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <form hx-post="{% url 'liquidacion:periodo_calcular' per.id %}" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="px-3 py-1 bg-oliva-700 hover:bg-oliva-800 text-white rounded-lg text-xs font-semibold shadow-sm">
+                Recalcular con Celery
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="py-8 text-center text-slate-400 text-sm">No hay períodos de liquidación generados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

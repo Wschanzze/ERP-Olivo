@@ -1,0 +1,112 @@
+<div class="flex justify-between items-center pb-4 border-b border-slate-200">
+  <div class="flex items-center space-x-2">
+    <div class="w-8 h-8 rounded-lg bg-oliva-100 flex items-center justify-center text-oliva-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    </div>
+    <h3 class="text-lg font-bold text-slate-900">Nuevo Movimiento Financiero</h3>
+  </div>
+  <button @click="modalOpen = false" class="text-slate-400 hover:text-slate-600">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+</div>
+
+<form 
+  hx-post="{% url 'finanzas:movimiento_create' %}" 
+  hx-target="#movimientos-table-body" 
+  hx-swap="afterbegin"
+  hx-on::after-request="if(event.detail.successful) modalOpen = false"
+  class="mt-5 space-y-4"
+>
+  {% csrf_token %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
+    <!-- Cuenta Bancaria / Caja -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cuenta / Caja *</label>
+      <select name="cuenta" required class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        {% for c in form.fields.cuenta.queryset %}
+          <option value="{{ c.id }}">{{ c.nombre }} ({{ c.moneda }} ${{ c.saldo_actual|floatformat:0 }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Tipo de Movimiento -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tipo de Movimiento *</label>
+      <select name="tipo" required class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        <option value="EGRESO">EGRESO / PAGO A PROVEEDOR</option>
+        <option value="INGRESO">INGRESO / COBRO DE CLIENTE</option>
+        <option value="TRANSFERENCIA">TRANSFERENCIA INTERNA</option>
+      </select>
+    </div>
+
+    <!-- Fecha -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fecha de Operación *</label>
+      <input type="date" name="fecha" required value="{% now 'Y-m-d' %}" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+
+    <!-- Importe -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Importe *</label>
+      <div class="relative rounded-xl shadow-sm">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold">$</div>
+        <input type="number" step="0.01" name="importe" required placeholder="0.00" class="pl-8 w-full rounded-xl border-slate-300 text-sm focus:border-oliva-500 focus:ring-oliva-500">
+      </div>
+    </div>
+
+    <!-- Moneda -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Moneda</label>
+      <select name="moneda" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        <option value="ARS">ARS (Pesos)</option>
+        <option value="USD">USD (Dólares)</option>
+      </select>
+    </div>
+
+    <!-- Cuenta Corriente (Proveedor / Cliente) -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Entidad (Proveedor / Cliente)</label>
+      <select name="cuenta_corriente" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+        <option value="">-- Sin imputar a cuenta corriente --</option>
+        {% for cc in form.fields.cuenta_corriente.queryset %}
+          <option value="{{ cc.id }}">[{{ cc.get_tipo_entidad_display }}] {{ cc.razon_social }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Concepto -->
+  <div>
+    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Concepto / Motivo *</label>
+    <input type="text" name="concepto" required placeholder="Ej: Pago de gasoil para cosecha, Cobro factura exp..." class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+  </div>
+
+  <!-- Comprobante -->
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tipo Comprobante</label>
+      <input type="text" name="comprobante_tipo" placeholder="Factura A, Recibo, Ticket..." class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">N° Comprobante</label>
+      <input type="text" name="comprobante_nro" placeholder="0001-00004512" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-oliva-500 focus:ring-oliva-500">
+    </div>
+  </div>
+
+  <!-- Botones de Acción -->
+  <div class="pt-4 border-t border-slate-200 flex justify-end space-x-3">
+    <button type="button" @click="modalOpen = false" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800">
+      Cancelar
+    </button>
+    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-sm transition-colors">
+      Guardar Movimiento
+    </button>
+  </div>
+</form>

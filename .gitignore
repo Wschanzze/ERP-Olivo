@@ -1,0 +1,23 @@
+# Python & Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+.env
+
+# Virtualenv
+venv/
+env/
+ENV/
+
+# Node & Vite
+frontend_react/node_modules/
+frontend_react/dist/
+npm-debug.log*
+
+# Celery & Logs
+celerybeat-schedule
+*.log

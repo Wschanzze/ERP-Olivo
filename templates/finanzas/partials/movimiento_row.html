@@ -1,0 +1,21 @@
+<tr class="hover:bg-slate-50/70 transition-colors">
+  <td class="py-3 px-4 font-mono text-xs text-slate-600 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
+  <td class="py-3 px-4 whitespace-nowrap">
+    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {% if mov.tipo == 'INGRESO' %}bg-emerald-100 text-emerald-800{% elif mov.tipo == 'EGRESO' %}bg-rose-100 text-rose-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+      {{ mov.get_tipo_display }}
+    </span>
+  </td>
+  <td class="py-3 px-4 text-slate-800 font-medium whitespace-nowrap">{{ mov.cuenta.nombre }}</td>
+  <td class="py-3 px-4 text-slate-700">
+    <div class="font-medium">{{ mov.concepto }}</div>
+    {% if mov.cuenta_corriente %}
+      <span class="text-xs text-slate-400">{{ mov.cuenta_corriente.razon_social }}</span>
+    {% endif %}
+  </td>
+  <td class="py-3 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">
+    {{ mov.comprobante_tipo }} {{ mov.comprobante_nro }}
+  </td>
+  <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-700{% else %}text-slate-800{% endif %}">
+    {% if mov.tipo == 'EGRESO' %}-{% elif mov.tipo == 'INGRESO' %}+{% endif %}{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}
+  </td>
+</tr>
