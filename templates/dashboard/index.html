@@ -1,38 +1,426 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Tablero Ejecutivo Olivícola | ERP{% endblock %}
+{% block title %}Inicio & Accesos Directos | ERP Olivícola{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div 
+  class="space-y-6"
+  x-data="{ 
+    activeView: (new URLSearchParams(window.location.search).get('vista') === 'tablero' || window.location.pathname.includes('/tablero')) ? 'tablero' : 'launchpad',
+    searchQuery: '',
+    activeCategory: 'todas',
+    viewMode: 'desktop',
+    previewModalOpen: false,
+    selectedAcceso: null,
+    accesos: {{ accesos_directos_json|safe }},
+    openPreview(item) {
+      this.selectedAcceso = item;
+      this.previewModalOpen = true;
+    },
+    matches(item) {
+      const q = this.searchQuery.toLowerCase().trim();
+      const catMatch = this.activeCategory === 'todas' || item.categoria === this.activeCategory;
+      if (!catMatch) return false;
+      if (!q) return true;
+      return (item.titulo && item.titulo.toLowerCase().includes(q)) || 
+             (item.descripcion && item.descripcion.toLowerCase().includes(q)) ||
+             (item.categoria_nombre && item.categoria_nombre.toLowerCase().includes(q)) ||
+             (item.tipo_archivo && item.tipo_archivo.toLowerCase().includes(q));
+    }
+  }"
+>
   
-  <!-- Encabezado de Inicio -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+  <!-- Encabezado con Segmented Control de Vistas -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-1 border-b border-slate-200/80">
     <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
-        Tablero de Control Agroindustrial
-      </h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+          Centro de Control Agroindustrial
+        </h1>
+        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+          CloudSuite Olivícola
+        </span>
+      </div>
       <p class="text-sm text-slate-500 mt-1">
-        Monitor consolidado de producción olivícola, rendimientos de almazara, liquidez y jornales.
+        Accesos directos a consultas de costos, padrones de cuadrillas, partes diarios y analítica de almazara.
       </p>
     </div>
 
-    <!-- Indicador de Sincronización -->
-    <div class="flex items-center space-x-2 text-xs font-mono bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 shadow-sm">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span>API DRF: /api/v1/dashboard/kpis/</span>
+    <!-- Segmented View Switcher: Launchpad vs Tablero BI -->
+    <div class="inline-flex p-1 bg-slate-200/70 backdrop-blur-sm rounded-2xl border border-slate-300/50 shadow-xs self-start md:self-auto">
+      <button 
+        type="button"
+        @click="activeView = 'launchpad'; window.history.replaceState({}, '', '{% url 'dashboard:index' %}')"
+        :class="activeView === 'launchpad' ? 'bg-white text-[#222B17] font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-150"
+      >
+        <svg class="w-4 h-4 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+        <span>Accesos & Consultas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="activeView = 'tablero'; window.history.replaceState({}, '', '{% url 'dashboard:tablero' %}')"
+        :class="activeView === 'tablero' ? 'bg-white text-[#222B17] font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-150"
+      >
+        <svg class="w-4 h-4 text-[#C29B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>Tablero Ejecutivo (BI)</span>
+      </button>
     </div>
   </div>
 
-  <!-- Montaje de la Isla React -->
+  <!-- VISTA 1: LAUNCHPAD / ESCRITORIO CON CARPETAS Y CONSULTAS (ESTILO CLOUDSUITE) -->
+  <div x-show="activeView === 'launchpad'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-5">
+    
+    <!-- Barra de Búsqueda y Filtros de Categoría -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
+      
+      <!-- Buscador Spotlight en Vivo -->
+      <div class="relative flex-1 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input 
+          id="spotlight-search"
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Buscar consulta o análisis (ej: 'costos', 'asistencia', 'cheques')..."
+          class="w-full pl-9 pr-12 py-1.5 text-xs bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 rounded-xl focus:border-[#3D4A2A] focus:ring-1 focus:ring-[#3D4A2A] transition-all"
+        />
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+          <span class="text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">/</span>
+        </div>
+      </div>
+
+      <!-- Filtros por Categoría en Píldoras -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button 
+          type="button" 
+          @click="activeCategory = 'todas'"
+          :class="activeCategory === 'todas' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
+        >
+          Todas
+        </button>
+        <button 
+          type="button" 
+          @click="activeCategory = 'campo'"
+          :class="activeCategory === 'campo' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
+        >
+          🌾 Campo & Olivos
+        </button>
+        <button 
+          type="button" 
+          @click="activeCategory = 'almazara'"
+          :class="activeCategory === 'almazara' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
+        >
+          ⚙️ Almazara & Stock
+        </button>
+        <button 
+          type="button" 
+          @click="activeCategory = 'personal'"
+          :class="activeCategory === 'personal' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
+        >
+          👥 Cuadrillas & Nómina
+        </button>
+        <button 
+          type="button" 
+          @click="activeCategory = 'finanzas'"
+          :class="activeCategory === 'finanzas' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
+        >
+          💰 Costos & Finanzas
+        </button>
+      </div>
+
+      <!-- Selector de Modo de Visualización (Desktop vs Grid) -->
+      <div class="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        <button 
+          type="button" 
+          @click="viewMode = 'desktop'"
+          :class="viewMode === 'desktop' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'"
+          class="p-1.5 rounded-lg text-xs"
+          title="Modo Escritorio con Carpetas"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <button 
+          type="button" 
+          @click="viewMode = 'grid'"
+          :class="viewMode === 'grid' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'text-slate-500 hover:text-slate-800'"
+          class="p-1.5 rounded-lg text-xs"
+          title="Modo Tarjetas Detalladas"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- EL LIENZO DE ESCRITORIO (CANVAS CON FONDO CORPORATIVO Y ACCESOS ESTILO CARPETAS) -->
+    <div class="relative min-h-[560px] rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs bg-gradient-to-br from-[#FAFBF8] via-[#F3F7EE] to-[#EAEFE4] p-6 sm:p-8">
+      
+      <!-- Ondas de Fondo Abstractas Corporativas (Inspiradas en el diseño del ERP en la imagen) -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
+        <svg class="absolute -right-20 -bottom-20 w-[600px] h-[600px] text-[#D5DFC9]/40" fill="currentColor" viewBox="0 0 200 200">
+          <path d="M45.7,-77.4C58.9,-71.1,69.1,-58.5,77.3,-44.6C85.5,-30.7,91.7,-15.3,89.9,-0.9C88.2,13.5,78.5,27.1,69.5,40.1C60.5,53.2,52.2,65.8,40.4,73.4C28.6,81.1,14.3,83.8,-0.2,84.1C-14.7,84.5,-29.4,82.4,-41.8,75.1C-54.3,67.8,-64.5,55.3,-72.6,41.2C-80.7,27.1,-86.7,13.6,-86.3,0.2C-85.9,-13.1,-79,-26.2,-70.7,-38.4C-62.5,-50.6,-52.8,-61.9,-40.8,-68.8C-28.7,-75.7,-14.4,-78.3,0.7,-79.5C15.8,-80.7,32.5,-83.7,45.7,-77.4Z" transform="translate(100 100)" />
+        </svg>
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-white/60 rounded-full blur-3xl"></div>
+      </div>
+
+      <!-- Watermark / Branding Corporativo en la esquina superior derecha (Como en la foto XRP Cloudsuite) -->
+      <div class="absolute top-6 right-6 z-10 hidden sm:flex items-center gap-3 bg-white/70 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/80 shadow-xs select-none">
+        <div class="w-7 h-7 rounded-lg bg-[#3D4A2A] flex items-center justify-center p-1 shadow-xs">
+          <img src="{% static 'img/olives_12006391.png' %}" alt="ERP" class="w-5 h-5 object-contain" />
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-black text-[#222B17] tracking-wider leading-none">ERP OLIVÍCOLA</span>
+          <span class="text-[9px] font-bold text-[#52633A] tracking-widest font-mono mt-0.5">AGRO & CLOUDSUITE</span>
+        </div>
+      </div>
+
+      <!-- MODO 1: ESCRITORIO CON ACCESOS DIRECTOS TIPO CARPETAS Y VENTANAS (COMO EN LA IMAGEN) -->
+      <div x-show="viewMode === 'desktop'" class="relative z-10">
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 sm:gap-7 pt-2">
+          
+          <template x-for="item in accesos" :key="item.id">
+            <div 
+              x-show="matches(item)"
+              x-transition:enter="transition ease-out duration-150"
+              x-transition:enter-start="opacity-0 scale-90"
+              x-transition:enter-end="opacity-100 scale-100"
+              class="flex flex-col items-center group cursor-pointer"
+              @click="window.location.href = item.url"
+            >
+              <!-- Icono de Carpeta / Ventana de Consulta Estilo Escritorio de ERP -->
+              <div class="relative w-20 h-20 sm:w-22 sm:h-22 bg-white/90 group-hover:bg-white backdrop-blur-sm rounded-2xl border border-slate-200/90 group-hover:border-[#3D4A2A]/50 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1.5 transition-all duration-200 flex flex-col items-center justify-center p-2.5">
+                
+                <!-- Barra superior de la ventana en miniatura (Estilo Window Titlebar como en la foto) -->
+                <div class="w-full flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
+                  <div class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-[#3D4A2A] transition-colors"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                  </div>
+                  <span class="text-[8px] font-mono font-semibold uppercase text-slate-400" x-text="item.tipo_archivo"></span>
+                </div>
+
+                <!-- Ícono Central Temático -->
+                <div class="flex-1 flex items-center justify-center text-[#3D4A2A] group-hover:scale-110 transition-transform duration-200">
+                  
+                  <!-- Tree / Olivo -->
+                  <template x-if="item.icono === 'tree'">
+                    <svg class="w-8 h-8 text-[#4E5F36]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21v-4m0 0a5 5 0 005-5c0-1.8-1-3.3-2.5-4.2A5.5 5.5 0 004 8.5c0 1.5.6 2.8 1.5 3.8a5 5 0 006.5 4.7z" />
+                    </svg>
+                  </template>
+
+                  <!-- Chart Pie / Costos -->
+                  <template x-if="item.icono === 'chart_pie'">
+                    <svg class="w-8 h-8 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                  </template>
+
+                  <!-- Filter / Variedades -->
+                  <template x-if="item.icono === 'filter'">
+                    <svg class="w-8 h-8 text-[#52633A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                  </template>
+
+                  <!-- Cube / Stock -->
+                  <template x-if="item.icono === 'cube'">
+                    <svg class="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </template>
+
+                  <!-- Calculator / PPP -->
+                  <template x-if="item.icono === 'calculator'">
+                    <svg class="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </template>
+
+                  <!-- Clipboard / Partes -->
+                  <template x-if="item.icono === 'clipboard'">
+                    <svg class="w-8 h-8 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                  </template>
+
+                  <!-- User Check / Asistencia -->
+                  <template x-if="item.icono === 'user_check'">
+                    <svg class="w-8 h-8 text-sky-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </template>
+
+                  <!-- Users / Personal -->
+                  <template x-if="item.icono === 'users'">
+                    <svg class="w-8 h-8 text-sky-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </template>
+
+                  <!-- Banknotes / Liquidación -->
+                  <template x-if="item.icono === 'banknotes'">
+                    <svg class="w-8 h-8 text-emerald-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </template>
+
+                  <!-- Building Library / Bancos -->
+                  <template x-if="item.icono === 'building_library'">
+                    <svg class="w-8 h-8 text-emerald-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                    </svg>
+                  </template>
+
+                  <!-- Document Down / Proveedores -->
+                  <template x-if="item.icono === 'document_arrow_down'">
+                    <svg class="w-8 h-8 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </template>
+
+                  <!-- Document Up / Clientes -->
+                  <template x-if="item.icono === 'document_arrow_up'">
+                    <svg class="w-8 h-8 text-emerald-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </template>
+
+                  <!-- Credit Card / Cheques -->
+                  <template x-if="item.icono === 'credit_card'">
+                    <svg class="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  </template>
+                </div>
+
+                <!-- Live Badge en la Esquina Superior -->
+                <div class="absolute -top-1.5 -right-1.5">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white block shadow-xs"></span>
+                </div>
+              </div>
+
+              <!-- Etiqueta de Nombre del Acceso Directo (Estilo Etiqueta Blanca de Escritorio) -->
+              <div class="mt-2.5 max-w-[130px] text-center">
+                <span 
+                  class="inline-block bg-white/95 group-hover:bg-white text-slate-800 group-hover:text-[#222B17] font-semibold text-[11px] leading-tight px-2.5 py-1 rounded-xl shadow-xs group-hover:shadow-md border border-slate-200/80 group-hover:border-[#3D4A2A]/40 transition-all duration-150" 
+                  x-text="item.titulo"
+                ></span>
+                <div class="mt-1">
+                  <span class="text-[9px] font-mono text-slate-500 font-medium" x-text="item.badge"></span>
+                </div>
+              </div>
+
+            </div>
+          </template>
+
+        </div>
+
+      </div>
+
+      <!-- MODO 2: CUADRÍCULA DETALLADA DE TARJETAS (GRID VIEW) -->
+      <div x-show="viewMode === 'grid'" class="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="item in accesos" :key="item.id">
+          <div 
+            x-show="matches(item)"
+            class="bg-white/95 hover:bg-white p-4 rounded-2xl border border-slate-200/90 hover:border-[#3D4A2A]/50 shadow-xs hover:shadow-md transition-all group flex items-start justify-between gap-3 cursor-pointer"
+            @click="window.location.href = item.url"
+          >
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-[#EAEFE3] text-[#3D4A2A] flex items-center justify-center flex-shrink-0 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <span class="text-[10px] font-mono uppercase font-bold text-slate-400" x-text="item.categoria_nombre"></span>
+                <h3 class="font-bold text-slate-900 group-hover:text-[#3D4A2A] text-sm leading-snug transition-colors" x-text="item.titulo"></h3>
+                <p class="text-xs text-slate-500 mt-1 line-clamp-2" x-text="item.descripcion"></p>
+                <div class="mt-2 flex items-center gap-2">
+                  <span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" x-text="item.badge"></span>
+                </div>
+              </div>
+            </div>
+
+            <span class="text-slate-300 group-hover:text-[#3D4A2A] transition-colors self-center">&rarr;</span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Empty State cuando la búsqueda no arroja resultados -->
+      <div 
+        x-show="accesos.filter(i => matches(i)).length === 0" 
+        class="py-20 text-center relative z-10"
+      >
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/80 shadow-xs border border-slate-200 mb-3 text-slate-400">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <h4 class="text-sm font-bold text-slate-700">No se encontraron accesos directos</h4>
+        <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">No hay consultas que coincidan con los términos de búsqueda o filtros seleccionados.</p>
+        <button 
+          type="button" 
+          @click="searchQuery = ''; activeCategory = 'todas'"
+          class="mt-3 text-xs font-semibold text-[#3D4A2A] hover:underline"
+        >
+          Limpiar filtros de búsqueda
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- VISTA 2: TABLERO EJECUTIVO REACT ISLAND (MÉTRICAS & RECHARTS) -->
   <div 
-    id="react-dashboard-island" 
-    data-api-url="{% url 'dashboard-kpis' %}"
+    x-show="activeView === 'tablero'" 
+    x-transition:enter="transition ease-out duration-200" 
+    x-transition:enter-start="opacity-0 translate-y-2" 
+    x-transition:enter-end="opacity-100 translate-y-0"
+    class="space-y-6"
   >
-    <!-- Fallback mientras carga el bundle de Vite -->
-    <div class="p-12 text-center bg-white rounded-2xl border border-slate-200">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-oliva-700 border-t-transparent mb-3"></div>
-      <p class="text-sm text-slate-600 font-medium">Iniciando componente interactivo del Tablero...</p>
+    <!-- Indicador de Sincronización API -->
+    <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div class="flex items-center space-x-2 text-xs text-slate-600">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-medium">Monitor analítico interactivo con actualización en tiempo real</span>
+      </div>
+      <span class="text-[11px] font-mono text-slate-400">Endpoint: /api/v1/dashboard/kpis/</span>
+    </div>
+
+    <!-- Contenedor del Componente React de Vite -->
+    <div 
+      id="react-dashboard-island" 
+      data-api-url="{% url 'dashboard-kpis' %}"
+    >
+      <!-- Fallback mientras carga el bundle de React -->
+      <div class="p-12 text-center bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#3D4A2A] border-t-transparent mb-3"></div>
+        <p class="text-sm text-slate-600 font-medium">Iniciando componente interactivo del Tablero...</p>
+      </div>
     </div>
   </div>
 
@@ -42,4 +430,17 @@
 {% block extra_js %}
 <!-- Bundle compilado de React (Vite Island) -->
 <script type="module" src="{% static 'dist/assets/dashboard.js' %}"></script>
+<script>
+  // Atajo de teclado: pulsar '/' enfoca la barra de búsqueda de accesos directos
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      const searchInput = document.getElementById('spotlight-search');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }
+  });
+</script>
 {% endblock %}
+
