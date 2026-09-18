@@ -105,16 +105,29 @@
 
   </div>
 
-  <!-- Contenedor Universal para Formularios Modales HTMX -->
+  <!-- Contenedor Universal para Formularios Modales HTMX con animación suave -->
   <div 
     id="modal-container"
     x-show="modalOpen" 
     x-cloak
-    class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4"
     @click.self="modalOpen = false"
   >
     <div 
-      class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 relative overflow-hidden transform transition-all"
+      x-show="modalOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+      x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+      x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
+      class="bg-white rounded-3xl shadow-2xl border border-slate-200/80 max-w-2xl w-full p-7 relative overflow-hidden"
       id="modal-body"
     >
       <!-- Se inyecta contenido HTMX aquí -->

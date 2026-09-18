@@ -1,27 +1,45 @@
-<tr class="hover:bg-slate-50 transition-colors">
-  <td class="py-3 px-4 font-mono font-bold text-xs text-oliva-700 whitespace-nowrap">{{ cuadro.codigo }}</td>
+<tr class="hover:bg-slate-50/80 transition-colors">
+  <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
+    <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ cuadro.codigo }}</span>
+  </td>
   <td class="py-3 px-4">
-    <div class="font-semibold text-slate-900">{{ cuadro.nombre }}</div>
-    <span class="text-xs text-slate-400">{{ cuadro.finca.nombre }}</span>
+    <div class="font-semibold text-slate-900 text-sm">{{ cuadro.nombre }}</div>
+    <span class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+      <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      </svg>
+      {{ cuadro.finca.nombre }}
+    </span>
   </td>
   <td class="py-3 px-4 whitespace-nowrap">
-    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-oliva-100 text-oliva-800">
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#EAEFE3] text-[#3D4A2A] border border-[#D5DFC9]/70">
       {{ cuadro.get_variedad_olivo_display }}
     </span>
   </td>
-  <td class="py-3 px-4 font-mono font-semibold text-slate-900 whitespace-nowrap">{{ cuadro.hectareas_netas }} ha</td>
-  <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
-    <div>Año {{ cuadro.ano_plantacion }}</div>
-    <div class="text-slate-400 font-mono">{{ cuadro.densidad_plantas_ha }} pl/ha ({{ cuadro.total_estimado_plantas|floatformat:0 }} plantas)</div>
+  <td class="py-3 px-4 font-mono font-bold text-slate-900 text-right whitespace-nowrap tabular-nums">
+    {{ cuadro.hectareas_netas }} <span class="text-xs font-normal text-slate-400">ha</span>
   </td>
   <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
-    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+    <div class="font-medium text-slate-700">Año {{ cuadro.ano_plantacion }}</div>
+    <div class="text-slate-400 font-mono text-[11px] tabular-nums">{{ cuadro.densidad_plantas_ha }} pl/ha &bull; ~{{ cuadro.total_estimado_plantas|floatformat:0 }} plantas</div>
+  </td>
+  <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
+    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium text-[11px]">
+      <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
       {{ cuadro.get_sistema_riego_display }}
     </span>
   </td>
   <td class="py-3 px-4 text-center whitespace-nowrap">
-    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {% if cuadro.activo %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-500{% endif %}">
-      {% if cuadro.activo %}Activo{% else %}Inactivo{% endif %}
-    </span>
+    {% if cuadro.activo %}
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        Activo
+      </span>
+    {% else %}
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/60">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+        Inactivo
+      </span>
+    {% endif %}
   </td>
 </tr>

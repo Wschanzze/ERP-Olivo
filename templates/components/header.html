@@ -1,70 +1,76 @@
-<!-- Header Superior -->
-<header class="h-16 bg-white border-b border-[#E2E8DE] flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm">
+{% load static %}
+<!-- Header Superior con Estilo Minimalista de Precisión -->
+<header class="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-6 sticky top-0 z-20 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
   
-  <!-- Finca Activa Selector & Ruta -->
-  <div class="flex items-center space-x-4">
-    <div class="flex items-center space-x-2 bg-[#F3F6F0] px-3 py-1.5 rounded-lg border border-[#D5DFC9]">
-      <svg class="w-4 h-4 text-[#4E5F36]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-      <span class="text-xs font-medium text-[#4E5F36] uppercase tracking-wider">Finca:</span>
-      <select 
-        name="finca_activa" 
-        class="bg-transparent text-xs font-semibold text-[#28321B] border-none focus:ring-0 cursor-pointer pr-6 py-0 font-sans"
-        hx-get="{{ request.path }}" 
-        hx-trigger="change" 
-        hx-target="#main-content"
-        hx-push-url="true"
-        name="finca"
-      >
-        {% for f in fincas_disponibles %}
-          <option value="{{ f.id }}" {% if finca_activa and finca_activa.id == f.id %}selected{% endif %}>
-            {{ f.nombre }} ({{ f.superficie_total_ha }} ha)
-          </option>
-        {% endfor %}
-      </select>
+  <!-- Finca Activa Selector & Breadcrumbs -->
+  <div class="flex items-center space-x-5">
+    
+    <!-- Workspace / Finca Switcher (Estilo Vercel/GitHub Organization) -->
+    <div class="flex items-center space-x-2.5 bg-[#F4F7F1] hover:bg-[#EAEFE3] transition-all px-3 py-1.5 rounded-xl border border-[#D5DFC9] shadow-2xs group">
+      <div class="w-5 h-5 rounded-md bg-[#3D4A2A] flex items-center justify-center p-0.5 flex-shrink-0">
+        <img src="{% static 'img/olive_12006613.png' %}" alt="Finca" class="w-3.5 h-3.5 object-contain" />
+      </div>
+      <div class="flex flex-col">
+        <span class="text-[9px] font-bold text-[#4E5F36] uppercase tracking-widest leading-none">Finca Activa</span>
+        <select 
+          name="finca" 
+          class="bg-transparent text-xs font-bold text-slate-800 border-none focus:ring-0 cursor-pointer pr-6 py-0 pl-0 font-sans leading-tight mt-0.5"
+          hx-get="{{ request.path }}" 
+          hx-trigger="change" 
+          hx-target="#main-content"
+          hx-push-url="true"
+        >
+          {% for f in fincas_disponibles %}
+            <option value="{{ f.id }}" {% if finca_activa and finca_activa.id == f.id %}selected{% endif %}>
+              {{ f.nombre }} ({{ f.superficie_total_ha|floatformat:0 }} ha)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
 
-    <!-- Indicador de Campaña -->
-    <div class="hidden md:flex items-center space-x-1.5 text-xs text-slate-500">
-      <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-      <span class="font-medium text-slate-700">Campaña 2025/2026</span>
+    <!-- Separador sutil -->
+    <div class="hidden sm:block h-5 w-px bg-slate-200"></div>
+
+    <!-- Breadcrumb de Navegación -->
+    <div class="hidden md:flex items-center space-x-2 text-xs text-slate-400">
+      <span class="hover:text-slate-600 transition-colors">ERP</span>
+      <span class="text-slate-300">›</span>
+      <span class="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] tracking-wide uppercase">
+        {{ request.resolver_match.app_name|default:"Inicio" }}
+      </span>
     </div>
   </div>
 
-  <!-- Acciones y Perfil de Usuario -->
-  <div class="flex items-center space-x-5">
+  <!-- Barra de Herramientas y Perfil -->
+  <div class="flex items-center space-x-4">
     
-    <!-- Notificaciones / Vencimientos -->
-    <button class="relative p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>
-      <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white"></span>
-    </button>
+    <!-- Badge de Estado de Campaña -->
+    <div class="hidden sm:flex items-center space-x-2 bg-emerald-50/70 border border-emerald-200/80 px-2.5 py-1 rounded-full text-[11px] text-emerald-800 font-medium">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Campaña 2025/2026</span>
+    </div>
 
     <!-- Separador -->
     <div class="h-6 w-px bg-slate-200"></div>
 
-    <!-- Usuario con Rol y Avatar Circular con Iniciales -->
+    <!-- Perfil de Usuario con Avatar e Iniciales -->
     <div class="flex items-center space-x-3">
       <div class="flex flex-col text-right">
-        <span class="text-sm font-semibold text-slate-800 leading-tight">
+        <span class="text-xs font-bold text-slate-900 leading-tight">
           {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Gonzalo Olivar{% endif %}
         </span>
-        <span class="text-[11px] font-medium text-[#4E5F36] bg-[#EAEFE3] px-1.5 py-0.5 rounded-full inline-block mt-0.5 tracking-tight self-end">
+        <span class="text-[10px] font-semibold text-[#4E5F36] bg-[#EAEFE3] px-2 py-0.5 rounded-full inline-block mt-0.5 tracking-tight self-end">
           {% if user.is_authenticated %}{{ user.get_rol_display }}{% else %}Administrador General{% endif %}
         </span>
       </div>
       
-      <!-- Avatar Circular con Iniciales -->
-      <div class="w-10 h-10 rounded-full bg-[#3D4A2A] text-[#F3F6F0] flex items-center justify-center font-bold text-sm shadow-md border-2 border-white ring-1 ring-[#3D4A2A]/20">
-        {% if user.is_authenticated and user.iniciales %}
-          {{ user.iniciales }}
-        {% else %}
-          GO
-        {% endif %}
+      <!-- Avatar con Anillo de Estado -->
+      <div class="relative">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#3D4A2A] to-[#252E19] text-[#F3F6F0] flex items-center justify-center font-extrabold text-xs shadow-sm border border-[#52633A]/40 ring-2 ring-white">
+          {% if user.is_authenticated and user.iniciales %}{{ user.iniciales }}{% else %}GO{% endif %}
+        </div>
+        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" title="En línea"></span>
       </div>
     </div>
 

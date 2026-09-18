@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Inventario y Depósitos | ERP Olivícola{% endblock %}
 
@@ -7,44 +8,76 @@
   
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Depósitos, Insumos y Maquinarias</h1>
-      <p class="text-sm text-slate-500 mt-1">Control de stock de agroquímicos, fertilizantes, combustibles y parque mecánico.</p>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Depósitos, Insumos y Maquinarias</h1>
+        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+          Gestión de Stock PPP
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">Control de stock de fitosanitarios, fertilizantes, combustibles y parque mecánico.</p>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-    <table class="w-full text-left border-collapse text-sm">
-      <thead>
-        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
-          <th class="py-3.5 px-4">Código</th>
-          <th class="py-3.5 px-4">Insumo / Producto</th>
-          <th class="py-3.5 px-4">Categoría</th>
-          <th class="py-3.5 px-4">Unidad</th>
-          <th class="py-3.5 px-4 text-right">Stock Actual</th>
-          <th class="py-3.5 px-4 text-right">Costo PPP (ARS)</th>
-          <th class="py-3.5 px-4 text-right">Valorizado</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for ins in insumos %}
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="py-3 px-4 font-mono font-bold text-xs text-oliva-700">{{ ins.codigo }}</td>
-          <td class="py-3 px-4 font-semibold text-slate-900">{{ ins.nombre }}</td>
-          <td class="py-3 px-4 text-xs text-slate-600">{{ ins.categoria.nombre }}</td>
-          <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ ins.get_unidad_medida_display }}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold {% if ins.stock_bajo %}text-rose-600{% else %}text-slate-800{% endif %}">
-            {{ ins.stock_actual|floatformat:2 }}
-          </td>
-          <td class="py-3 px-4 text-right font-mono text-slate-600">${{ ins.costo_unitario_ars|floatformat:2 }}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${{ ins.valor_total_stock_ars|floatformat:2 }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay insumos cargados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3.5 px-4">Código</th>
+            <th class="py-3.5 px-4">Insumo / Producto</th>
+            <th class="py-3.5 px-4">Categoría</th>
+            <th class="py-3.5 px-4">Unidad</th>
+            <th class="py-3.5 px-4 text-right">Stock Actual</th>
+            <th class="py-3.5 px-4 text-center">Estado</th>
+            <th class="py-3.5 px-4 text-right">Costo PPP (ARS)</th>
+            <th class="py-3.5 px-4 text-right">Valorizado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for ins in insumos %}
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
+              <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ ins.codigo }}</span>
+            </td>
+            <td class="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">{{ ins.nombre }}</td>
+            <td class="py-3 px-4 text-xs whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium text-[11px]">
+                {{ ins.categoria.nombre }}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{{ ins.get_unidad_medida_display }}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap tabular-nums {% if ins.stock_bajo %}text-rose-600{% else %}text-slate-800{% endif %}">
+              {{ ins.stock_actual|floatformat:2 }}
+            </td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              {% if ins.stock_bajo %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/70 shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                  Stock Crítico
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Normal
+                </span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4 text-right font-mono text-slate-500 whitespace-nowrap tabular-nums">${{ ins.costo_unitario_ars|floatformat:2 }}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">${{ ins.valor_total_stock_ars|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin insumos" class="w-10 h-10 opacity-30 grayscale" />
+                <p class="font-medium text-slate-500 text-xs">No hay insumos cargados en el inventario.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>

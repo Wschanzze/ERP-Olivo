@@ -1,47 +1,101 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Campos y Cuadros de Olivo | ERP Olivícola{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ activeVariedad: '' }">
   
-  <!-- Encabezado -->
+  <!-- Encabezado con Métricas y CTA -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Catastro de Cuadros y Olivares</h1>
-      <p class="text-sm text-slate-500 mt-1">Superficie, variedades de olivo (Arauco, Arbequina, Picual), densidad de plantación y marcos de riego.</p>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Catastro de Cuadros y Olivares</h1>
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+          ● Catastro Georreferenciado
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">Superficie neta, variedades implantadas, densidad de marcos y sistemas de fertirriego.</p>
     </div>
 
     <button 
       @click="modalOpen = true"
       hx-get="{% url 'campos:cuadro_create' %}"
       hx-target="#modal-body"
-      class="inline-flex items-center px-4 py-2.5 bg-oliva-700 hover:bg-oliva-800 text-white font-medium text-sm rounded-xl shadow-sm transition-colors"
+      class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3D4A2A] hover:bg-[#2F3A20] text-white font-semibold text-xs tracking-wide uppercase rounded-xl shadow-sm hover:shadow transition-all duration-200 group"
     >
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4 text-[#A2B38F] group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
       Nuevo Cuadro
     </button>
   </div>
 
-  <!-- Filtros Reactivos con HTMX -->
-  <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
-    <div class="flex items-center space-x-2">
-      <span class="text-xs font-bold text-slate-600 uppercase">Filtrar Variedad:</span>
-      <select 
-        name="variedad" 
+  <!-- Filtro Segmentado de Variedades (Pill Switcher) -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200/80 shadow-xs">
+    
+    <!-- Segmented Control Pills -->
+    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl">
+      <button 
+        type="button"
+        @click="activeVariedad = ''"
         hx-get="{% url 'campos:cuadros_list' %}" 
-        hx-target="#cuadros-table-container" 
-        hx-trigger="change"
-        class="text-xs border-slate-300 rounded-lg py-1.5 focus:border-oliva-500 focus:ring-oliva-500"
+        hx-target="#cuadros-table-container"
+        :class="activeVariedad === '' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
       >
-        <option value="">Todas las Variedades</option>
-        <option value="ARAUCO">Arauco (Criolla)</option>
-        <option value="ARBEQUINA">Arbequina</option>
-        <option value="PICUAL">Picual</option>
-        <option value="FRANTOIO">Frantoio</option>
-      </select>
+        Todas las Variedades
+      </button>
+
+      <button 
+        type="button"
+        @click="activeVariedad = 'ARAUCO'"
+        hx-get="{% url 'campos:cuadros_list' %}?variedad=ARAUCO" 
+        hx-target="#cuadros-table-container"
+        :class="activeVariedad === 'ARAUCO' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
+      >
+        Arauco (Criolla)
+      </button>
+
+      <button 
+        type="button"
+        @click="activeVariedad = 'ARBEQUINA'"
+        hx-get="{% url 'campos:cuadros_list' %}?variedad=ARBEQUINA" 
+        hx-target="#cuadros-table-container"
+        :class="activeVariedad === 'ARBEQUINA' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
+      >
+        Arbequina
+      </button>
+
+      <button 
+        type="button"
+        @click="activeVariedad = 'PICUAL'"
+        hx-get="{% url 'campos:cuadros_list' %}?variedad=PICUAL" 
+        hx-target="#cuadros-table-container"
+        :class="activeVariedad === 'PICUAL' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
+      >
+        Picual
+      </button>
+
+      <button 
+        type="button"
+        @click="activeVariedad = 'FRANTOIO'"
+        hx-get="{% url 'campos:cuadros_list' %}?variedad=FRANTOIO" 
+        hx-target="#cuadros-table-container"
+        :class="activeVariedad === 'FRANTOIO' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all duration-150"
+      >
+        Frantoio
+      </button>
+    </div>
+
+    <!-- Indicador de filtrado sutil -->
+    <div class="text-[11px] text-slate-400 px-2 flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#3D4A2A]"></span>
+      <span class="font-mono">Filtro dinámico HTMX</span>
     </div>
   </div>
 

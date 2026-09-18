@@ -1,23 +1,28 @@
 {% if asistencia %}
   {% if asistencia.estado == 'PRESENTE' %}
-    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-      ● Presente ({{ asistencia.horas_normales }}h)
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      Presente <span class="font-mono font-medium text-emerald-600/90">({{ asistencia.horas_normales }}h)</span>
     </span>
   {% elif asistencia.estado == 'AUSENTE_INJUSTIFICADO' %}
-    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-      ● Ausente
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/70 shadow-2xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+      Ausente
     </span>
   {% elif asistencia.estado == 'LLUVIA_CLIMA' %}
-    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
-      ● Suspensión Lluvia
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200/70 shadow-2xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+      Suspensión Lluvia
     </span>
   {% else %}
-    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/70 shadow-2xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
       {{ asistencia.get_estado_display }}
     </span>
   {% endif %}
 {% else %}
-  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-400 border border-slate-200/50">
+    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
     Sin registrar
   </span>
 {% endif %}

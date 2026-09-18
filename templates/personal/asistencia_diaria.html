@@ -26,21 +26,21 @@
   </div>
 
   <!-- Matriz de Asistencia Diaria con Botones HTMX Inmediatos -->
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="px-6 py-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-slate-50/50">
       <div class="flex items-center space-x-3">
-        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
           Planilla del {{ fecha_seleccionada|date:"l d \d\e F, Y" }}
         </h3>
       </div>
-      <span class="text-xs text-slate-500">Haz clic en los botones para marcar estado en tiempo real</span>
+      <span class="text-[11px] text-slate-400 font-medium">Marcación instantánea con actualización atómica</span>
     </div>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead>
-          <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
             <th class="py-3.5 px-4">Legajo</th>
             <th class="py-3.5 px-4">Trabajador Rural</th>
             <th class="py-3.5 px-4">Puesto / Rol</th>
@@ -52,14 +52,16 @@
         <tbody class="divide-y divide-slate-100">
           {% for emp in empleados %}
           {% with a=asistencias_dict|dictsort:emp.id %}
-          <tr class="hover:bg-slate-50 transition-colors" id="row-emp-{{ emp.id }}">
-            <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ emp.legajo }}</td>
+          <tr class="hover:bg-slate-50/70 transition-colors" id="row-emp-{{ emp.id }}">
+            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A]">
+              <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ emp.legajo }}</span>
+            </td>
             <td class="py-3 px-4 font-semibold text-slate-900">
               {{ emp.nombre_completo }}
               <span class="block text-[11px] text-slate-400 font-mono">{{ emp.dni_cuil }}</span>
             </td>
             <td class="py-3 px-4 text-xs text-slate-700">
-              <span class="px-2 py-0.5 rounded-full bg-slate-100 font-medium">
+              <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[11px]">
                 {{ emp.get_rol_laboral_display }}
               </span>
             </td>
@@ -71,14 +73,14 @@
             </td>
 
             <!-- Botones HTMX para marcar -->
-            <td class="py-3 px-4 text-center">
-              <div class="inline-flex items-center space-x-1">
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
                 <form hx-post="{% url 'personal:asistencia_marcar' %}" hx-target="#badge-container-{{ emp.id }}" class="inline">
                   {% csrf_token %}
                   <input type="hidden" name="empleado_id" value="{{ emp.id }}">
                   <input type="hidden" name="fecha" value="{{ fecha_seleccionada|date:'Y-m-d' }}">
                   <input type="hidden" name="estado" value="PRESENTE">
-                  <button type="submit" class="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50 border border-emerald-200 text-xs font-bold" title="Marcar Presente">
+                  <button type="submit" class="px-2.5 py-1 rounded-lg text-emerald-700 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-200/70 text-[11px] font-semibold transition-all hover:shadow-2xs active:scale-95" title="Marcar Presente">
                     ✓ Presente
                   </button>
                 </form>
@@ -88,7 +90,7 @@
                   <input type="hidden" name="empleado_id" value="{{ emp.id }}">
                   <input type="hidden" name="fecha" value="{{ fecha_seleccionada|date:'Y-m-d' }}">
                   <input type="hidden" name="estado" value="AUSENTE_INJUSTIFICADO">
-                  <button type="submit" class="p-1.5 rounded-lg text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold" title="Marcar Ausente">
+                  <button type="submit" class="px-2.5 py-1 rounded-lg text-rose-700 hover:bg-rose-100/80 bg-rose-50 border border-rose-200/70 text-[11px] font-semibold transition-all hover:shadow-2xs active:scale-95" title="Marcar Ausente">
                     ✕ Falta
                   </button>
                 </form>
@@ -98,7 +100,7 @@
                   <input type="hidden" name="empleado_id" value="{{ emp.id }}">
                   <input type="hidden" name="fecha" value="{{ fecha_seleccionada|date:'Y-m-d' }}">
                   <input type="hidden" name="estado" value="LLUVIA_CLIMA">
-                  <button type="submit" class="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 border border-blue-200 text-xs font-bold" title="Marcar Lluvia">
+                  <button type="submit" class="px-2.5 py-1 rounded-lg text-sky-700 hover:bg-sky-100/80 bg-sky-50 border border-sky-200/70 text-[11px] font-semibold transition-all hover:shadow-2xs active:scale-95" title="Marcar Lluvia">
                     🌧 Lluvia
                   </button>
                 </form>
@@ -108,7 +110,11 @@
           {% endwith %}
           {% empty %}
           <tr>
-            <td colspan="6" class="py-8 text-center text-slate-400 text-sm">No hay empleados activos en esta finca.</td>
+            <td colspan="6" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <p class="font-medium text-slate-500 text-xs">No hay empleados registrados para esta finca.</p>
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>

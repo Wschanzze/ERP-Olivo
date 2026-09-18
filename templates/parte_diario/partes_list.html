@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Partes Diarios de Campo | ERP Olivícola{% endblock %}
 
@@ -7,56 +8,78 @@
   
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Partes Diarios de Labor y Cosecha</h1>
-      <p class="text-sm text-slate-500 mt-1">Registro operativo de tareas, insumos consumidos y mano de obra imputada.</p>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Partes Diarios de Labor y Cosecha</h1>
+        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+          Imputación Automática
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">Registro operativo de labores agrícolas, insumos consumidos y jornales devengados.</p>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-    <table class="w-full text-left border-collapse text-sm">
-      <thead>
-        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
-          <th class="py-3.5 px-4">Parte #</th>
-          <th class="py-3.5 px-4">Fecha</th>
-          <th class="py-3.5 px-4">Finca / Cuadro</th>
-          <th class="py-3.5 px-4">Supervisor</th>
-          <th class="py-3.5 px-4">Insumos & Personal</th>
-          <th class="py-3.5 px-4 text-center">Estado</th>
-          <th class="py-3.5 px-4 text-right">Acción</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for p in partes %}
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="py-3 px-4 font-mono font-bold text-oliva-700">#{{ p.id }}</td>
-          <td class="py-3 px-4 font-mono text-xs text-slate-600">{{ p.fecha|date:"d/m/Y" }}</td>
-          <td class="py-3 px-4">
-            <span class="font-semibold text-slate-900">{{ p.cuadro.codigo }}</span>
-            <span class="block text-xs text-slate-400">{{ p.finca.nombre }}</span>
-          </td>
-          <td class="py-3 px-4 text-xs text-slate-700">{{ p.supervisor.get_full_name|default:p.supervisor.username }}</td>
-          <td class="py-3 px-4 text-xs text-slate-500">
-            <div>{{ p.insumos_utilizados.count }} insumos consumidos</div>
-            <div>{{ p.personal_asignado.count }} personas en cuadrilla</div>
-          </td>
-          <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {% if p.estado == 'CONFIRMADO_CERRADO' %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
-              {{ p.get_estado_display }}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-right">
-            <a href="{% url 'parte_diario:parte_detail' p.id %}" class="text-xs font-semibold text-oliva-700 hover:text-oliva-900 underline">
-              Ver Detalle &rarr;
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay partes diarios registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3.5 px-4">Parte #</th>
+            <th class="py-3.5 px-4">Fecha</th>
+            <th class="py-3.5 px-4">Finca / Cuadro</th>
+            <th class="py-3.5 px-4">Supervisor</th>
+            <th class="py-3.5 px-4">Insumos & Personal</th>
+            <th class="py-3.5 px-4 text-center">Estado</th>
+            <th class="py-3.5 px-4 text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for p in partes %}
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
+              <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">#{{ p.id }}</span>
+            </td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-600 whitespace-nowrap tabular-nums">{{ p.fecha|date:"d/m/Y" }}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+              <span class="font-semibold text-slate-900 text-sm">{{ p.cuadro.codigo }}</span>
+              <span class="block text-xs text-slate-400">{{ p.finca.nombre }}</span>
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-700 whitespace-nowrap">{{ p.supervisor.get_full_name|default:p.supervisor.username }}</td>
+            <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
+              <div class="font-medium text-slate-700">{{ p.insumos_utilizados.count }} insumos descargados</div>
+              <div class="text-slate-400">{{ p.personal_asignado.count }} personas en cuadrilla</div>
+            </td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              {% if p.estado == 'CONFIRMADO_CERRADO' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Confirmado & Cerrado
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/70 shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  {{ p.get_estado_display }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <a href="{% url 'parte_diario:parte_detail' p.id %}" class="inline-flex items-center text-xs font-semibold text-[#3D4A2A] hover:text-[#252E19] bg-[#F4F7F1] hover:bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-1 rounded-lg transition-colors">
+                Ver Detalle &rarr;
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin partes" class="w-10 h-10 opacity-30 grayscale" />
+                <p class="font-medium text-slate-500 text-xs">No hay partes diarios registrados.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>

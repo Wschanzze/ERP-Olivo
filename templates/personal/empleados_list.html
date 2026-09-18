@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Padrón de Personal y Cuadrillas | ERP Olivícola{% endblock %}
 
@@ -7,56 +8,75 @@
   
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Padrón de Empleados y Cuadrillas</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Padrón de Empleados y Cuadrillas</h1>
+        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+          Nómina Rural & Almazara
+        </span>
+      </div>
       <p class="text-sm text-slate-500 mt-1">Legajos, roles laborales rurales, categorías salariales y asignación por finca.</p>
     </div>
 
     <a 
       href="{% url 'personal:asistencia_diaria' %}" 
-      class="inline-flex items-center px-4 py-2.5 bg-oliva-700 hover:bg-oliva-800 text-white font-medium text-sm rounded-xl shadow-sm transition-colors"
+      class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3D4A2A] hover:bg-[#2F3A20] text-white font-semibold text-xs tracking-wide uppercase rounded-xl shadow-sm hover:shadow transition-all duration-200 group"
     >
-      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4 text-[#A2B38F] group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
       Cargar Asistencia de Hoy
     </a>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-    <table class="w-full text-left border-collapse text-sm">
-      <thead>
-        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
-          <th class="py-3.5 px-4">Legajo</th>
-          <th class="py-3.5 px-4">Nombre y Apellido</th>
-          <th class="py-3.5 px-4">DNI / CUIL</th>
-          <th class="py-3.5 px-4">Categoría Rural</th>
-          <th class="py-3.5 px-4">Modalidad</th>
-          <th class="py-3.5 px-4">Finca Habitual</th>
-          <th class="py-3.5 px-4 text-right">Jornal Base</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for emp in empleados %}
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="py-3 px-4 font-mono font-bold text-xs text-oliva-700">{{ emp.legajo }}</td>
-          <td class="py-3 px-4 font-semibold text-slate-900">{{ emp.nombre_completo }}</td>
-          <td class="py-3 px-4 font-mono text-xs text-slate-600">{{ emp.dni_cuil }}</td>
-          <td class="py-3 px-4 text-xs">
-            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
-              {{ emp.get_rol_laboral_display }}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-xs text-slate-600">{{ emp.get_modalidad_display }}</td>
-          <td class="py-3 px-4 text-xs text-slate-700 font-medium">{{ emp.finca_habitual.nombre }}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">${{ emp.valor_jornal_base_ars|floatformat:2 }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="py-8 text-center text-slate-400 text-sm">No hay empleados registrados.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3.5 px-4">Legajo</th>
+            <th class="py-3.5 px-4">Nombre y Apellido</th>
+            <th class="py-3.5 px-4">DNI / CUIL</th>
+            <th class="py-3.5 px-4">Categoría Rural</th>
+            <th class="py-3.5 px-4">Modalidad</th>
+            <th class="py-3.5 px-4">Finca Asignada</th>
+            <th class="py-3.5 px-4 text-right">Jornal Base (ARS)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for emp in empleados %}
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
+              <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ emp.legajo }}</span>
+            </td>
+            <td class="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">{{ emp.nombre_completo }}</td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{{ emp.dni_cuil }}</td>
+            <td class="py-3 px-4 text-xs whitespace-nowrap">
+              <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
+                {{ emp.get_rol_laboral_display }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">{{ emp.get_modalidad_display }}</td>
+            <td class="py-3 px-4 text-xs text-slate-700 font-medium whitespace-nowrap">
+              <span class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#3D4A2A]"></span>
+                {{ emp.finca_habitual.nombre }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">${{ emp.valor_jornal_base_ars|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin empleados" class="w-10 h-10 opacity-30 grayscale" />
+                <p class="font-medium text-slate-500 text-xs">No hay empleados registrados en el padrón.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>

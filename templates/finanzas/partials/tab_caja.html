@@ -1,55 +1,66 @@
-<!-- Cards de Cuentas y Saldos -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+<!-- Cards de Cuentas Financieras con Acabado Minimalista -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
   {% for c in cuentas %}
-  <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-oliva-400 transition-all">
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-oliva-500/40 transition-all duration-200 group">
     <div class="flex items-center justify-between">
-      <span class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider {% if c.moneda == 'USD' %}bg-emerald-100 text-emerald-800{% else %}bg-oliva-100 text-oliva-800{% endif %}">
+      <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase {% if c.moneda == 'USD' %}bg-emerald-50 text-emerald-700 border border-emerald-200/60{% else %}bg-oliva-50 text-oliva-800 border border-oliva-200/60{% endif %}">
         {{ c.get_tipo_display }}
       </span>
-      <span class="font-mono text-xs font-semibold text-slate-500">{{ c.moneda }}</span>
+      <span class="text-xs font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">{{ c.moneda }}</span>
     </div>
     
     <div class="mt-4">
-      <h3 class="text-sm font-medium text-slate-600">{{ c.nombre }}</h3>
-      <p class="text-2xl font-bold text-slate-900 mt-1">
-        {% if c.moneda == 'USD' %}u$s{% else %}${% endif %} {{ c.saldo_actual|floatformat:2 }}
+      <h3 class="text-xs font-semibold text-slate-500 tracking-wide">{{ c.nombre }}</h3>
+      <p class="text-2xl font-extrabold text-slate-900 mt-1 font-mono tracking-tight tabular-nums">
+        {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
       </p>
       {% if c.cbu_cvu %}
-        <p class="text-[11px] font-mono text-slate-400 mt-1 truncate">CBU: {{ c.cbu_cvu }}</p>
+        <p class="text-[11px] font-mono text-slate-400 mt-2 truncate bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+          <span class="text-slate-400 font-sans font-medium">CBU/Alias:</span> {{ c.cbu_cvu }}
+        </p>
       {% endif %}
     </div>
   </div>
   {% empty %}
-  <p class="text-sm text-slate-500 col-span-3">No hay cuentas bancarias configuradas.</p>
+  <p class="text-sm text-slate-400 col-span-3">No hay cuentas bancarias configuradas.</p>
   {% endfor %}
 </div>
 
-<!-- Tabla de Movimientos Financieros Recientes -->
-<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-  <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Últimos Movimientos de Tesorería</h3>
-    <span class="text-xs text-slate-500 font-mono">Tiempo Real</span>
+<!-- Tabla de Movimientos Financieros con Estilo Clean Data-Grid -->
+<div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+  <div class="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50">
+    <div class="flex items-center space-x-2">
+      <div class="w-2 h-2 rounded-full bg-oliva-600"></div>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Asientos Recientes de Tesorería</h3>
+    </div>
+    <span class="text-[11px] text-slate-400 font-mono">Sincronización en vivo</span>
   </div>
   
   <div class="overflow-x-auto">
     <table class="w-full text-left border-collapse text-sm">
       <thead>
-        <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
+        <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
           <th class="py-3 px-4">Fecha</th>
           <th class="py-3 px-4">Tipo</th>
           <th class="py-3 px-4">Cuenta</th>
-          <th class="py-3 px-4">Concepto / Entidad</th>
+          <th class="py-3 px-4">Concepto / Referencia</th>
           <th class="py-3 px-4">Comprobante</th>
           <th class="py-3 px-4 text-right">Importe</th>
         </tr>
       </thead>
-      <tbody id="movimientos-table-body" class="divide-y divide-slate-100">
+      <tbody id="movimientos-table-body" class="divide-y divide-slate-100 text-xs">
         {% for mov in movimientos_recientes %}
           {% include 'finanzas/partials/movimiento_row.html' with mov=mov %}
         {% empty %}
           <tr>
-            <td colspan="6" class="py-8 text-center text-slate-500 text-sm">
-              No hay movimientos financieros asentados. Usa el botón "Registrar Movimiento Financiero".
+            <td colspan="6" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>No hay movimientos financieros asentados.</p>
+                <p class="text-xs text-slate-400 font-normal">Utiliza el botón "Nuevo Movimiento" para asentar un ingreso o egreso.</p>
+              </div>
             </td>
           </tr>
         {% endfor %}
