@@ -1,33 +1,33 @@
 {% load static %}
-<!-- Sidebar Fija Oscura con Fondo Difuminado Profesional (250.jpg) -->
+<!-- Sidebar Fija Oscura con Restricción Estricta al Viewport (No desborda la pantalla) -->
 <aside 
-  :class="sidebarOpen ? 'w-64' : 'w-20'" 
-  class="fixed inset-y-0 left-0 z-30 flex flex-col bg-[#1B2312] text-[#E5EBDD] transition-all duration-300 ease-in-out border-r border-[#344024] shadow-2xl select-none overflow-hidden relative"
+  :class="sidebarOpen ? 'w-64 max-w-[16rem]' : 'w-20 max-w-[5rem]'" 
+  class="fixed top-0 bottom-0 left-0 z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-all duration-300 ease-in-out border-r border-[#344024] shadow-2xl select-none overflow-hidden"
 >
-  <!-- Capa 1: Imagen '250.jpg' difuminada con blur y escala suave -->
+  <!-- Capa 1: Imagen '250.jpg' difuminada (restringida dentro del contenedor fijo) -->
   <div 
     class="absolute inset-0 z-0 bg-cover bg-center pointer-events-none transform scale-110 filter blur-[3px] opacity-20 transition-all duration-700"
     style="background-image: url('{% static 'img/250.jpg' %}');"
   ></div>
 
-  <!-- Capa 2: Máscara de gradiente verde oliva profundo para garantizar contraste y elegancia sobria -->
-  <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#18200F]/90 via-[#222B17]/94 to-[#141A0D]/98 pointer-events-none backdrop-blur-[1px]"></div>
+  <!-- Capa 2: Gradiente verde oliva oscuro -->
+  <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#151C0D]/92 via-[#1F2714]/95 to-[#12170B]/98 pointer-events-none backdrop-blur-[1px]"></div>
 
-  <!-- Logo / Branding Corporativo (z-10 relativo) -->
-  <div class="relative z-10 flex items-center justify-between h-16 px-4 bg-[#141A0D]/70 border-b border-[#344024]/80 backdrop-blur-md">
-    <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 overflow-hidden">
-      <!-- Ícono de Aceitunas Personalizado -->
-      <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#3D4A2A] to-[#252E19] flex items-center justify-center p-1.5 shadow-md border border-[#52633A]/60">
-        <img src="{% static 'img/olives_12006391.png' %}" alt="Olivas ERP" class="w-7 h-7 object-contain drop-shadow" />
+  <!-- Logo / Branding Corporativo (Fijo en la parte superior) -->
+  <div class="relative z-10 flex-shrink-0 flex items-center justify-between h-16 px-4 bg-[#12170B]/80 border-b border-[#344024]/80 backdrop-blur-md">
+    <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 overflow-hidden min-w-0">
+      <!-- Ícono de Olivo -->
+      <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-[#3D4A2A] to-[#252E19] flex items-center justify-center p-1.5 shadow-md border border-[#52633A]/60">
+        <img src="{% static 'img/olives_12006391.png' %}" alt="Olivas ERP" class="w-6 h-6 object-contain drop-shadow" />
       </div>
-      <div x-show="sidebarOpen" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200">
-        <span class="font-bold text-sm tracking-wider text-white uppercase">ERP Olivícola</span>
-        <span class="text-[10px] text-[#A2B38F] font-mono tracking-wider font-semibold">AGRO & ALMAZARA</span>
+      <div x-show="sidebarOpen" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0">
+        <span class="font-bold text-sm tracking-wider text-white uppercase truncate">ERP Olivícola</span>
+        <span class="text-[10px] text-[#A2B38F] font-mono tracking-wider font-semibold truncate">AGRO & ALMAZARA</span>
       </div>
     </a>
     <button 
       @click="sidebarOpen = !sidebarOpen" 
-      class="p-1.5 rounded-lg hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors"
+      class="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors ml-1"
       title="Colapsar menú"
     >
       <svg class="w-5 h-5 transition-transform duration-200" :class="!sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,106 +36,106 @@
     </button>
   </div>
 
-  <!-- Navegación de Módulos (z-10 relativo con efectos glassmorphism) -->
-  <nav class="relative z-10 flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+  <!-- Navegación de Módulos (Scrollable interno con min-h-0 para nunca empujar el pie de página) -->
+  <nav class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
     
     <!-- Inicio / Tablero -->
     <a 
       href="{% url 'dashboard:index' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Tablero Ejecutivo</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Tablero Ejecutivo</span>
     </a>
 
     <!-- Campos y Cuadros -->
     <a 
       href="{% url 'campos:cuadros_list' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'campos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'campos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Campos y Cuadros</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Campos y Cuadros</span>
     </a>
 
     <!-- Partes Diarios y OTs -->
     <a 
       href="{% url 'parte_diario:partes_list' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'parte_diario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'parte_diario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Partes Diarios</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Partes Diarios</span>
     </a>
 
     <!-- Personal y Asistencia -->
     <a 
       href="{% url 'personal:asistencia_diaria' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'personal' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'personal' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Personal y Cuadrillas</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Personal y Cuadrillas</span>
     </a>
 
     <!-- Liquidación de Haberes -->
     <a 
       href="{% url 'liquidacion:periodos_list' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Liquidación Sueldos</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Liquidación Sueldos</span>
     </a>
 
     <!-- Finanzas y Tesorería -->
     <a 
       href="{% url 'finanzas:dashboard' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'finanzas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'finanzas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Finanzas & Cuentas</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Finanzas & Cuentas</span>
     </a>
 
     <!-- Costos y Gestión -->
     <a 
       href="{% url 'costos:dashboard' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Costos por Centro</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Costos por Centro</span>
     </a>
 
     <!-- Inventario y Depósito -->
     <a 
       href="{% url 'inventario:insumos_list' %}" 
-      class="flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'inventario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      class="flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.resolver_match.app_name == 'inventario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
     >
       <svg class="w-5 h-5 flex-shrink-0 mr-3 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
       </svg>
-      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity">Depósitos & Insumos</span>
+      <span x-show="sidebarOpen" class="whitespace-nowrap transition-opacity truncate">Depósitos & Insumos</span>
     </a>
 
   </nav>
 
-  <!-- Pie de Barra / Versión y Estado (z-10 relativo con cristal translúcido) -->
-  <div class="relative z-10 p-3.5 bg-[#141A0D]/80 border-t border-[#344024]/80 backdrop-blur-md flex items-center justify-between">
-    <div x-show="sidebarOpen" class="text-[11px] text-[#A2B38F]">
-      <p class="font-bold text-[#E5EBDD] tracking-wide">PostgreSQL 16</p>
-      <p class="text-[10px] text-[#7E9169]">Django 5.1 • Celery Worker</p>
+  <!-- Pie de Barra / Versión y Estado (Fijo en la parte inferior, nunca empujado fuera de la pantalla) -->
+  <div class="relative z-10 flex-shrink-0 p-3 bg-[#12170B]/85 border-t border-[#344024]/80 backdrop-blur-md flex items-center justify-between">
+    <div x-show="sidebarOpen" class="text-[11px] text-[#A2B38F] truncate">
+      <p class="font-bold text-[#E5EBDD] tracking-wide truncate">PostgreSQL 16</p>
+      <p class="text-[10px] text-[#7E9169] truncate">Django 5.1 • Celery Worker</p>
     </div>
-    <div class="flex items-center space-x-1.5" title="Sistema en línea">
+    <div class="flex items-center space-x-1.5 flex-shrink-0" title="Sistema en línea">
       <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50 animate-pulse"></div>
     </div>
   </div>
