@@ -104,75 +104,75 @@ export default function App({ apiUrl }) {
       </div>
 
       {/* FILA 1: Cards Métricas Principales (4 por fila conforme a especificación) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         
         {/* Card 1: Dinero en Caja y Bancos */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tesorería (ARS)</span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700 flex-shrink-0">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-slate-900 tracking-tight font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-mono truncate">
               ${resumen.total_caja_bancos_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-emerald-700 font-medium mt-1">
+            <p className="text-xs text-emerald-700 font-medium mt-1 truncate" title={`+ u$s ${resumen.total_caja_bancos_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })} en Santander`}>
               + u$s {resumen.total_caja_bancos_usd.toLocaleString('en-US', { maximumFractionDigits: 0 })} en Santander
             </p>
           </div>
         </div>
 
         {/* Card 2: Deudores por Ventas vs Proveedores */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cuentas x Cobrar</span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700 flex-shrink-0">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-slate-900 tracking-tight font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-mono truncate">
               ${resumen.nos_deben_clientes_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
             </p>
-            <p className="text-xs text-rose-600 font-medium mt-1">
+            <p className="text-xs text-rose-600 font-medium mt-1 truncate" title={`Debemos a proveedores: $${resumen.debemos_proveedores_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`}>
               Debemos a proveedores: ${resumen.debemos_proveedores_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
             </p>
           </div>
         </div>
 
         {/* Card 3: Cosecha Total Campaña */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cosecha Acumulada</span>
-            <div className="w-9 h-9 rounded-xl bg-[#EAEFE3] flex items-center justify-center text-[#3D4A2A]">
+            <div className="w-9 h-9 rounded-xl bg-[#EAEFE3] flex items-center justify-center text-[#3D4A2A] flex-shrink-0">
               <Sprout className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-slate-900 tracking-tight font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-mono truncate">
               {resumen.total_cosecha_kg.toLocaleString('es-AR', { maximumFractionDigits: 0 })} <span className="text-sm font-sans font-bold text-slate-500">kg</span>
             </p>
-            <p className="text-xs text-[#6B894B] font-medium mt-1">
+            <p className="text-xs text-[#6B894B] font-medium mt-1 truncate">
               {resumen.total_cuadros} cuadros en recolección
             </p>
           </div>
         </div>
 
         {/* Card 4: Superficie Neta Cultivada */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#8FA872] transition-all min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Superficie Activa</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 flex-shrink-0">
               <Layers className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-slate-900 tracking-tight font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-mono truncate">
               {resumen.total_hectareas} <span className="text-sm font-sans font-bold text-slate-500">ha</span>
             </p>
-            <p className="text-xs text-amber-700 font-medium mt-1">
+            <p className="text-xs text-amber-700 font-medium mt-1 truncate">
               100% bajo riego presurizado
             </p>
           </div>
@@ -181,45 +181,45 @@ export default function App({ apiUrl }) {
       </div>
 
       {/* FILA 2: Cards Métricas Secundarias (4 por fila) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0">
             <Users className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Personal en Campo Hoy</span>
-            <p className="text-lg font-bold text-slate-900">{resumen.presentes_hoy} de {resumen.personal_activo} registrados</p>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase block truncate">Personal en Campo Hoy</span>
+            <p className="text-base sm:text-lg font-bold text-slate-900 truncate">{resumen.presentes_hoy} de {resumen.personal_activo} registrados</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-oliva-50 text-[#3D4A2A] flex items-center justify-center">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-oliva-50 text-[#3D4A2A] flex items-center justify-center flex-shrink-0">
             <Package className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Stock Insumos Valorizado</span>
-            <p className="text-lg font-bold text-slate-900 font-mono">${resumen.valor_stock_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</p>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase block truncate">Stock Insumos Valorizado</span>
+            <p className="text-base sm:text-lg font-bold text-slate-900 font-mono truncate">${resumen.valor_stock_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0">
             <Truck className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Tractores y Máquinas</span>
-            <p className="text-lg font-bold text-slate-900">{resumen.maquinaria_operativa} Operativas ({resumen.maquinaria_taller} Taller)</p>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase block truncate">Tractores y Máquinas</span>
+            <p className="text-base sm:text-lg font-bold text-slate-900 truncate">{resumen.maquinaria_operativa} Operativas ({resumen.maquinaria_taller} Taller)</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center flex-shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase">Resultado Neto Estimado</span>
-            <p className="text-lg font-bold text-emerald-700 font-mono">${resumen.resultado_neto_estimado.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</p>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase block truncate">Resultado Neto Estimado</span>
+            <p className="text-base sm:text-lg font-bold text-emerald-700 font-mono truncate">${resumen.resultado_neto_estimado.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</p>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ export default function App({ apiUrl }) {
           
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataVariedades}>
+              <BarChart data={dataVariedades} margin={{ top: 10, right: 15, left: -10, bottom: 20 }}>
                 <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} />
                 <YAxis stroke="#888888" fontSize={11} tickLine={false} unit=" ha" />
                 <Tooltip 
@@ -260,7 +260,7 @@ export default function App({ apiUrl }) {
           <div className="h-64">
             {dataCosechas.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dataCosechas}>
+                <BarChart data={dataCosechas} margin={{ top: 10, right: 15, left: -10, bottom: 20 }}>
                   <XAxis dataKey="lote" stroke="#888888" fontSize={11} tickLine={false} />
                   <YAxis stroke="#888888" fontSize={11} tickLine={false} />
                   <Tooltip 

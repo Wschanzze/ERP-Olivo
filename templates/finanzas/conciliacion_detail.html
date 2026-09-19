@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Conciliación — {{ conciliacion.cuenta.nombre }} | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'finanzas:dashboard' %}?tab=conciliacion"
+        class="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition text-slate-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Conciliación Bancaria</h1>
+        <p class="text-sm text-slate-500">{{ conciliacion.cuenta.nombre }} — Corte: {{ conciliacion.fecha_extracto|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      {% if conciliacion.estado == 'BORRADOR' %}
+      <span class="px-3 py-1 text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 rounded-xl">En Proceso</span>
+      {% else %}
+      <span class="px-3 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-xl">✓ Cerrada</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Resumen de diferencias -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Saldo Extracto</p>
+      <p class="text-2xl font-extrabold font-mono text-slate-900 mt-1">${{ conciliacion.saldo_extracto|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Saldo Sistema</p>
+      <p class="text-2xl font-extrabold font-mono text-slate-900 mt-1">${{ conciliacion.saldo_sistema|floatformat:2 }}</p>
+    </div>
+    <div class="rounded-2xl p-5 shadow-2xs {% if conciliacion.diferencia == 0 %}bg-emerald-50 border border-emerald-200/60{% else %}bg-red-50 border border-red-200/60{% endif %}">
+      <p class="text-[10px] font-bold uppercase tracking-widest {% if conciliacion.diferencia == 0 %}text-emerald-600{% else %}text-red-500{% endif %}">Diferencia</p>
+      <p class="text-2xl font-extrabold font-mono mt-1 {% if conciliacion.diferencia == 0 %}text-emerald-700{% else %}text-red-600{% endif %}">
+        {% if conciliacion.diferencia >= 0 %}+{% endif %}${{ conciliacion.diferencia|floatformat:2 }}
+      </p>
+      {% if conciliacion.diferencia == 0 %}
+      <p class="text-[11px] text-emerald-600 mt-1 font-medium">✓ Sin diferencias</p>
+      {% else %}
+      <p class="text-[11px] text-red-500 mt-1">Revisar movimientos pendientes</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Tabla de movimientos para cotejar -->
+  <form method="post">
+    {% csrf_token %}
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Movimientos del Período</h3>
+        <p class="text-[11px] text-slate-400">Tildá los movimientos que aparecen en el extracto bancario</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+              <th class="py-3 px-4 text-center w-10">
+                <input type="checkbox" id="select-all" class="rounded border-slate-300 text-oliva-600 focus:ring-oliva-500"
+                  onclick="document.querySelectorAll('input[name=movimientos_conciliados]').forEach(c => c.checked = this.checked)"/>
+              </th>
+              <th class="py-3 px-4">Fecha</th>
+              <th class="py-3 px-4">Tipo</th>
+              <th class="py-3 px-4">Concepto</th>
+              <th class="py-3 px-4 text-right">Importe</th>
+              <th class="py-3 px-4 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-xs">
+            {% for mov in movimientos %}
+            <tr class="hover:bg-slate-50/50 transition-colors {% if mov.id in ids_conciliados %}bg-emerald-50/40{% endif %}">
+              <td class="py-3 px-4 text-center">
+                <input type="checkbox" name="movimientos_conciliados" value="{{ mov.id }}"
+                  {% if mov.id in ids_conciliados %}checked{% endif %}
+                  class="rounded border-slate-300 text-oliva-600 focus:ring-oliva-500"/>
+              </td>
+              <td class="py-3 px-4 font-mono text-slate-600">{{ mov.fecha|date:"d/m/Y" }}</td>
+              <td class="py-3 px-4">
+                {% if mov.tipo == 'INGRESO' %}
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Ingreso</span>
+                {% elif mov.tipo == 'EGRESO' %}
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-red-50 text-red-600 border border-red-200/60">Egreso</span>
+                {% else %}
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-600 border border-blue-200/60">Transf.</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 text-slate-700 max-w-xs truncate">{{ mov.concepto }}</td>
+              <td class="py-3 px-4 text-right font-mono font-semibold {% if mov.tipo == 'INGRESO' %}text-emerald-600{% elif mov.tipo == 'EGRESO' %}text-red-500{% else %}text-slate-600{% endif %}">
+                {% if mov.tipo == 'EGRESO' %}-{% endif %}${{ mov.importe|floatformat:2 }}
+              </td>
+              <td class="py-3 px-4 text-center">
+                {% if mov.id in ids_conciliados %}
+                <span class="text-emerald-500 font-bold text-[10px]">✓ Conciliado</span>
+                {% else %}
+                <span class="text-slate-300 text-[10px]">Pendiente</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="py-12 text-center text-slate-400">
+                No hay movimientos en el período para esta cuenta.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if conciliacion.estado == 'BORRADOR' %}
+      <div class="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+        <p class="text-[11px] text-slate-400">Guardá los cambios para actualizar los movimientos conciliados.</p>
+        <div class="flex items-center space-x-3">
+          <button type="submit" name="guardar"
+            class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+            Guardar cambios
+          </button>
+          <button type="submit" name="cerrar"
+            class="px-5 py-2 text-xs font-bold text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-sm transition"
+            onclick="return confirm('¿Cerrar esta conciliación? Ya no podrás modificarla.')">
+            Cerrar Conciliación
+          </button>
+        </div>
+      </div>
+      {% else %}
+      <div class="px-6 py-4 border-t border-slate-200/80 bg-emerald-50/50">
+        <p class="text-[11px] text-emerald-700 font-medium text-center">✓ Esta conciliación está cerrada y no puede modificarse.</p>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+
+</div>
+{% endblock %}

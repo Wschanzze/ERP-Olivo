@@ -213,6 +213,12 @@ class DashboardView(TemplateView):
             },
         ]
 
+        for acc in accesos:
+            if acc['categoria'] in ('finanzas', 'personal'):
+                acc['icono_carpeta'] = '/static/img/folder_2577349.png'
+            else:
+                acc['icono_carpeta'] = '/static/img/folder_2577158.png'
+
         context['accesos_directos'] = accesos
         context['accesos_directos_json'] = json.dumps(accesos)
         context['kpis_resumen'] = {

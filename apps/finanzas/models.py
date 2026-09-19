@@ -94,6 +94,7 @@ class MovimientoFinanciero(TimeStampedModel):
     concepto = models.CharField(max_length=200, verbose_name=_("Concepto / Detalle"))
     comprobante_tipo = models.CharField(max_length=50, blank=True, verbose_name=_("Tipo Comprobante (Factura, Recibo)"))
     comprobante_nro = models.CharField(max_length=50, blank=True, verbose_name=_("N° Comprobante"))
+    conciliado = models.BooleanField(default=False, verbose_name=_("Conciliado"))
     cuenta_corriente = models.ForeignKey(
         CuentaCorriente, 
         on_delete=models.SET_NULL, 
@@ -187,3 +188,48 @@ class Cheque(TimeStampedModel):
 
     def __str__(self):
         return f"Cheque {self.banco_emisor} #{self.numero} - ${self.importe:,.2f} ({self.get_estado_display()})"
+
+
+class ConciliacionBancaria(TimeStampedModel):
+    """Proceso de conciliación entre los movimientos del sistema y el extracto bancario."""
+    class EstadoConciliacion(models.TextChoices):
+        BORRADOR = 'BORRADOR', _('En Proceso')
+        CERRADA = 'CERRADA', _('Conciliación Cerrada')
+
+    cuenta = models.ForeignKey(
+        Cuenta,
+        on_delete=models.PROTECT,
+        related_name='conciliaciones',
+        verbose_name=_("Cuenta Bancaria")
+    )
+    fecha_extracto = models.DateField(verbose_name=_("Fecha de Corte del Extracto"))
+    saldo_extracto = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Saldo según Extracto"))
+    saldo_sistema = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Saldo según Sistema"))
+    diferencia = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name=_("Diferencia"))
+    estado = models.CharField(
+        max_length=15,
+        choices=EstadoConciliacion.choices,
+        default=EstadoConciliacion.BORRADOR,
+        verbose_name=_("Estado")
+    )
+    movimientos_conciliados = models.ManyToManyField(
+        MovimientoFinanciero,
+        blank=True,
+        related_name='conciliaciones_asociadas',
+        verbose_name=_("Movimientos Conciliados")
+    )
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name=_("Usuario")
+    )
+
+    class Meta:
+        verbose_name = _("Conciliación Bancaria")
+        verbose_name_plural = _("Conciliaciones Bancarias")
+        ordering = ['-fecha_extracto']
+
+    def __str__(self):
+        return f"Conciliación {self.cuenta.nombre} — {self.fecha_extracto} ({self.get_estado_display()})"

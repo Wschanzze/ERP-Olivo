@@ -23,4 +23,11 @@
   <td class="py-3.5 px-4 text-right font-mono font-bold text-xs whitespace-nowrap tabular-nums tracking-tight {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-slate-900{% else %}text-blue-800{% endif %}">
     {% if mov.tipo == 'EGRESO' %}-{% elif mov.tipo == 'INGRESO' %}+{% endif %}{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}
   </td>
+  <td class="py-3.5 px-4 text-center text-xs whitespace-nowrap">
+    {% if mov.conciliado %}
+      <span class="text-emerald-500 font-bold">✓</span>
+    {% else %}
+      <span class="text-slate-300">—</span>
+    {% endif %}
+  </td>
 </tr>

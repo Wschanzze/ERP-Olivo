@@ -1,0 +1,196 @@
+<!-- Flujo de Caja — Resumen ejecutivo + gráfico + tabla -->
+<div class="space-y-6">
+
+  <!-- KPI Cards superiores -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Saldo ARS -->
+    <div class="bg-gradient-to-br from-oliva-700 to-oliva-900 rounded-2xl p-5 text-white shadow">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-oliva-200">Liquidez ARS</p>
+      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">${{ total_ars|floatformat:2 }}</p>
+      <p class="text-[11px] text-oliva-300 mt-1">Saldo consolidado en pesos</p>
+    </div>
+
+    <!-- Saldo USD -->
+    <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-2xl p-5 text-white shadow">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Liquidez USD</p>
+      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">u$s{{ total_usd|floatformat:2 }}</p>
+      <p class="text-[11px] text-emerald-300 mt-1">Saldo consolidado en dólares</p>
+    </div>
+
+    <!-- Ingresos del mes -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingresos del mes</p>
+      <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2 tabular-nums">${{ ingresos_mes|floatformat:2 }}</p>
+      <div class="flex items-center mt-1 space-x-1">
+        <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+        </svg>
+        <span class="text-[11px] text-slate-400">Cobros y otros ingresos</span>
+      </div>
+    </div>
+
+    <!-- Egresos del mes -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Egresos del mes</p>
+      <p class="text-2xl font-extrabold font-mono text-red-500 mt-2 tabular-nums">${{ egresos_mes|floatformat:2 }}</p>
+      <div class="flex items-center mt-1 space-x-1">
+        <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
+        <span class="text-[11px] text-slate-400">Pagos y gastos del período</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico de barras + tabla últimos 6 meses -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+    <!-- Gráfico SVG inline -->
+    <div class="lg:col-span-3 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-2xs">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Flujo de Caja — Últimos 6 Meses</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ingresos vs egresos por mes</p>
+        </div>
+        <div class="flex items-center space-x-3 text-[10px] font-medium text-slate-500">
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-oliva-600 inline-block"></span><span>Ingresos</span></span>
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-400 inline-block"></span><span>Egresos</span></span>
+        </div>
+      </div>
+
+      <!-- Gráfico con Alpine.js + SVG dinámico -->
+      <div
+        x-data="flujoChart({{ grafico_data_json }})"
+        class="relative"
+      >
+        <svg viewBox="0 0 600 220" :viewBox="'0 0 ' + svgW + ' ' + svgH" class="w-full" style="height:200px;">
+          <!-- Líneas de referencia -->
+          <template x-for="(line, i) in gridLines" :key="i">
+            <line :x1="padL" :y1="line.y" :x2="svgW - padR" :y2="line.y" stroke="#e2e8f0" stroke-width="1"/>
+          </template>
+
+          <!-- Barras de ingresos (izquierda de cada grupo) -->
+          <template x-for="(d, i) in data" :key="'ing-' + i">
+            <rect
+              :x="barX(i, 0)"
+              :y="barY(d.ingresos)"
+              :width="barW"
+              :height="barH(d.ingresos)"
+              rx="3"
+              fill="#4d7c0f"
+              opacity="0.85"
+            />
+          </template>
+
+          <!-- Barras de egresos (derecha de cada grupo) -->
+          <template x-for="(d, i) in data" :key="'egr-' + i">
+            <rect
+              :x="barX(i, 1)"
+              :y="barY(d.egresos)"
+              :width="barW"
+              :height="barH(d.egresos)"
+              rx="3"
+              fill="#f87171"
+              opacity="0.85"
+            />
+          </template>
+
+          <!-- Etiquetas de mes -->
+          <template x-for="(d, i) in data" :key="'lbl-' + i">
+            <text
+              :x="groupCenterX(i)"
+              :y="svgH - padB + 14"
+              text-anchor="middle"
+              font-size="10"
+              fill="#94a3b8"
+              font-family="sans-serif"
+              x-text="d.mes"
+            />
+          </template>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Saldos por cuenta -->
+    <div class="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-2xs flex flex-col">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Posición por Cuenta</h3>
+      <div class="space-y-2 flex-1 overflow-y-auto">
+        {% for c in cuentas %}
+        <div class="flex items-center justify-between py-2 px-3 rounded-xl {% if c.saldo_actual >= 0 %}bg-slate-50{% else %}bg-red-50{% endif %} border border-slate-100">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold text-slate-800 truncate">{{ c.nombre }}</p>
+            <p class="text-[10px] text-slate-400">{{ c.get_tipo_display }}</p>
+          </div>
+          <div class="text-right ml-3 shrink-0">
+            <p class="text-sm font-extrabold font-mono {% if c.saldo_actual >= 0 %}text-slate-900{% else %}text-red-500{% endif %} tabular-nums">
+              {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
+            </p>
+            <span class="text-[10px] font-mono text-slate-400">{{ c.moneda }}</span>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-slate-400 text-center py-8">Sin cuentas configuradas.<br>Creá una desde "Nueva Cuenta".</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de movimientos recientes -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+    <div class="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50">
+      <div class="flex items-center space-x-2">
+        <div class="w-2 h-2 rounded-full bg-oliva-600"></div>
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Últimos Movimientos</h3>
+      </div>
+      <span class="text-[11px] text-slate-400 font-mono">{{ movimientos_recientes|length }} registros</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3 px-4">Fecha</th>
+            <th class="py-3 px-4">Tipo</th>
+            <th class="py-3 px-4">Cuenta</th>
+            <th class="py-3 px-4">Concepto</th>
+            <th class="py-3 px-4 text-right">Importe</th>
+            <th class="py-3 px-4 text-center">Conciliado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-xs">
+          {% for mov in movimientos_recientes %}
+          {% include 'finanzas/partials/movimiento_row.html' with mov=mov %}
+          {% empty %}
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-400">
+              <p>No hay movimientos registrados.</p>
+              <p class="text-xs mt-1">Usá "Nuevo Movimiento" para asentar un ingreso o egreso.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function flujoChart(data) {
+  const svgW = 600, svgH = 220;
+  const padL = 10, padR = 10, padT = 10, padB = 28;
+  const n = data.length;
+  const groupW = (svgW - padL - padR) / n;
+  const gap = 4, barW = (groupW - gap * 3) / 2;
+  const maxVal = Math.max(...data.map(d => Math.max(d.ingresos, d.egresos)), 1);
+  const chartH = svgH - padT - padB;
+
+  return {
+    data, svgW, svgH, padL, padR, padT, padB, barW,
+    gridLines: [0.25, 0.5, 0.75, 1].map(f => ({ y: padT + chartH * (1 - f) })),
+    barX(i, side) { return padL + i * groupW + gap + side * (barW + gap); },
+    barY(v) { return padT + chartH * (1 - v / maxVal); },
+    barH(v) { return chartH * (v / maxVal); },
+    groupCenterX(i) { return padL + i * groupW + groupW / 2; },
+  };
+}
+</script>
