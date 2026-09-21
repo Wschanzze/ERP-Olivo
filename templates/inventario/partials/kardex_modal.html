@@ -1,0 +1,100 @@
+{% load static %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div>
+      <div class="flex items-center gap-2">
+        <h3 class="text-base font-extrabold text-slate-900 tracking-tight">{{ insumo.nombre }}</h3>
+        <span class="font-mono text-xs font-bold text-[#3D4A2A] bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">
+          {{ insumo.codigo }}
+        </span>
+      </div>
+      <p class="text-[11px] text-slate-500">
+        {{ insumo.categoria.nombre }} • Stock Actual: <strong class="text-slate-800 font-mono">{{ insumo.stock_actual|floatformat:2 }} {{ insumo.get_unidad_medida_display }}</strong> • PPP: <strong class="text-slate-800 font-mono">${{ insumo.costo_unitario_ars|floatformat:2 }}</strong>
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a 
+        href="{% url 'inventario:insumo_kardex' insumo.pk %}" 
+        class="text-xs font-semibold text-[#3D4A2A] hover:underline px-2 py-1 rounded-lg hover:bg-[#EAEFE3] transition-colors"
+        title="Abrir en pantalla completa para imprimir o filtrar fechas"
+      >
+        Pantalla Completa ↗
+      </a>
+      <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen rápido -->
+  <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200/70 text-center">
+    <div>
+      <span class="block text-[10px] text-slate-400 uppercase font-bold">Total Ingresado</span>
+      <span class="text-sm font-bold font-mono text-emerald-700">+{{ kardex.total_entradas_cant|floatformat:2 }}</span>
+    </div>
+    <div>
+      <span class="block text-[10px] text-slate-400 uppercase font-bold">Total Salidas</span>
+      <span class="text-sm font-bold font-mono text-rose-700">-{{ kardex.total_salidas_cant|floatformat:2 }}</span>
+    </div>
+    <div>
+      <span class="block text-[10px] text-slate-400 uppercase font-bold">Valor Inventario</span>
+      <span class="text-sm font-bold font-mono text-slate-900">${{ kardex.saldo_final_valorizado|floatformat:2 }}</span>
+    </div>
+  </div>
+
+  <!-- Tabla de últimos movimientos -->
+  <div class="border border-slate-200 rounded-xl overflow-hidden max-h-[55vh] overflow-y-auto">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead class="sticky top-0 bg-slate-100/90 backdrop-blur-xs z-10">
+        <tr class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+          <th class="py-2.5 px-3">Fecha</th>
+          <th class="py-2.5 px-2">Tipo</th>
+          <th class="py-2.5 px-2">Ref / Motivo</th>
+          <th class="py-2.5 px-2 text-right">Cant.</th>
+          <th class="py-2.5 px-3 text-right font-bold">Saldo</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for m in kardex.movimientos %}
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-2 px-3 font-mono text-slate-500 text-[11px] whitespace-nowrap">{{ m.fecha|date:"d/m/y H:i" }}</td>
+          <td class="py-2 px-2 whitespace-nowrap">
+            <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md {% if m.cant_entrada %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif m.cant_salida %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-sky-50 text-sky-700 border border-sky-200{% endif %}">
+              {{ m.tipo_display|truncatechars:20 }}
+            </span>
+          </td>
+          <td class="py-2 px-2">
+            <div class="font-mono text-[11px] font-semibold text-slate-800">{{ m.referencia }}</div>
+            <div class="text-[10px] text-slate-400 truncate max-w-[150px]">{{ m.motivo }}</div>
+          </td>
+          <td class="py-2 px-2 text-right font-mono font-semibold whitespace-nowrap">
+            {% if m.cant_entrada %}
+              <span class="text-emerald-700">+{{ m.cant_entrada|floatformat:2 }}</span>
+            {% elif m.cant_salida %}
+              <span class="text-rose-700">-{{ m.cant_salida|floatformat:2 }}</span>
+            {% else %}
+              <span class="text-sky-700">0.00</span>
+            {% endif %}
+          </td>
+          <td class="py-2 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+            {{ m.saldo_cantidad|floatformat:2 }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="py-8 text-center text-slate-400 text-xs">Sin movimientos registrados aún.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+    <a href="{% url 'inventario:insumo_kardex' insumo.pk %}" class="text-xs font-semibold text-[#3D4A2A] hover:underline">
+      Ver reporte completo e imprimir →
+    </a>
+    <button type="button" @click="modalOpen = false" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+      Cerrar
+    </button>
+  </div>
+</div>

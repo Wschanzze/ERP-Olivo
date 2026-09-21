@@ -1,0 +1,84 @@
+{% load static %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
+        ±
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Ajuste de Stock o Merma</h3>
+        <p class="text-[11px] text-slate-500">Recuentos físicos, diferencias de inventario, roturas o vencimientos.</p>
+      </div>
+    </div>
+    <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl space-y-1">
+      {% for err in form.non_field_errors %}
+        <p class="font-medium flex items-center gap-1">
+          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          {{ err }}
+        </p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form hx-post="{% url 'inventario:ajuste_create' %}" hx-target="#modal-body" hx-swap="innerHTML" class="space-y-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Insumo a Ajustar *</label>
+        {{ form.insumo }}
+        {% if form.insumo.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.insumo.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Depósito Físico *</label>
+        {{ form.deposito }}
+        {% if form.deposito.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.deposito.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de Operación / Ajuste *</label>
+      {{ form.tipo_ajuste }}
+      {% if form.tipo_ajuste.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.tipo_ajuste.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Cantidad a Ajustar *</label>
+        {{ form.cantidad }}
+        {% if form.cantidad.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.cantidad.errors.0 }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Costo Unit. ARS (Opcional en +)</label>
+        {{ form.costo_unitario }}
+        {% if form.costo_unitario.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.costo_unitario.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 mb-1">Motivo / Justificación Obligatoria *</label>
+      {{ form.motivo }}
+      {% if form.motivo.errors %}<p class="text-[11px] text-rose-600 mt-0.5">{{ form.motivo.errors.0 }}</p>{% endif %}
+    </div>
+
+    <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 flex items-start gap-2">
+      <svg class="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>Este ajuste impactará en el stock local del depósito y en el stock global de la empresa, quedando registrado con el usuario conectado para auditoría de inventario.</span>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+      <button type="button" @click="modalOpen = false" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+        Cancelar
+      </button>
+      <button type="submit" class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors shadow-xs">
+        <span>Asentar Ajuste</span>
+      </button>
+    </div>
+  </form>
+</div>

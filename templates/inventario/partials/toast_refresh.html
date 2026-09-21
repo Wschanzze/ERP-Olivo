@@ -1,0 +1,7 @@
+<div class="p-6 text-center space-y-4" x-data x-init="setTimeout(() => { modalOpen = false; window.location.reload(); }, 800)">
+  <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+  </div>
+  <h3 class="text-sm font-bold text-slate-900">{{ mensaje|default:"Operación completada exitosamente." }}</h3>
+  <p class="text-xs text-slate-500">Actualizando inventario...</p>
+</div>

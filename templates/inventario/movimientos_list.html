@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Movimientos de Inventario | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Movimientos de Stock</h1>
+        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+          Auditoría &amp; Trazabilidad
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">Historial unificado de recepciones, consumos de partes diarios, traslados y ajustes.</p>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex items-center gap-2 self-start sm:self-auto">
+      <button
+        type="button"
+        hx-get="{% url 'inventario:transferencia_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs cursor-pointer"
+      >
+        <span class="text-[#3D4A2A]">⇄</span>
+        <span>Nueva Transferencia</span>
+      </button>
+
+      <button
+        type="button"
+        hx-get="{% url 'inventario:ajuste_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors shadow-xs cursor-pointer"
+      >
+        <span>± Ajuste / Merma</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros y Búsqueda -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <!-- Buscador general -->
+      <div class="lg:col-span-2">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Buscar por Insumo o Referencia</label>
+        <div class="relative">
+          <input 
+            type="text" 
+            name="q" 
+            value="{{ filtro_q }}" 
+            placeholder="Nombre, código, comprobante..." 
+            class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 pl-8 pr-3"
+          >
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+
+      <!-- Tipo de Movimiento -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tipo de Operación</label>
+        <select name="tipo" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todos los Tipos</option>
+          {% for val, lab in tipos_movimiento %}
+            <option value="{{ val }}" {% if filtro_tipo == val %}selected{% endif %}>{{ lab }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Insumo -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Insumo</label>
+        <select name="insumo" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todos los Insumos</option>
+          {% for ins in insumos %}
+            <option value="{{ ins.id }}" {% if filtro_insumo == ins.id|stringformat:"i" %}selected{% endif %}>{{ ins.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Depósito -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Depósito</label>
+        <select name="deposito" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todos los Depósitos</option>
+          {% for dep in depositos %}
+            <option value="{{ dep.id }}" {% if filtro_deposito == dep.id|stringformat:"i" %}selected{% endif %}>{{ dep.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    {% if filtro_q or filtro_tipo or filtro_insumo or filtro_deposito %}
+      <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-medium">Filtros aplicados activos</span>
+        <a href="{% url 'inventario:movimientos_list' %}" class="text-rose-600 hover:text-rose-700 font-semibold hover:underline">
+          Borrar todos los filtros
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Tabla de Movimientos -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs min-w-[950px]">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3 px-4">Fecha &amp; Hora</th>
+            <th class="py-3 px-4">Insumo</th>
+            <th class="py-3 px-4">Operación</th>
+            <th class="py-3 px-4">Ubicación / Depósito</th>
+            <th class="py-3 px-4 text-right">Cantidad</th>
+            <th class="py-3 px-4 text-right">Costo Unit.</th>
+            <th class="py-3 px-4 text-right">Total Imputado</th>
+            <th class="py-3 px-4">Documento / Motivo</th>
+            <th class="py-3 px-4">Usuario</th>
+            <th class="py-3 px-4 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for mov in movimientos %}
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <!-- Fecha -->
+            <td class="py-3 px-4 font-mono text-slate-600 whitespace-nowrap">
+              {{ mov.fecha|date:"d/m/Y H:i" }}
+            </td>
+
+            <!-- Insumo -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <div class="font-bold text-slate-900">{{ mov.insumo.nombre }}</div>
+              <div class="text-[10px] text-slate-400 font-mono">{{ mov.insumo.codigo }} • {{ mov.insumo.categoria.nombre }}</div>
+            </td>
+
+            <!-- Tipo de Movimiento -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              {% if mov.tipo == 'ENTRADA_COMPRA' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Entrada Compra
+                </span>
+              {% elif mov.tipo == 'SALIDA_PARTE_DIARIO' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                  Consumo Campo
+                </span>
+              {% elif mov.tipo == 'TRANSFERENCIA' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                  Transferencia
+                </span>
+              {% elif mov.tipo == 'AJUSTE_POSITIVO' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                  Ajuste (+)
+                </span>
+              {% elif mov.tipo == 'AJUSTE_NEGATIVO' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                  Ajuste (-)
+                </span>
+              {% elif mov.tipo == 'SALIDA_MERMA' %}
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                  Merma / Vencimiento
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Depósito -->
+            <td class="py-3 px-4 whitespace-nowrap text-slate-600">
+              {% if mov.tipo == 'TRANSFERENCIA' %}
+                <div class="flex items-center gap-1 text-[11px]">
+                  <span class="font-medium text-slate-700">{{ mov.deposito.nombre }}</span>
+                  <span class="text-slate-400">→</span>
+                  <span class="font-medium text-sky-800">{{ mov.deposito_destino.nombre|default:"Destino" }}</span>
+                </div>
+              {% else %}
+                <span class="font-medium text-slate-800 text-[11px]">{{ mov.deposito.nombre }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Cantidad -->
+            <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap tabular-nums {% if mov.tipo in 'ENTRADA_COMPRA AJUSTE_POSITIVO' %}text-emerald-700{% elif mov.tipo in 'SALIDA_PARTE_DIARIO SALIDA_MERMA AJUSTE_NEGATIVO' %}text-rose-700{% else %}text-sky-700{% endif %}">
+              {% if mov.tipo in 'ENTRADA_COMPRA AJUSTE_POSITIVO' %}+{% elif mov.tipo in 'SALIDA_PARTE_DIARIO SALIDA_MERMA AJUSTE_NEGATIVO' %}-{% endif %}{{ mov.cantidad|floatformat:2 }}
+              <span class="text-[10px] text-slate-400 font-normal">{{ mov.insumo.unidad_medida }}</span>
+            </td>
+
+            <!-- Costo Unit. -->
+            <td class="py-3 px-4 text-right font-mono text-slate-500 whitespace-nowrap tabular-nums">
+              ${{ mov.costo_unitario|floatformat:2 }}
+            </td>
+
+            <!-- Total -->
+            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">
+              ${{ mov.costo_total_movimiento|floatformat:2 }}
+            </td>
+
+            <!-- Comprobante / Motivo -->
+            <td class="py-3 px-4">
+              {% if mov.referencia_origen %}
+                <span class="font-mono text-[11px] font-semibold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/80">{{ mov.referencia_origen }}</span>
+              {% endif %}
+              <div class="text-[11px] text-slate-500 truncate max-w-[200px] mt-0.5" title="{{ mov.motivo }}">{{ mov.motivo }}</div>
+            </td>
+
+            <!-- Usuario -->
+            <td class="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+              {{ mov.usuario.username|default:"Sistema" }}
+            </td>
+
+            <!-- Acciones -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <a 
+                href="{% url 'inventario:insumo_kardex' mov.insumo.pk %}" 
+                class="text-[11px] font-semibold text-[#3D4A2A] hover:text-[#252E19] hover:underline px-2 py-1 rounded-lg hover:bg-[#EAEFE3] transition-colors"
+                title="Ver Kardex de este insumo"
+              >
+                Ver Kardex →
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="py-12 text-center text-slate-400">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <p class="font-medium text-xs text-slate-500">No se registraron movimientos de inventario con los criterios seleccionados.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      <div>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} ({{ paginator.count }} movimientos)</div>
+      <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_insumo %}&insumo={{ filtro_insumo }}{% endif %}{% if filtro_deposito %}&deposito={{ filtro_deposito }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}" class="px-3 py-1.5 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium">Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_insumo %}&insumo={{ filtro_insumo }}{% endif %}{% if filtro_deposito %}&deposito={{ filtro_deposito }}{% endif %}{% if filtro_q %}&q={{ filtro_q }}{% endif %}" class="px-3 py-1.5 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium">Siguiente</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

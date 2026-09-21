@@ -1,54 +1,268 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Inventario y Depósitos | ERP Olivícola{% endblock %}
+{% block title %}Control de Inventario y Depósitos | ERP Olivícola{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
   
+  <!-- Header Principal -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Depósitos, Insumos y Maquinarias</h1>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Depósitos e Insumos Agrícolas</h1>
         <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
-          Gestión de Stock PPP
+          Control de Existencias PPP
         </span>
       </div>
-      <p class="text-sm text-slate-500 mt-1">Control de stock de fitosanitarios, fertilizantes, combustibles y parque mecánico.</p>
+      <p class="text-sm text-slate-500 mt-1">Gestión multidepósito de fitosanitarios, fertilizantes, combustibles y trazabilidad con Kardex.</p>
+    </div>
+
+    <!-- Botones de Acción Operativa -->
+    <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+      <a 
+        href="{% url 'inventario:analisis_stock' %}"
+        class="inline-flex items-center gap-1.5 bg-[#EAEFE3] border border-[#D5DFC9] text-[#3D4A2A] text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-[#D5DFC9] transition-colors shadow-2xs"
+        title="Dashboard de Clasificación ABC Pareto y Cobertura"
+      >
+        <span>📊</span>
+        <span>Análisis ABC &amp; Cobertura</span>
+      </a>
+      <a 
+        href="{% url 'inventario:movimientos_list' %}"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs"
+        title="Ver auditoría de movimientos"
+      >
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span>Movimientos</span>
+      </a>
+
+      <button 
+        type="button"
+        hx-get="{% url 'inventario:transferencia_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs cursor-pointer"
+      >
+        <span class="text-[#3D4A2A]">⇄</span>
+        <span>Transferir</span>
+      </button>
+
+      <button 
+        type="button"
+        hx-get="{% url 'inventario:ajuste_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs cursor-pointer"
+      >
+        <span class="text-amber-700">±</span>
+        <span>Ajuste / Merma</span>
+      </button>
+
+      <button 
+        type="button"
+        hx-get="{% url 'inventario:insumo_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors shadow-xs cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Nuevo Insumo</span>
+      </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+  <!-- Tarjetas KPI de Inventario -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Valorización Total -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Valor Total del Stock</span>
+        <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-mono text-xs font-bold">$ ARS</span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 tabular-nums">
+          ${{ total_valorizado_ars|floatformat:2 }}
+        </span>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">Valuación a Precio Promedio Ponderado</p>
+    </div>
+
+    <!-- Total Insumos en Catálogo -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Insumos Registrados</span>
+        <span class="p-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold">{{ total_insumos_count }}</span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 tabular-nums">
+          {{ insumos|length }}
+        </span>
+        <span class="text-xs text-slate-400 font-medium">mostrados en lista</span>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">Activos en ciclo productivo</p>
+    </div>
+
+    <!-- Insumos en Stock Crítico -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stock Crítico / Alerta</span>
+        <span class="w-2.5 h-2.5 rounded-full {% if total_criticos_count > 0 %}bg-rose-500 animate-pulse{% else %}bg-emerald-500{% endif %}"></span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl sm:text-3xl font-extrabold font-mono {% if total_criticos_count > 0 %}text-rose-600{% else %}text-emerald-700{% endif %} tabular-nums">
+          {{ total_criticos_count }}
+        </span>
+        <span class="text-xs text-slate-500">por debajo del mínimo</span>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">Requieren reposición / OC</p>
+    </div>
+
+    <!-- Depósitos Habilitados -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Depósitos Físicos</span>
+        <span class="text-xs font-bold text-[#3D4A2A] bg-[#EAEFE3] px-2 py-0.5 rounded-md">{{ depositos.count }}</span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 tabular-nums">
+          {{ depositos.count }}
+        </span>
+        <span class="text-xs text-slate-400 font-medium">ubicaciones</span>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">Fincas y naves centrales</p>
+    </div>
+  </div>
+
+  <!-- Barra de Búsqueda y Filtros Interactivos -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Búsqueda rápida -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Buscar Insumo</label>
+        <div class="relative">
+          <input 
+            type="text" 
+            name="q" 
+            value="{{ filtro_q }}" 
+            placeholder="Código, nombre o principio activo..." 
+            class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 pl-8 pr-3"
+          >
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+
+      <!-- Filtro por Categoría -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Categoría</label>
+        <select name="categoria" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todas las Categorías</option>
+          {% for cat in categorias %}
+            <option value="{{ cat.id }}" {% if filtro_categoria == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtro por Depósito -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Depósito Físico</label>
+        <select name="deposito" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todos los Depósitos</option>
+          {% for dep in depositos %}
+            <option value="{{ dep.id }}" {% if filtro_deposito == dep.id|stringformat:"i" %}selected{% endif %}>{{ dep.nombre }} ({{ dep.finca.nombre }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtro por Estado de Stock -->
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Estado de Stock</label>
+        <select name="estado" onchange="this.form.submit()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:border-[#3D4A2A] focus:ring-[#3D4A2A] py-2 px-3">
+          <option value="">Todos los Niveles</option>
+          <option value="critico" {% if filtro_estado == 'critico' %}selected{% endif %}>Solo Críticos / Alerta</option>
+          <option value="normal" {% if filtro_estado == 'normal' %}selected{% endif %}>Stock Normal</option>
+        </select>
+      </div>
+    </form>
+
+    {% if filtro_q or filtro_categoria or filtro_deposito or filtro_estado %}
+      <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <span class="text-slate-500">Mostrando resultados filtrados</span>
+        <a href="{% url 'inventario:insumos_list' %}" class="text-rose-600 hover:text-rose-700 font-semibold hover:underline">
+          Restablecer Filtros
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Tabla de Insumos con Desglose Multidepósito y Acciones -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs" x-data="{ expandedRow: null }">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+      <table class="w-full text-left border-collapse text-sm min-w-[850px]">
         <thead>
           <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-            <th class="py-3.5 px-4">Código</th>
+            <th class="py-3.5 px-4 w-12 text-center"></th>
+            <th class="py-3.5 px-3">Código</th>
             <th class="py-3.5 px-4">Insumo / Producto</th>
             <th class="py-3.5 px-4">Categoría</th>
             <th class="py-3.5 px-4">Unidad</th>
             <th class="py-3.5 px-4 text-right">Stock Actual</th>
             <th class="py-3.5 px-4 text-center">Estado</th>
             <th class="py-3.5 px-4 text-right">Costo PPP (ARS)</th>
-            <th class="py-3.5 px-4 text-right">Valorizado</th>
+            <th class="py-3.5 px-4 text-right">Valor Total</th>
+            <th class="py-3.5 px-4 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
           {% for ins in insumos %}
-          <tr class="hover:bg-slate-50/70 transition-colors">
-            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
+          <tr class="hover:bg-slate-50/70 transition-colors group">
+            <!-- Botón desplegable para existencias por depósito -->
+            <td class="py-3 px-2 text-center">
+              <button 
+                type="button" 
+                @click="expandedRow = (expandedRow === {{ ins.pk }} ? null : {{ ins.pk }})"
+                class="p-1 rounded-lg hover:bg-slate-200/70 text-slate-400 hover:text-slate-700 transition-colors"
+                title="Ver stock desglosado por galpón"
+              >
+                <svg 
+                  class="w-4 h-4 transform transition-transform" 
+                  :class="expandedRow === {{ ins.pk }} ? 'rotate-90 text-[#3D4A2A]' : 'rotate-0'"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </td>
+
+            <!-- Código -->
+            <td class="py-3 px-3 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
               <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ ins.codigo }}</span>
             </td>
-            <td class="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">{{ ins.nombre }}</td>
+
+            <!-- Nombre y principio activo -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <div class="font-semibold text-slate-900">{{ ins.nombre }}</div>
+              {% if ins.principio_activo %}
+                <div class="text-[11px] text-slate-400 font-mono">{{ ins.principio_activo }}</div>
+              {% endif %}
+            </td>
+
+            <!-- Categoría -->
             <td class="py-3 px-4 text-xs whitespace-nowrap">
               <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium text-[11px]">
                 {{ ins.categoria.nombre }}
               </span>
             </td>
+
+            <!-- Unidad -->
             <td class="py-3 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{{ ins.get_unidad_medida_display }}</td>
+
+            <!-- Stock Actual -->
             <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap tabular-nums {% if ins.stock_bajo %}text-rose-600{% else %}text-slate-800{% endif %}">
               {{ ins.stock_actual|floatformat:2 }}
             </td>
+
+            <!-- Estado -->
             <td class="py-3 px-4 text-center whitespace-nowrap">
               {% if ins.stock_bajo %}
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/70 shadow-2xs">
@@ -62,15 +276,99 @@
                 </span>
               {% endif %}
             </td>
-            <td class="py-3 px-4 text-right font-mono text-slate-500 whitespace-nowrap tabular-nums">${{ ins.costo_unitario_ars|floatformat:2 }}</td>
-            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">${{ ins.valor_total_stock_ars|floatformat:2 }}</td>
+
+            <!-- Costo PPP -->
+            <td class="py-3 px-4 text-right font-mono text-slate-500 whitespace-nowrap tabular-nums">
+              ${{ ins.costo_unitario_ars|floatformat:2 }}
+            </td>
+
+            <!-- Valor Total -->
+            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">
+              ${{ ins.valor_total_stock_ars|floatformat:2 }}
+            </td>
+
+            <!-- Acciones -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1.5">
+                <!-- Botón Kardex -->
+                <button
+                  type="button"
+                  hx-get="{% url 'inventario:insumo_kardex' ins.pk %}?modal=1"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="inline-flex items-center gap-1 text-xs font-bold text-[#3D4A2A] bg-[#EAEFE3] hover:bg-[#D5DFC9] border border-[#D5DFC9] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  title="Consultar Kardex y trazabilidad"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <span>Kardex</span>
+                </button>
+
+                <!-- Trasladar rápido -->
+                <button
+                  type="button"
+                  hx-get="{% url 'inventario:transferencia_create' %}?insumo={{ ins.pk }}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                  title="Transferir este insumo entre depósitos"
+                >
+                  <span class="text-xs font-bold">⇄</span>
+                </button>
+
+                <!-- Ajustar rápido -->
+                <button
+                  type="button"
+                  hx-get="{% url 'inventario:ajuste_create' %}?insumo={{ ins.pk }}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-amber-700 transition-colors"
+                  title="Ajuste o merma de este insumo"
+                >
+                  <span class="text-xs font-bold">±</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Subfila Expandible: Existencias por Depósito Físico -->
+          <tr x-show="expandedRow === {{ ins.pk }}" x-cloak class="bg-slate-50/90 border-t border-b border-slate-200">
+            <td colspan="10" class="p-4 pl-12">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    Existencias por Depósito Físico
+                  </h4>
+                  <span class="text-[11px] text-slate-400 font-mono">Punto de reposición mínimo: {{ ins.stock_minimo|floatformat:2 }} {{ ins.unidad_medida }}</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-1">
+                  {% for ep in ins.existencias_por_deposito.all %}
+                    <div class="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                      <div>
+                        <div class="text-xs font-bold text-slate-800">{{ ep.deposito.nombre }}</div>
+                        <div class="text-[10px] text-slate-400">{{ ep.deposito.finca.nombre }}</div>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-xs font-mono font-extrabold text-[#3D4A2A]">{{ ep.cantidad|floatformat:2 }}</span>
+                        <span class="text-[10px] text-slate-400 block">{{ ins.unidad_medida }}</span>
+                      </div>
+                    </div>
+                  {% empty %}
+                    <div class="col-span-full py-2 text-xs text-slate-400 italic">
+                      No hay registros de depósitos físicos cargados para este insumo.
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="8" class="py-12 text-center text-slate-400 text-sm">
+            <td colspan="10" class="py-12 text-center text-slate-400 text-sm">
               <div class="flex flex-col items-center justify-center space-y-2">
-                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin insumos" class="w-10 h-10 opacity-30 grayscale" />
-                <p class="font-medium text-slate-500 text-xs">No hay insumos cargados en el inventario.</p>
+                <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                <p class="font-medium text-slate-500 text-xs">No se encontraron insumos cargados con los filtros seleccionados.</p>
               </div>
             </td>
           </tr>
