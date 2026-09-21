@@ -1,0 +1,147 @@
+<div class="p-6 bg-white rounded-3xl" x-data="{
+  entidadId: '',
+  tipoEntidad: 'PROVEEDOR'
+}">
+  <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">
+        📑
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Cargar Comprobante / Factura a Cuenta Corriente</h3>
+        <p class="text-xs text-slate-500">Registra compras a crédito de proveedores o ventas facturadas a clientes.</p>
+      </div>
+    </div>
+    <button @click="modalComprobanteCC = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    </button>
+  </div>
+
+  <form method="post" action="{% url 'finanzas:cuenta_corriente_comprobante' %}" class="mt-5 space-y-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Operación</label>
+        <select 
+          name="tipo_operacion" 
+          x-model="tipoEntidad"
+          class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5"
+        >
+          <option value="PROVEEDOR">Factura de Compra (Proveedor - Aumenta Deuda)</option>
+          <option value="CLIENTE">Factura de Venta (Cliente - Aumenta Saldo a Cobrar)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1" x-text="tipoEntidad === 'PROVEEDOR' ? 'Proveedor' : 'Cliente'"></label>
+        <!-- Selección de Proveedores -->
+        <template x-if="tipoEntidad === 'PROVEEDOR'">
+          <select 
+            name="entidad_id" 
+            required 
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5"
+          >
+            <option value="">-- Seleccione Proveedor --</option>
+            {% for p in proveedores %}
+              <option value="{{ p.id }}">{{ p.razon_social }}</option>
+            {% endfor %}
+          </select>
+        </template>
+        <!-- Selección de Clientes -->
+        <template x-if="tipoEntidad === 'CLIENTE'">
+          <select 
+            name="entidad_id" 
+            required 
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5"
+          >
+            <option value="">-- Seleccione Cliente --</option>
+            {% for c in clientes %}
+              <option value="{{ c.id }}">{{ c.razon_social }}</option>
+            {% endfor %}
+          </select>
+        </template>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Tipo Comprobante</label>
+        <select name="tipo_comprobante" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2">
+          <option value="FACTURA_A">Factura A</option>
+          <option value="FACTURA_B">Factura B</option>
+          <option value="FACTURA_E">Factura E (Exportación)</option>
+          <option value="NOTA_DEBITO">Nota de Débito</option>
+          <option value="REMITO">Remito Valorizado</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">N° Comprobante</label>
+        <input 
+          type="text" 
+          name="comprobante_nro" 
+          placeholder="0001-00012345" 
+          required 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Fecha Emisión</label>
+        <input 
+          type="date" 
+          name="fecha" 
+          value="{% now 'Y-m-d' %}" 
+          required 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Importe Total ($ ARS)</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-mono font-bold text-slate-400">$</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            min="0.01"
+            name="importe" 
+            required 
+            placeholder="0.00" 
+            class="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Concepto / Descripción</label>
+        <input 
+          type="text" 
+          name="concepto" 
+          placeholder="Ej. Insumos cosecha bines / Fertilizante foliar" 
+          required 
+          class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+      <button 
+        type="button" 
+        @click="modalComprobanteCC = false" 
+        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+      >
+        Cargar a Cuenta Corriente
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,96 +1,205 @@
-<!-- Cards de Cuentas Financieras -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-  {% for c in cuentas %}
-  <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:shadow-md hover:border-oliva-500/40 transition-all duration-200 group flex flex-col">
-    <div class="flex items-start justify-between">
-      <div class="flex flex-col space-y-1.5">
-        <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase w-fit {% if c.moneda == 'USD' %}bg-emerald-50 text-emerald-700 border border-emerald-200/60{% else %}bg-oliva-50 text-oliva-800 border border-oliva-200/60{% endif %}">
-          {{ c.get_tipo_display }}
-        </span>
-        <span class="text-xs font-mono font-bold text-slate-400">{{ c.moneda }}</span>
-      </div>
-      <a href="{% url 'finanzas:cuenta_edit' c.pk %}"
-        class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center space-x-1 px-2.5 py-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-        </svg>
-        <span>Editar</span>
-      </a>
-    </div>
+<!-- Módulo de Caja & Bancos Interactivo -->
+<div class="space-y-6" x-data="{
+  filtroCuentaId: 'todas',
+  modalArqueo: false,
+  seleccionarCuenta(id) {
+    if (this.filtroCuentaId === String(id)) {
+      this.filtroCuentaId = 'todas';
+    } else {
+      this.filtroCuentaId = String(id);
+    }
+  }
+}">
 
-    <div class="mt-4 flex-1">
-      <h3 class="text-xs font-semibold text-slate-500 tracking-wide">{{ c.nombre }}</h3>
-      <p class="text-2xl font-extrabold text-slate-900 mt-1 font-mono tracking-tight tabular-nums">
-        {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
-      </p>
-      {% if c.banco_nombre %}
-        <p class="text-[11px] text-slate-400 mt-1">{{ c.banco_nombre }}</p>
-      {% endif %}
-      {% if c.cbu_cvu %}
-        <p class="text-[11px] font-mono text-slate-400 mt-2 truncate bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-          <span class="text-slate-400 font-sans font-medium">CBU/Alias:</span> {{ c.cbu_cvu }}
-        </p>
-      {% endif %}
-    </div>
-
-    {% if not c.activa %}
-    <div class="mt-3 pt-3 border-t border-slate-100">
-      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">⚠ Inactiva</span>
-    </div>
-    {% endif %}
-  </div>
-  {% empty %}
-  <div class="col-span-3 flex flex-col items-center justify-center py-16 text-slate-400">
-    <svg class="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-    </svg>
-    <p class="text-sm">No hay cuentas configuradas.</p>
-    <p class="text-xs mt-1">Usá el botón "Nueva Cuenta" para agregar una.</p>
-  </div>
-  {% endfor %}
-</div>
-
-
-<!-- Tabla de Movimientos Financieros con Estilo Clean Data-Grid -->
-<div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-  <div class="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50">
+  <!-- Barra de Herramientas Operativas de Caja -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
     <div class="flex items-center space-x-2">
-      <div class="w-2 h-2 rounded-full bg-oliva-600"></div>
-      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Asientos Recientes de Tesorería</h3>
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Cajas Físicas &amp; Cuentas Bancarias</h3>
+      <span class="text-slate-300">•</span>
+      <span class="text-xs text-slate-500">Haz clic en una cuenta para ver su extracto</span>
     </div>
-    <span class="text-[11px] text-slate-400 font-mono">Sincronización en vivo</span>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <button 
+        @click="modalArqueo = true" 
+        type="button" 
+        class="inline-flex items-center px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer"
+      >
+        <span class="mr-1.5">⚖️</span>
+        <span>Arqueo de Caja</span>
+      </button>
+
+      <button 
+        @click="modalTransferencia = true" 
+        type="button" 
+        class="inline-flex items-center px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer"
+      >
+        <span class="mr-1.5">🔄</span>
+        <span>Transferir Fondos</span>
+      </button>
+
+      <button 
+        @click="modalMovimiento = true" 
+        type="button" 
+        class="inline-flex items-center px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+      >
+        <span class="mr-1.5">➕</span>
+        <span>Nuevo Movimiento</span>
+      </button>
+    </div>
   </div>
-  
-  <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse text-sm min-w-[700px]">
-      <thead>
-        <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-          <th class="py-3 px-4">Fecha</th>
-          <th class="py-3 px-4">Tipo</th>
-          <th class="py-3 px-4">Cuenta</th>
-          <th class="py-3 px-4">Concepto / Referencia</th>
-          <th class="py-3 px-4">Comprobante</th>
-          <th class="py-3 px-4 text-right">Importe</th>
-          <th class="py-3 px-4 text-center">Imprimir</th>
-        </tr>
-      </thead>
-      <tbody id="movimientos-table-body" class="divide-y divide-slate-100 text-xs">
-        {% for mov in movimientos_recientes %}
-          {% include 'finanzas/partials/movimiento_row.html' with mov=mov %}
-        {% empty %}
-          <tr>
-            <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p>No hay movimientos financieros asentados.</p>
-                <p class="text-xs text-slate-400 font-normal">Utiliza el botón "Nuevo Movimiento" para asentar un ingreso o egreso.</p>
-              </div>
-            </td>
+
+  <!-- Cards de Cuentas Financieras con selección reactiva -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for c in cuentas %}
+    <div 
+      @click="seleccionarCuenta('{{ c.id }}')"
+      :class="filtroCuentaId === '{{ c.id }}' ? 'ring-2 ring-oliva-600 border-oliva-500 bg-oliva-50/20 shadow-md' : 'bg-white border-slate-200/80 hover:border-oliva-400 hover:shadow-sm'"
+      class="border rounded-2xl p-5 transition-all duration-200 group flex flex-col cursor-pointer relative"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex flex-col space-y-1.5">
+          <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase w-fit {% if c.moneda == 'USD' %}bg-emerald-50 text-emerald-700 border border-emerald-200/60{% else %}bg-oliva-50 text-oliva-800 border border-oliva-200/60{% endif %}">
+            {{ c.get_tipo_display }}
+          </span>
+          <span class="text-xs font-mono font-bold text-slate-400">{{ c.moneda }}</span>
+        </div>
+        
+        <div class="flex items-center space-x-1" @click.stop>
+          <a href="{% url 'finanzas:cuenta_edit' c.pk %}"
+            class="flex items-center space-x-1 px-2.5 py-1 text-[10px] font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            <span>Editar</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-4 flex-1">
+        <h3 class="text-xs font-semibold text-slate-500 tracking-wide">{{ c.nombre }}</h3>
+        <p class="text-2xl font-extrabold text-slate-900 mt-1 font-mono tracking-tight tabular-nums">
+          {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
+        </p>
+        {% if c.banco_nombre %}
+          <p class="text-[11px] text-slate-400 mt-1">{{ c.banco_nombre }}</p>
+        {% endif %}
+        {% if c.cbu_cvu %}
+          <p class="text-[11px] font-mono text-slate-400 mt-2 truncate bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+            <span class="text-slate-400 font-sans font-medium">CBU/Alias:</span> {{ c.cbu_cvu }}
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+        <span class="text-slate-400 font-medium" x-text="filtroCuentaId === '{{ c.id }}' ? '✓ Extracto activo' : 'Ver extracto'"></span>
+        <span class="text-oliva-700 font-semibold group-hover:underline">Filtrar asientos →</span>
+      </div>
+
+      {% if not c.activa %}
+      <div class="mt-2 pt-2 border-t border-slate-100">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">⚠ Inactiva</span>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="col-span-3 flex flex-col items-center justify-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-200">
+      <svg class="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+      </svg>
+      <p class="text-sm font-semibold">No hay cuentas configuradas.</p>
+      <p class="text-xs mt-1">Usá el botón "Nueva Cuenta" para agregar una.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Tabla de Movimientos Financieros con Filtro Reactivo -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+    <div class="px-6 py-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-50/50">
+      <div class="flex items-center space-x-2">
+        <div class="w-2 h-2 rounded-full bg-oliva-600"></div>
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">
+          Extracto de Movimientos
+          <span x-show="filtroCuentaId !== 'todas'" class="text-oliva-700 font-normal font-mono lowercase">(filtrado por cuenta seleccionada)</span>
+        </h3>
+      </div>
+      <button 
+        x-show="filtroCuentaId !== 'todas'" 
+        @click="filtroCuentaId = 'todas'" 
+        class="text-xs text-oliva-700 hover:text-oliva-900 font-semibold underline self-start sm:self-auto cursor-pointer"
+      >
+        Mostrar todas las cuentas
+      </button>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3 px-4">Fecha</th>
+            <th class="py-3 px-4">Tipo</th>
+            <th class="py-3 px-4">Cuenta</th>
+            <th class="py-3 px-4">Concepto / Referencia</th>
+            <th class="py-3 px-4">Comprobante</th>
+            <th class="py-3 px-4 text-right">Importe</th>
+            <th class="py-3 px-4 text-center">Imprimir</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody id="movimientos-table-body" class="divide-y divide-slate-100 text-xs">
+          {% for mov in movimientos_recientes %}
+            <tr 
+              x-show="filtroCuentaId === 'todas' || filtroCuentaId === '{{ mov.cuenta_id }}' || filtroCuentaId === '{{ mov.cuenta_destino_id }}'"
+              class="hover:bg-slate-50/70 transition-colors"
+            >
+              <td class="py-3 px-4 font-mono text-slate-500 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                  {{ mov.get_tipo_display }}
+                </span>
+              </td>
+              <td class="py-3 px-4 font-semibold text-slate-900">
+                {{ mov.cuenta.nombre }}
+                {% if mov.cuenta_destino %}
+                  <span class="text-slate-400 font-normal">→ {{ mov.cuenta_destino.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 text-slate-700">
+                <div>{{ mov.concepto }}</div>
+                {% if mov.cuenta_corriente %}
+                  <span class="text-[10px] text-oliva-700 bg-oliva-50 px-1.5 py-0.2 rounded font-mono">{{ mov.cuenta_corriente.razon_social }}</span>
+                {% endif %}
+              </td>
+              <td class="py-3 px-4 font-mono text-slate-500">
+                {{ mov.comprobante_tipo|default:"-" }} {{ mov.comprobante_nro }}
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-bold {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-600{% else %}text-blue-700{% endif %}">
+                {% if mov.tipo == 'INGRESO' %}+{% elif mov.tipo == 'EGRESO' %}-{% endif %}${{ mov.importe|floatformat:2 }}
+              </td>
+              <td class="py-3 px-4 text-center">
+                <a href="{% url 'finanzas:comprobante_print' mov.pk %}" target="_blank" class="p-1 text-slate-400 hover:text-slate-700 inline-block">
+                  🖨️
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+                No hay movimientos financieros asentados.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+
+  <!-- Modal de Arqueo de Caja Incrustado -->
+  <div x-show="modalArqueo" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalArqueo = false"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
+      {% include 'finanzas/partials/arqueo_caja_modal.html' %}
+    </div>
+  </div>
+
 </div>

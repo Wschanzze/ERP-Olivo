@@ -161,3 +161,128 @@ class TipoCambioYCuadroSimplificadoTest(TestCase):
         self.assertEqual(res['ventas_totales_usd'], Decimal("10000.00"))
         self.assertTrue(len(res['bloques']) > 0)
 
+
+class FinanzasOperacionesInteractivasTest(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(razon_social="Olivo Finca Test", cuit="30-33445566-7")
+        self.cuenta = Cuenta.objects.create(
+            empresa=self.empresa,
+            nombre="Caja Central Finca",
+            tipo="CAJA",
+            saldo_actual=Decimal("50000.00")
+        )
+        self.cuenta_banco = Cuenta.objects.create(
+            empresa=self.empresa,
+            nombre="Banco Galicia Cta Cte",
+            tipo="BANCO",
+            saldo_actual=Decimal("150000.00")
+        )
+        self.proveedor = CuentaCorriente.objects.create(
+            razon_social="Agronomía San Juan S.A.",
+            cuit="30-44556677-8",
+            tipo_entidad=CuentaCorriente.TipoEntidad.PROVEEDOR,
+            saldo_actual=Decimal("-40000.00")
+        )
+        self.cliente = CuentaCorriente.objects.create(
+            razon_social="Aceitera del Sol S.A.",
+            cuit="30-88990011-2",
+            tipo_entidad=CuentaCorriente.TipoEntidad.CLIENTE,
+            saldo_actual=Decimal("90000.00")
+        )
+        self.cheque = Cheque.objects.create(
+            tipo="RECIBIDO",
+            banco_emisor="Banco Macro",
+            numero="99887711",
+            emisor_firmante="Aceitera del Sol S.A.",
+            cuit_emisor="30-88990011-2",
+            fecha_emision=timezone.now().date(),
+            fecha_cobro=timezone.now().date(),
+            importe=Decimal("35000.00"),
+            estado="EN_CARTERA"
+        )
+
+    def test_pago_proveedor_view(self):
+        from django.urls import reverse
+        url = reverse('finanzas:proveedor_pagar')
+        resp = self.client.post(url, {
+            'proveedor_id': self.proveedor.id,
+            'cuenta_id': self.cuenta.id,
+            'importe': '15000.00',
+            'concepto': 'Pago factura abonos',
+            'comprobante_nro': 'OP-001'
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cuenta.refresh_from_db()
+        self.proveedor.refresh_from_db()
+        self.assertEqual(self.cuenta.saldo_actual, Decimal("35000.00"))
+        self.assertEqual(self.proveedor.saldo_actual, Decimal("-25000.00"))
+
+    def test_cobro_cliente_view(self):
+        from django.urls import reverse
+        url = reverse('finanzas:cliente_cobrar')
+        resp = self.client.post(url, {
+            'cliente_id': self.cliente.id,
+            'cuenta_id': self.cuenta_banco.id,
+            'importe': '30000.00',
+            'concepto': 'Cobro lote aceituna',
+            'comprobante_nro': 'REC-001'
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cuenta_banco.refresh_from_db()
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cuenta_banco.saldo_actual, Decimal("180000.00"))
+        self.assertEqual(self.cliente.saldo_actual, Decimal("60000.00"))
+
+    def test_arqueo_caja_con_ajuste(self):
+        from django.urls import reverse
+        url = reverse('finanzas:caja_arqueo')
+        resp = self.client.post(url, {
+            'cuenta_id': self.cuenta.id,
+            'monto_fisico': '52000.00',  # Sobrante de 2.000
+            'ajustar_saldo': 'true',
+            'observaciones': 'Conteo físico fin de turno'
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cuenta.refresh_from_db()
+        self.assertEqual(self.cuenta.saldo_actual, Decimal("52000.00"))
+
+    def test_cheque_depositar_y_acreditar(self):
+        from django.urls import reverse
+        # 1. Depositar
+        url = reverse('finanzas:cheque_cambiar_estado', args=[self.cheque.id])
+        resp = self.client.post(url, {
+            'accion': 'depositar',
+            'cuenta_bancaria_id': self.cuenta_banco.id
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cheque.refresh_from_db()
+        self.assertEqual(self.cheque.estado, 'DEPOSITADO')
+        self.assertEqual(self.cheque.cuenta_bancaria_origen, self.cuenta_banco)
+
+        # 2. Acreditar
+        saldo_inicial = self.cuenta_banco.saldo_actual
+        resp2 = self.client.post(url, {
+            'accion': 'acreditar'
+        })
+        self.assertEqual(resp2.status_code, 302)
+        self.cheque.refresh_from_db()
+        self.cuenta_banco.refresh_from_db()
+        self.assertEqual(self.cheque.estado, 'COBRADO')
+        self.assertEqual(self.cuenta_banco.saldo_actual, saldo_inicial + Decimal("35000.00"))
+
+    def test_cheque_endosar_a_proveedor(self):
+        from django.urls import reverse
+        url = reverse('finanzas:cheque_cambiar_estado', args=[self.cheque.id])
+        resp = self.client.post(url, {
+            'accion': 'endosar',
+            'proveedor_id': self.proveedor.id
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cheque.refresh_from_db()
+        self.proveedor.refresh_from_db()
+        self.assertEqual(self.cheque.estado, 'ENTREGADO_PROVEEDOR')
+        self.assertEqual(self.cheque.cuenta_corriente, self.proveedor)
+        # Deuda baja de -40000 a -5000 (+35000)
+        self.assertEqual(self.proveedor.saldo_actual, Decimal("-5000.00"))
+
+

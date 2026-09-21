@@ -1462,11 +1462,6 @@ def poblar_datos_demo_q1_2026():
         cuadro_q1.save(update_fields=['moneda'])
 
     poblar_lineas_cuadro(cuadro_q1, inicializar_con_valores_demo=True)
-    # Expresamos las líneas en Pesos Argentinos (ARS) para el 1° Trimestre
-    for l in cuadro_q1.lineas.all():
-        l.monto_real = round(l.monto_real * Decimal("294.00"), 2)
-        l.monto_presupuestado = round(l.monto_presupuestado * Decimal("294.00"), 2)
-        l.save(update_fields=['monto_real', 'monto_presupuestado'])
     cuadro_q1.recalcular_totales(save=True)
 
     # 9. Consolidación Final y Verificación Matemática de Stock

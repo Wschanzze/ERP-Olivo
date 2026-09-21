@@ -1493,4 +1493,212 @@ class ComprobantePrintView(DetailView):
         return ctx
 
 
+class PagoProveedorView(View):
+    """Registra una Orden de Pago a Proveedor con impacto en caja y saldo de cuenta corriente."""
+    def post(self, request):
+        proveedor_id = request.POST.get('proveedor_id')
+        cuenta_id = request.POST.get('cuenta_id')
+        importe = Decimal(request.POST.get('importe', '0'))
+        fecha_str = request.POST.get('fecha')
+        concepto = request.POST.get('concepto', 'Pago a Proveedor')
+        comprobante_nro = request.POST.get('comprobante_nro', '')
+        
+        proveedor = get_object_or_404(CuentaCorriente, id=proveedor_id, tipo_entidad=CuentaCorriente.TipoEntidad.PROVEEDOR)
+        cuenta = get_object_or_404(Cuenta, id=cuenta_id)
+        
+        fecha = datetime.date.fromisoformat(fecha_str) if fecha_str else timezone.now().date()
+        
+        mov = registrar_movimiento_financiero(
+            cuenta=cuenta,
+            tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+            fecha=fecha,
+            importe=importe,
+            moneda=cuenta.moneda,
+            concepto=concepto,
+            comprobante_tipo="ORDEN_PAGO",
+            comprobante_nro=comprobante_nro,
+            cuenta_corriente=proveedor,
+            usuario=request.user if request.user.is_authenticated else None
+        )
+        messages.success(request, f"Pago de ${importe:,.2f} registrado exitosamente a {proveedor.razon_social}.")
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+
+
+class CobroClienteView(View):
+    """Registra un Recibo de Cobranza de Cliente con impacto en cuenta bancaria y saldo del cliente."""
+    def post(self, request):
+        cliente_id = request.POST.get('cliente_id')
+        cuenta_id = request.POST.get('cuenta_id')
+        importe = Decimal(request.POST.get('importe', '0'))
+        fecha_str = request.POST.get('fecha')
+        concepto = request.POST.get('concepto', 'Cobranza de Cliente')
+        comprobante_nro = request.POST.get('comprobante_nro', '')
+        
+        cliente = get_object_or_404(CuentaCorriente, id=cliente_id, tipo_entidad=CuentaCorriente.TipoEntidad.CLIENTE)
+        cuenta = get_object_or_404(Cuenta, id=cuenta_id)
+        
+        fecha = datetime.date.fromisoformat(fecha_str) if fecha_str else timezone.now().date()
+        
+        mov = registrar_movimiento_financiero(
+            cuenta=cuenta,
+            tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
+            fecha=fecha,
+            importe=importe,
+            moneda=cuenta.moneda,
+            concepto=concepto,
+            comprobante_tipo="RECIBO_COBRO",
+            comprobante_nro=comprobante_nro,
+            cuenta_corriente=cliente,
+            usuario=request.user if request.user.is_authenticated else None
+        )
+        messages.success(request, f"Cobranza de ${importe:,.2f} registrada exitosamente de {cliente.razon_social}.")
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=clientes')
+
+
+class ComprobanteCuentaCorrienteView(View):
+    """Registra una Factura de Compra (Proveedor) o Factura de Venta (Cliente) en Cuenta Corriente."""
+    def post(self, request):
+        entidad_id = request.POST.get('entidad_id')
+        importe = Decimal(request.POST.get('importe', '0'))
+        tipo_comprobante = request.POST.get('tipo_comprobante', 'FACTURA')
+        comprobante_nro = request.POST.get('comprobante_nro', '')
+        concepto = request.POST.get('concepto', '')
+        fecha_str = request.POST.get('fecha')
+        fecha = datetime.date.fromisoformat(fecha_str) if fecha_str else timezone.now().date()
+        
+        entidad = get_object_or_404(CuentaCorriente, id=entidad_id)
+        if entidad.tipo_entidad == CuentaCorriente.TipoEntidad.PROVEEDOR:
+            # Factura de compra: aumenta nuestra deuda (saldo más negativo)
+            entidad.saldo_actual -= importe
+            entidad.save(update_fields=['saldo_actual', 'updated_at'])
+            messages.success(request, f"Comprobante {tipo_comprobante} N° {comprobante_nro} registrado por ${importe:,.2f} a {entidad.razon_social}.")
+            return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+        else:
+            # Factura de venta: aumenta saldo a cobrar (más positivo)
+            entidad.saldo_actual += importe
+            entidad.save(update_fields=['saldo_actual', 'updated_at'])
+            messages.success(request, f"Factura de Venta N° {comprobante_nro} registrada por ${importe:,.2f} a {entidad.razon_social}.")
+            return redirect(reverse_lazy('finanzas:dashboard') + '?tab=clientes')
+
+
+class CuentaCorrienteDetalleModalView(View):
+    """Devuelve el extracto / movimientos de una cuenta corriente específica para modal HTMX."""
+    def get(self, request, pk):
+        entidad = get_object_or_404(CuentaCorriente, pk=pk)
+        movimientos = MovimientoFinanciero.objects.filter(cuenta_corriente=entidad).select_related('cuenta').order_by('-fecha', '-created_at')[:50]
+        cheques = Cheque.objects.filter(cuenta_corriente=entidad).order_by('-fecha_cobro')[:20]
+        return render(request, 'finanzas/partials/cuenta_corriente_movimientos_modal.html', {
+            'entidad': entidad,
+            'movimientos': movimientos,
+            'cheques': cheques
+        })
+
+
+class ArqueoCajaView(View):
+    """Procesa el arqueo de caja físico y genera ajuste automático si se solicita."""
+    def post(self, request):
+        cuenta_id = request.POST.get('cuenta_id')
+        monto_fisico = Decimal(request.POST.get('monto_fisico', '0'))
+        observaciones = request.POST.get('observaciones', '')
+        ajustar = request.POST.get('ajustar_saldo') in ('true', 'on', '1', True)
+        
+        cuenta = get_object_or_404(Cuenta, id=cuenta_id)
+        diferencia = monto_fisico - cuenta.saldo_actual
+        
+        if ajustar and diferencia != Decimal('0'):
+            if diferencia > 0:
+                tipo = MovimientoFinanciero.TipoMovimiento.INGRESO
+                concepto = f"Ajuste Arqueo (Sobrante de Caja): {observaciones}".strip(' :')
+                imp = diferencia
+            else:
+                tipo = MovimientoFinanciero.TipoMovimiento.EGRESO
+                concepto = f"Ajuste Arqueo (Faltante de Caja): {observaciones}".strip(' :')
+                imp = abs(diferencia)
+                
+            registrar_movimiento_financiero(
+                cuenta=cuenta,
+                tipo=tipo,
+                fecha=timezone.now().date(),
+                importe=imp,
+                moneda=cuenta.moneda,
+                concepto=concepto,
+                comprobante_tipo="ARQUEO_CAJA",
+                usuario=request.user if request.user.is_authenticated else None
+            )
+            messages.success(request, f"Arqueo realizado en {cuenta.nombre}. Saldo ajustado a ${monto_fisico:,.2f} con registro de diferencia.")
+        else:
+            messages.info(request, f"Arqueo registrado en {cuenta.nombre}. Conteo físico: ${monto_fisico:,.2f} | Sistema: ${cuenta.saldo_actual:,.2f} | Diferencia: ${diferencia:,.2f}.")
+            
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=caja')
+
+
+class ChequeCambiarEstadoView(View):
+    """Gestiona el ciclo de vida del cheque: depositar, cobrar/acreditar, endosar o rechazar."""
+    def post(self, request, pk):
+        cheque = get_object_or_404(Cheque, pk=pk)
+        accion = request.POST.get('accion')
+        
+        if accion == 'depositar':
+            cuenta_id = request.POST.get('cuenta_bancaria_id')
+            cuenta = get_object_or_404(Cuenta, id=cuenta_id)
+            cheque.estado = Cheque.EstadoCheque.DEPOSITADO
+            cheque.cuenta_bancaria_origen = cuenta
+            cheque.save(update_fields=['estado', 'cuenta_bancaria_origen', 'updated_at'])
+            messages.success(request, f"Cheque #{cheque.numero} depositado en {cuenta.nombre}.")
+            
+        elif accion == 'acreditar':
+            cuenta = cheque.cuenta_bancaria_origen or Cuenta.objects.filter(tipo='BANCO', activa=True).first()
+            if not cuenta:
+                messages.error(request, "Debe especificar o contar con una cuenta bancaria activa.")
+                return redirect(reverse_lazy('finanzas:dashboard') + '?tab=cheques')
+                
+            cheque.estado = Cheque.EstadoCheque.COBRADO
+            cheque.save(update_fields=['estado', 'updated_at'])
+            # Acreditar fondos en la cuenta bancaria
+            registrar_movimiento_financiero(
+                cuenta=cuenta,
+                tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
+                fecha=timezone.now().date(),
+                importe=cheque.importe,
+                moneda=cuenta.moneda,
+                concepto=f"Acreditación Cheque {cheque.banco_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
+                comprobante_tipo="CHEQUE_COBRADO",
+                comprobante_nro=cheque.numero,
+                usuario=request.user if request.user.is_authenticated else None
+            )
+            messages.success(request, f"Cheque #{cheque.numero} acreditado en {cuenta.nombre} por ${cheque.importe:,.2f}.")
+            
+        elif accion == 'endosar':
+            proveedor_id = request.POST.get('proveedor_id')
+            proveedor = get_object_or_404(CuentaCorriente, id=proveedor_id, tipo_entidad=CuentaCorriente.TipoEntidad.PROVEEDOR)
+            cheque.estado = Cheque.EstadoCheque.ENTREGADO_PROVEEDOR
+            cheque.cuenta_corriente = proveedor
+            cheque.save(update_fields=['estado', 'cuenta_corriente', 'updated_at'])
+            # Reduce la deuda con el proveedor
+            proveedor.saldo_actual += cheque.importe
+            proveedor.save(update_fields=['saldo_actual', 'updated_at'])
+            messages.success(request, f"Cheque #{cheque.numero} (${cheque.importe:,.2f}) endosado a {proveedor.razon_social}. Deuda cancelada.")
+            
+        elif accion == 'rechazar':
+            motivo = request.POST.get('motivo', 'Rechazado por el banco (sin fondos o defecto formal)')
+            cheque.estado = Cheque.EstadoCheque.RECHAZADO
+            cheque.observaciones = f"{cheque.observaciones or ''} | Rechazo: {motivo}".strip(' |')
+            cheque.save(update_fields=['estado', 'observaciones', 'updated_at'])
+            messages.warning(request, f"Cheque #{cheque.numero} marcado como RECHAZADO: {motivo}.")
+            
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=cheques')
+
+
+class CuentaCorrienteCreateView(CreateView):
+    """Crea un nuevo Cliente o Proveedor."""
+    model = CuentaCorriente
+    fields = ['tipo_entidad', 'razon_social', 'nombre_comercial', 'cuit', 'email', 'telefono', 'direccion', 'limite_credito']
+    
+    def form_valid(self, form):
+        entidad = form.save()
+        messages.success(self.request, f"{entidad.get_tipo_entidad_display()} '{entidad.razon_social}' creado con éxito.")
+        tab = 'proveedores' if entidad.tipo_entidad == CuentaCorriente.TipoEntidad.PROVEEDOR else 'clientes'
+        return redirect(reverse_lazy('finanzas:dashboard') + f'?tab={tab}')
+
+
 

@@ -1,0 +1,166 @@
+<div class="p-6 bg-white rounded-3xl" x-data="{
+  tipoCheque: 'RECIBIDO'
+}">
+  <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg">
+        📜
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Registrar Nuevo Cheque</h3>
+        <p class="text-xs text-slate-500">Cheque diferido recibido de clientes o emitido de cuenta propia.</p>
+      </div>
+    </div>
+    <button @click="modalNuevoCheque = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    </button>
+  </div>
+
+  <form method="post" action="{% url 'finanzas:cheque_create' %}" class="mt-5 space-y-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Cheque</label>
+        <select 
+          name="tipo" 
+          x-model="tipoCheque"
+          class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5"
+        >
+          <option value="RECIBIDO">Cheque Recibido de Tercero (En Cartera)</option>
+          <option value="EMITIDO">Cheque Propio Emitido (Pago Diferido)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Banco Emisor</label>
+        <input 
+          type="text" 
+          name="banco_emisor" 
+          required 
+          placeholder="Ej. Banco Galicia / Santander / Macro" 
+          class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Número de Cheque</label>
+        <input 
+          type="text" 
+          name="numero" 
+          required 
+          placeholder="Ej. 04829104" 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Importe ($ ARS)</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-mono font-bold text-slate-400">$</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            min="0.01"
+            name="importe" 
+            required 
+            placeholder="0.00" 
+            class="w-full pl-7 pr-3 py-2 text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Emisor / Titular Firmante</label>
+        <input 
+          type="text" 
+          name="emisor_firmante" 
+          required 
+          placeholder="Razón Social o Persona del cheque" 
+          class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">CUIT Emisor</label>
+        <input 
+          type="text" 
+          name="cuit_emisor" 
+          placeholder="20-30405060-7" 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de Emisión</label>
+        <input 
+          type="date" 
+          name="fecha_emision" 
+          value="{% now 'Y-m-d' %}" 
+          required 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de Cobro / Vencimiento</label>
+        <input 
+          type="date" 
+          name="fecha_cobro" 
+          value="{% now 'Y-m-d' %}" 
+          required 
+          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+        >
+      </div>
+    </div>
+
+    <!-- Campo condicional para cheque propio -->
+    <template x-if="tipoCheque === 'EMITIDO'">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Cuenta Bancaria Origen de los Fondos</label>
+        <select name="cuenta_bancaria_origen" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2">
+          <option value="">-- Seleccione Cuenta Bancaria Propia --</option>
+          {% for cta in cuentas %}
+            {% if cta.tipo == 'BANCO' %}
+              <option value="{{ cta.id }}">{{ cta.nombre }} ({{ cta.banco_nombre }} - Saldo: ${{ cta.saldo_actual|floatformat:2 }})</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </template>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones</label>
+      <input 
+        type="text" 
+        name="observaciones" 
+        placeholder="Ej. Cheque entregado por acopio de aceituna en tolva" 
+        class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+      >
+    </div>
+
+    <input type="hidden" name="estado" value="EN_CARTERA">
+
+    <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+      <button 
+        type="button" 
+        @click="modalNuevoCheque = false" 
+        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+      >
+        Guardar Cheque
+      </button>
+    </div>
+  </form>
+</div>

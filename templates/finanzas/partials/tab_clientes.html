@@ -1,32 +1,88 @@
 {% load static %}
-<div class="space-y-4">
-  <div class="flex justify-between items-center px-1">
-    <p class="text-xs font-medium text-slate-500">Cuentas Corrientes de Clientes (Aceiteras mayoristas, fraccionadoras y exportación).</p>
-    <span class="text-[11px] font-mono text-slate-400">Total clientes: {{ clientes.count }}</span>
+<div class="space-y-4" x-data="{
+  searchCli: '',
+  modalCobroCliente: false,
+  modalNuevoCliente: false,
+  modalComprobanteVenta: false,
+  abrirCobroPara(id, nombre, saldo) {
+    this.modalCobroCliente = true;
+    this.$nextTick(() => {
+      const sel = document.getElementById('cobro-cliente-select');
+      if (sel) { sel.value = id; }
+    });
+  }
+}">
+
+  <!-- Barra de Herramientas y Acciones de Clientes -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+    <div class="relative flex-1 max-w-md">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      </div>
+      <input 
+        type="text" 
+        x-model="searchCli" 
+        placeholder="Buscar cliente, CUIT, razón social..." 
+        class="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-oliva-500 focus:ring-2 focus:ring-oliva-500/20 text-xs rounded-xl transition-all"
+      >
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <button 
+        @click="modalComprobanteVenta = true" 
+        type="button" 
+        class="inline-flex items-center px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer"
+      >
+        <span class="mr-1.5">📑</span>
+        <span>Facturar Venta</span>
+      </button>
+
+      <button 
+        @click="modalCobroCliente = true" 
+        type="button" 
+        class="inline-flex items-center px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+      >
+        <span class="mr-1.5">💰</span>
+        <span>Recibo de Cobranza</span>
+      </button>
+
+      <button 
+        @click="modalNuevoCliente = true" 
+        type="button" 
+        class="inline-flex items-center px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+      >
+        <span class="mr-1.5">➕</span>
+        <span>Nuevo Cliente</span>
+      </button>
+    </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+  <!-- Tabla Interactiva de Clientes -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm min-w-[640px]">
+      <table class="w-full text-left border-collapse text-sm min-w-[700px]">
         <thead>
           <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-            <th class="py-3.5 px-4">Razón Social</th>
+            <th class="py-3.5 px-4">Cliente / Razón Social</th>
             <th class="py-3.5 px-4">CUIT</th>
-            <th class="py-3.5 px-4">Contacto</th>
-            <th class="py-3.5 px-4">Límite Crédito</th>
+            <th class="py-3.5 px-4">Contacto / Tel</th>
             <th class="py-3.5 px-4 text-right">Saldo a Cobrar</th>
+            <th class="py-3.5 px-4 text-center">Acciones Operativas</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-xs">
           {% for cli in clientes %}
-          <tr class="hover:bg-oliva-50/40 transition-colors">
+          <tr 
+            x-show="!searchCli || '{{ cli.razon_social|lower }} {{ cli.cuit }} {{ cli.nombre_comercial|lower }}'.includes(searchCli.toLowerCase())"
+            class="hover:bg-slate-50/70 transition-colors"
+          >
             <td class="py-3.5 px-4 font-semibold text-slate-900">
               <div class="flex items-center space-x-2">
-                <span class="w-1.5 h-1.5 rounded-full {% if cli.saldo_actual > 0 %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
-                <span>{{ cli.razon_social }}</span>
+                <span class="w-2 h-2 rounded-full {% if cli.saldo_actual > 0 %}bg-emerald-500 animate-pulse{% else %}bg-slate-400{% endif %}"></span>
+                <span class="font-bold text-slate-900">{{ cli.razon_social }}</span>
               </div>
               {% if cli.nombre_comercial %}
-                <span class="block text-[11px] text-slate-400 font-normal pl-3.5">{{ cli.nombre_comercial }}</span>
+                <span class="block text-[11px] text-slate-400 font-normal pl-4">{{ cli.nombre_comercial }}</span>
               {% endif %}
             </td>
             <td class="py-3.5 px-4 font-mono text-xs text-slate-500">{{ cli.cuit }}</td>
@@ -34,18 +90,40 @@
               <div>{{ cli.email|default:"-" }}</div>
               <div class="text-slate-400 font-mono text-[11px]">{{ cli.telefono }}</div>
             </td>
-            <td class="py-3.5 px-4 font-mono text-xs text-slate-500 tabular-nums">${{ cli.limite_credito|floatformat:2 }}</td>
             <td class="py-3.5 px-4 text-right font-mono font-bold text-xs tabular-nums tracking-tight {% if cli.saldo_actual > 0 %}text-emerald-700{% else %}text-slate-600{% endif %}">
               ${{ cli.saldo_actual|floatformat:2 }}
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              <div class="flex items-center justify-center space-x-1.5">
+                <!-- Botón Cobrar -->
+                <button 
+                  type="button"
+                  @click="abrirCobroPara('{{ cli.id }}', '{{ cli.razon_social }}', '{{ cli.saldo_actual }}')"
+                  class="inline-flex items-center px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] rounded-lg transition-colors cursor-pointer border border-emerald-200"
+                  title="Registrar recibo de cobranza para este cliente"
+                >
+                  💰 Cobrar
+                </button>
+
+                <!-- Botón Ver Historial / Extracto -->
+                <button 
+                  type="button"
+                  hx-get="{% url 'finanzas:cuenta_corriente_movimientos' cli.pk %}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="inline-flex items-center px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] rounded-lg transition-colors cursor-pointer"
+                  title="Ver facturas emitidas y cobranzas históricas"
+                >
+                  📜 Extracto
+                </button>
+              </div>
             </td>
           </tr>
           {% empty %}
           <tr>
             <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Vacío" class="w-8 h-8 opacity-40" />
-                <p>No hay clientes registrados aún.</p>
-              </div>
+              <p>No hay clientes registrados aún.</p>
+              <p class="text-xs mt-1">Usa el botón "+ Nuevo Cliente" para dar de alta uno.</p>
             </td>
           </tr>
           {% endfor %}
@@ -53,4 +131,27 @@
       </table>
     </div>
   </div>
+
+  <!-- Modales incrustados -->
+  <div x-show="modalCobroCliente" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalCobroCliente = false"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
+      {% include 'finanzas/partials/cobro_cliente_modal.html' %}
+    </div>
+  </div>
+
+  <div x-show="modalNuevoCliente" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalNuevoCliente = false"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
+      {% include 'finanzas/partials/proveedor_cliente_form_modal.html' with tipo_default='CLIENTE' %}
+    </div>
+  </div>
+
+  <div x-show="modalComprobanteVenta" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalComprobanteVenta = false"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
+      {% include 'finanzas/partials/comprobante_cc_modal.html' %}
+    </div>
+  </div>
+
 </div>

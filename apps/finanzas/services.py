@@ -122,7 +122,7 @@ def poblar_lineas_cuadro(cuadro, inicializar_con_valores_demo: bool = False):
     Puebla un Cuadro de Resultados con todas las cuentas contables imputables de Clase 4 (Resultados).
     Si inicializar_con_valores_demo es True, asigna montos reales y presupuestados realistas de la empresa olivícola.
     """
-    from .models import CuentaContable, LineaCuadroResultado
+    from .models import CuentaContable, LineaCuadroResultado, CuadroResultado
     cuentas_r = CuentaContable.objects.filter(
         codigo__startswith='4.',
         es_imputable=True,
@@ -190,25 +190,37 @@ def poblar_lineas_cuadro(cuadro, inicializar_con_valores_demo: bool = False):
         '4.2.8.04': {'real': Decimal('9000'), 'presup': Decimal('9000'), 'obs': 'Impuesto a los débitos y créditos bancarios'},
     }
 
+    cuentas_existentes = set(cuadro.lineas.values_list('cuenta_contable_id', flat=True))
+    lineas_nuevas = []
+
+    # Factor de escala según tipo de período y moneda
+    es_trimestral = (cuadro.tipo_periodo == CuadroResultado.TipoPeriodo.TRIMESTRAL)
+    factor_periodo = Decimal('0.28') if es_trimestral else Decimal('1.00')
+    tc_mult = (cuadro.tipo_cambio if cuadro.tipo_cambio > 0 else Decimal('1050.00')) if cuadro.moneda == CuadroResultado.Moneda.ARS else Decimal('1.00')
+    factor_total = factor_periodo * tc_mult
+
     for c in cuentas_r:
+        if c.id in cuentas_existentes:
+            continue
         seccion = determinar_seccion_cuenta(c)
         prefix = '.'.join(c.codigo.split('.')[:4])
         demo = valores_demo.get(prefix, {'real': Decimal('0.00'), 'presup': Decimal('0.00'), 'obs': ''})
         
-        monto_real = demo['real'] if inicializar_con_valores_demo else Decimal('0.00')
-        monto_presup = demo['presup'] if inicializar_con_valores_demo else Decimal('0.00')
+        monto_real = round(demo['real'] * factor_total, 2) if inicializar_con_valores_demo else Decimal('0.00')
+        monto_presup = round(demo['presup'] * factor_total, 2) if inicializar_con_valores_demo else Decimal('0.00')
         obs = demo['obs'] if inicializar_con_valores_demo else ''
 
-        LineaCuadroResultado.objects.get_or_create(
+        lineas_nuevas.append(LineaCuadroResultado(
             cuadro=cuadro,
             cuenta_contable=c,
-            defaults={
-                'seccion': seccion,
-                'monto_real': monto_real,
-                'monto_presupuestado': monto_presup,
-                'observaciones': obs
-            }
-        )
+            seccion=seccion,
+            monto_real=monto_real,
+            monto_presupuestado=monto_presup,
+            observaciones=obs
+        ))
+
+    if lineas_nuevas:
+        LineaCuadroResultado.objects.bulk_create(lineas_nuevas)
 
     cuadro.recalcular_totales(save=True)
     return cuadro
@@ -219,6 +231,8 @@ def get_or_create_cuadro_default(empresa):
     from .models import CuadroResultado
     cuadro = CuadroResultado.objects.filter(empresa=empresa).order_by('-fecha_fin', '-created_at').first()
     if cuadro:
+        if cuadro.lineas.count() == 0:
+            poblar_lineas_cuadro(cuadro, inicializar_con_valores_demo=True)
         return cuadro
 
     # Creamos el cuadro insignia de la empresa
@@ -244,10 +258,4 @@ def get_or_create_cuadro_default(empresa):
         )
     )
     poblar_lineas_cuadro(cuadro, inicializar_con_valores_demo=True)
-    # Escalar a ARS para consistencia total en Pesos Argentinos
-    for l in cuadro.lineas.all():
-        l.monto_real = round(l.monto_real * Decimal('1050.00'), 2)
-        l.monto_presupuestado = round(l.monto_presupuestado * Decimal('1050.00'), 2)
-        l.save(update_fields=['monto_real', 'monto_presupuestado'])
-    cuadro.recalcular_totales(save=True)
     return cuadro
