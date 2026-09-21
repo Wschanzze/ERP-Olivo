@@ -12,7 +12,7 @@ IS_VERCEL = 'VERCEL' in os.environ
 # Cargar variables de entorno desde .env
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-erp-olivo-fallback-key-2025')
+SECRET_KEY = os.getenv('SECRET_KEY', '').strip() or 'django-insecure-erp-olivo-fallback-key-2025-x98vercel'
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # Soporte para proxies reversos (Vercel)
