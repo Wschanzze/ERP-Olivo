@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import TimeStampedModel, Finca
 
@@ -74,6 +75,88 @@ class Cuadro(TimeStampedModel):
     @property
     def total_estimado_plantas(self):
         return int(self.hectareas_netas * self.densidad_plantas_ha)
+
+    @property
+    def registro_fenologico_actual(self):
+        return self.registros_fenologicos.order_by('-fecha').first()
+
+    @property
+    def semaforo_fitosanitario(self):
+        reg = self.registro_fenologico_actual
+        if not reg:
+            return 'gris'
+        return reg.semaforo
+
+
+class RegistroFenologico(TimeStampedModel):
+    """Registro del estado fenológico y sanitario de un cuadro en una campaña."""
+    class FaseVegetativa(models.TextChoices):
+        REPOSO = 'REPOSO', _('Reposo Invernal')
+        BROTACION = 'BROTACION', _('Brotación / Hinchazón Yemas')
+        FLORACION = 'FLORACION', _('Floración')
+        CUAJADO = 'CUAJADO', _('Cuajado de Frutos')
+        CRECIMIENTO = 'CRECIMIENTO', _('Crecimiento del Fruto')
+        ENVERO = 'ENVERO', _('Envero / Cambio de Color')
+        MADUREZ = 'MADUREZ', _('Madurez Comercial')
+        POSTCOSECHA = 'POSTCOSECHA', _('Post-Cosecha')
+
+    class RiesgoFitosanitario(models.TextChoices):
+        BAJO = 'BAJO', _('Sin riesgo aparente')
+        MODERADO = 'MODERADO', _('Monitoreo requerido')
+        ALTO = 'ALTO', _('Intervención urgente')
+
+    cuadro = models.ForeignKey(Cuadro, on_delete=models.CASCADE, related_name='registros_fenologicos', verbose_name=_("Cuadro"))
+    campana = models.CharField(max_length=20, verbose_name=_("Campaña Agrícola"), help_text=_("Ej: 2025/2026"))
+    fecha = models.DateField(verbose_name=_("Fecha de Observación"))
+    fase_vegetativa = models.CharField(max_length=20, choices=FaseVegetativa.choices, default=FaseVegetativa.BROTACION, verbose_name=_("Fase Fenológica"))
+    grados_dia_acumulados = models.DecimalField(max_digits=7, decimal_places=1, default=0.0, verbose_name=_("GDC Acumulados"), help_text=_("Grados Día de Crecimiento desde inicio de campaña"))
+    temperatura_min = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, verbose_name=_("Temp. Mínima (°C)"))
+    temperatura_max = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, verbose_name=_("Temp. Máxima (°C)"))
+    riesgo_fitosanitario = models.CharField(max_length=10, choices=RiesgoFitosanitario.choices, default=RiesgoFitosanitario.BAJO, verbose_name=_("Riesgo Fitosanitario"))
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones Agronómicas"))
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Técnico / Agrónomo"))
+
+    class Meta:
+        verbose_name = _("Registro Fenológico")
+        verbose_name_plural = _("Registros Fenológicos")
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.cuadro.codigo} — {self.get_fase_vegetativa_display()} ({self.fecha})"
+
+    @property
+    def semaforo(self):
+        mapa = {'BAJO': 'verde', 'MODERADO': 'amarillo', 'ALTO': 'rojo'}
+        return mapa.get(self.riesgo_fitosanitario, 'gris')
+
+
+class EventoCuadro(TimeStampedModel):
+    """Historial de intervenciones y eventos agronómicos registrados en un cuadro."""
+    class TipoEvento(models.TextChoices):
+        PODA = 'PODA', _('Poda')
+        RALEO_FRUTOS = 'RALEO', _('Raleo de Frutos')
+        RIEGO_AUXILIO = 'RIEGO_AUXILIO', _('Riego de Auxilio')
+        APLICACION_FITOSANITARIA = 'FITOSANITARIO', _('Aplicación Fitosanitaria')
+        FERTILIZACION = 'FERTILIZACION', _('Fertilización')
+        ANALISIS_SUELO = 'ANALISIS_SUELO', _('Análisis de Suelo')
+        ANALISIS_FOLIAR = 'ANALISIS_FOLIAR', _('Análisis Foliar')
+        VISITA_TECNICA = 'VISITA_TECNICA', _('Visita Técnica / Agronómica')
+        OTRO = 'OTRO', _('Otro Evento')
+
+    cuadro = models.ForeignKey(Cuadro, on_delete=models.CASCADE, related_name='eventos', verbose_name=_("Cuadro"))
+    campana = models.CharField(max_length=20, verbose_name=_("Campaña"))
+    tipo_evento = models.CharField(max_length=25, choices=TipoEvento.choices, verbose_name=_("Tipo de Evento"))
+    fecha = models.DateField(verbose_name=_("Fecha"))
+    descripcion = models.TextField(verbose_name=_("Descripción / Detalle"))
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Responsable"))
+
+    class Meta:
+        verbose_name = _("Evento de Cuadro")
+        verbose_name_plural = _("Eventos de Cuadros")
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.get_tipo_evento_display()} en {self.cuadro.codigo} ({self.fecha})"
 
 
 class LoteDeCosecha(TimeStampedModel):

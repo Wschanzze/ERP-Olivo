@@ -209,25 +209,52 @@
         <div class="absolute -top-32 -left-32 w-96 h-96 bg-white/60 rounded-full blur-3xl"></div>
       </div>
 
-      <!-- Watermark / Branding Corporativo (Posicionado limpiamente sin solaparse) -->
-      <div class="flex items-center justify-between pb-4 mb-2 border-b border-slate-200/60 relative z-10">
+      <!-- Watermark / Branding Corporativo y Selector de Campaña -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-2 border-b border-slate-200/60 relative z-10">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Escritorio Agroindustrial</span>
-          <span class="text-[10px] text-slate-400 font-mono">• 12 carpetas de consulta directa</span>
+          <span class="text-[10px] text-slate-400 font-mono">• Gestión Operativa</span>
         </div>
-        <div class="hidden sm:flex items-center gap-2.5 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/80 shadow-2xs select-none">
-          <div class="w-6 h-6 rounded-lg bg-[#3D4A2A] flex items-center justify-center p-1 shadow-xs">
-            <img src="{% static 'img/olives_12006391.png' %}" alt="ERP" class="w-4 h-4 object-contain" />
+
+        <div class="flex items-center gap-3">
+          <!-- Selector de Campaña -->
+          <form method="get" class="flex items-center gap-1.5 bg-white/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Campaña:</label>
+            <select name="campana" onchange="this.form.submit()" class="text-xs font-mono font-bold text-[#3D4A2A] bg-transparent border-0 cursor-pointer focus:outline-none focus:ring-0 pr-1">
+              {% for c in campanas_disponibles %}
+                <option value="{{ c }}" {% if c == campana_activa %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </form>
+
+          {% if kpis_resumen.kg_cosechados_campana %}
+          <div class="hidden md:flex items-center gap-1.5 bg-[#EAEFE3] text-[#3D4A2A] px-2.5 py-1 rounded-xl border border-[#D5DFC9] text-xs font-semibold">
+            <span>🫒 Cosecha:</span>
+            <span class="font-mono font-bold">{{ kpis_resumen.kg_cosechados_campana|floatformat:0 }} kg</span>
           </div>
-          <span class="text-[11px] font-black text-[#222B17] tracking-wider leading-none">ERP OLIVÍCOLA</span>
+          {% endif %}
+
+          {% if kpis_resumen.costo_por_kg %}
+          <div class="hidden md:flex items-center gap-1.5 bg-[#FDF9EB] text-[#9E7C28] px-2.5 py-1 rounded-xl border border-[#DFBA56]/50 text-xs font-semibold">
+            <span>Costo/kg:</span>
+            <span class="font-mono font-bold">${{ kpis_resumen.costo_por_kg|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          <div class="hidden sm:flex items-center gap-2 bg-white/70 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/80 shadow-2xs select-none">
+            <div class="w-5 h-5 rounded-lg bg-[#3D4A2A] flex items-center justify-center p-0.5 shadow-xs">
+              <img src="{% static 'img/olives_12006391.png' %}" alt="ERP" class="w-3.5 h-3.5 object-contain" />
+            </div>
+            <span class="text-[11px] font-black text-[#222B17] tracking-wider leading-none">ERP OLIVÍCOLA</span>
+          </div>
         </div>
       </div>
 
       <!-- MODO 1: ESCRITORIO CON CARPETAS REALES (FOLDER PNGS) -->
       <div x-show="viewMode === 'desktop'" class="relative z-10">
         
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10 pt-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-7 pt-2">
           
           <template x-for="item in accesos" :key="item.id">
             <div 
@@ -243,10 +270,8 @@
                 <img 
                   :src="item.icono_carpeta || (item.categoria === 'finanzas' || item.categoria === 'personal' ? '{% static 'img/folder_2577349.png' %}' : '{% static 'img/folder_2577158.png' %}')" 
                   alt="Carpeta" 
-                  class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md group-hover:scale-110 group-hover:drop-shadow-xl transition-all duration-200 select-none pointer-events-none"
+                  class="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-sm group-hover:scale-105 group-hover:drop-shadow-md transition-all duration-200 select-none pointer-events-none"
                 />
-                <!-- Indicador de tipo de consulta sobre la carpeta -->
-                <span class="absolute -top-1 -right-1 text-[8px] font-mono font-bold uppercase text-[#3D4A2A] bg-white/90 border border-slate-200 px-1.5 py-0.5 rounded shadow-2xs" x-text="item.tipo_archivo"></span>
               </div>
 
               <!-- Etiqueta de Nombre de la Carpeta -->
@@ -254,10 +279,6 @@
                 <span 
                   class="block text-slate-800 group-hover:text-[#222B17] font-semibold text-xs leading-snug px-2 py-0.5 rounded-lg group-hover:bg-white/95 group-hover:shadow-xs transition-all duration-150 break-words line-clamp-2" 
                   x-text="item.titulo"
-                ></span>
-                <span 
-                  class="inline-block mt-1 text-[10px] font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-200/80 px-2 py-0.5 rounded-full font-medium shadow-2xs whitespace-nowrap" 
-                  x-text="item.badge"
                 ></span>
               </div>
 
@@ -277,10 +298,10 @@
             @click="window.location.href = item.url"
           >
             <div class="flex items-start gap-3 min-w-0">
-              <div class="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+              <div class="w-10 h-10 flex-shrink-0 flex items-center justify-center">
                 <img 
                   :src="item.icono_carpeta || (item.categoria === 'finanzas' || item.categoria === 'personal' ? '{% static 'img/folder_2577349.png' %}' : '{% static 'img/folder_2577158.png' %}')" 
-                  class="w-11 h-11 object-contain drop-shadow-sm group-hover:scale-105 transition-transform select-none pointer-events-none" 
+                  class="w-9 h-9 object-contain drop-shadow-sm group-hover:scale-105 transition-transform select-none pointer-events-none" 
                   alt="Carpeta" 
                 />
               </div>

@@ -8,7 +8,9 @@
   modalMovimiento: false,
   modalTransferencia: false,
   modalCuenta: false,
-  modalConciliacion: false
+  modalConciliacion: false,
+  modalLimpiarDemo: false,
+  modalTipoCambio: false
 }">
 
   <!-- Encabezado del Módulo -->
@@ -52,82 +54,118 @@
     </div>
   </div>
 
-  <!-- Barra de Pestañas -->
-  <div class="flex items-center justify-between border-b border-slate-200/80 pb-4">
-    <div class="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center space-x-1 border border-slate-200/50 shadow-2xs flex-wrap gap-y-1">
-
-      <button
-        @click="currentTab = 'flujo'"
-        :class="currentTab === 'flujo' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150 bg-white text-slate-900 shadow-xs font-bold"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+  <!-- Banner de Demostración Q1 2026 -->
+  {% if hay_datos_demo %}
+  <div class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>Flujo de Caja</span>
-      </button>
-
-      <button
-        @click="currentTab = 'caja'"
-        :class="currentTab === 'caja' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Datos de Demostración Activos</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">Q1 2026 (Ene - Mar)</span>
+        </div>
+        <p class="text-xs text-amber-700 mt-0.5">La plataforma cuenta con registros de prueba interconectados (cosecha, jornales, partes diarios, costos y P&L). Puedes purgarlos con un clic cuando cargues datos reales.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+      <button @click="modalLimpiarDemo = true" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        <span>Cajas y Bancos</span>
-      </button>
-
-      <button
-        @click="currentTab = 'proveedores'"
-        :class="currentTab === 'proveedores' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-        <span>Proveedores</span>
-      </button>
-
-      <button
-        @click="currentTab = 'clientes'"
-        :class="currentTab === 'clientes' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span>Clientes</span>
-      </button>
-
-      <button
-        @click="currentTab = 'cheques'"
-        :class="currentTab === 'cheques' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <span>Cheques</span>
-      </button>
-
-      <button
-        @click="currentTab = 'conciliacion'"
-        :class="currentTab === 'conciliacion' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-white/50'"
-        class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all duration-150"
-      >
-        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-        <span>Conciliaciones</span>
+        Limpiar datos de prueba
       </button>
     </div>
+  </div>
+  {% else %}
+  <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs">
+    <div class="flex items-center gap-2 text-slate-600">
+      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>El sistema se encuentra limpio, listo para operar con datos 100% reales.</span>
+    </div>
+    <form method="post" action="{% url 'finanzas:demo_poblar' %}">
+      {% csrf_token %}
+      <button type="submit" class="inline-flex items-center gap-1 text-[11px] font-semibold text-oliva-700 hover:text-oliva-900 bg-white hover:bg-oliva-50 border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        Cargar datos de ejemplo (Q1 2026)
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
-    <!-- Resumen rápido -->
-    <div class="hidden lg:flex items-center space-x-4 text-xs font-mono text-slate-500">
-      <span>ARS: <strong class="text-slate-800">${{ total_ars|floatformat:0 }}</strong></span>
-      <span>•</span>
-      <span>USD: <strong class="text-slate-800">u$s{{ total_usd|floatformat:0 }}</strong></span>
+  <!-- Barra de Encabezado de la Vista Activa & Coeficiente Mensual de Tipo de Cambio -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-oliva-800 shrink-0">
+        {% if active_tab == 'resultados' %}
+          <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        {% elif active_tab == 'caja' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+        {% elif active_tab == 'proveedores' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+        {% elif active_tab == 'clientes' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        {% elif active_tab == 'cheques' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        {% elif active_tab == 'conciliacion' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+        {% elif active_tab == 'plan_cuentas' %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+        {% else %}
+          <svg class="w-5 h-5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+        {% endif %}
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-extrabold text-slate-900 tracking-tight">
+            {% if active_tab == 'resultados' %}Resultados del Período (P&amp;L)
+            {% elif active_tab == 'caja' %}Cajas Físicas &amp; Cuentas Bancarias
+            {% elif active_tab == 'proveedores' %}Cuentas Corrientes Proveedores
+            {% elif active_tab == 'clientes' %}Cuentas Corrientes Clientes
+            {% elif active_tab == 'cheques' %}Cartera de Cheques
+            {% elif active_tab == 'conciliacion' %}Conciliaciones Bancarias
+            {% elif active_tab == 'plan_cuentas' %}Plan de Cuentas Contable
+            {% else %}Tesorería &amp; Flujo de Fondos{% endif %}
+          </h2>
+          <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-mono uppercase">
+            {{ active_tab }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Gestión centralizada en Pesos Argentinos (ARS). Navega entre secciones desde la barra lateral izquierda.
+        </p>
+      </div>
+    </div>
+
+    <!-- Indicador de Coeficiente Mensual y Liquidez Consolidada -->
+    <div class="flex flex-wrap items-center gap-3 self-end sm:self-center">
+      <!-- Botón Widget Coeficiente Mensual TC -->
+      <button 
+        @click="modalTipoCambio = true" 
+        type="button" 
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer group"
+        title="Ver y configurar el coeficiente de cotización mensual para convertir ARS a USD"
+      >
+        <span class="flex h-2 w-2 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span>TC Mensual: <strong class="font-mono text-slate-900">$1 USD = ${{ tc_vigente|floatformat:2 }} ARS</strong></span>
+        <span class="text-[10px] text-oliva-700 bg-oliva-50 px-1.5 py-0.5 rounded group-hover:bg-oliva-100 font-bold uppercase">Fijar TC</span>
+      </button>
+
+      <!-- Liquidez Consolidada ARS & USD -->
+      <div class="hidden md:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono">
+        <span class="text-slate-400">Total Cajas &amp; Bancos:</span>
+        <strong class="text-slate-800">${{ total_consolidado_ars|floatformat:0 }} ARS</strong>
+        <span class="text-slate-300">•</span>
+        <span class="text-slate-500">(u$s{{ total_consolidado_usd|floatformat:0 }} USD)</span>
+      </div>
     </div>
   </div>
 
@@ -173,6 +211,20 @@
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_conciliacion.html' %}
+    </div>
+
+    <div x-show="currentTab === 'plan_cuentas'" x-cloak
+      x-transition:enter="transition-opacity duration-150"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100">
+      {% include 'finanzas/partials/tab_plan_cuentas.html' with stats=plan_cuentas_stats cuentas_plan=cuentas_plan %}
+    </div>
+
+    <div x-show="currentTab === 'resultados'" x-cloak
+      x-transition:enter="transition-opacity duration-150"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100">
+      {% include 'finanzas/partials/tab_resultados.html' %}
     </div>
   </div>
 
@@ -221,6 +273,143 @@
     <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 z-10 overflow-hidden"
       x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
       {% include 'finanzas/partials/conciliacion_form_modal.html' %}
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmación Purga Datos de Prueba -->
+  <div x-show="modalLimpiarDemo" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" @click="modalLimpiarDemo = false"></div>
+    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 text-center border border-slate-200 z-10"
+      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+      <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">¿Limpiar datos de prueba del 1° Trimestre 2026?</h3>
+      <p class="text-xs text-slate-500 mt-2">
+        Se eliminarán de forma segura todos los movimientos transaccionales de Enero a Marzo 2026 (lotes de cosecha, asistencias, jornales, partes diarios, liquidaciones, cheques y cuadro de resultados Q1).
+      </p>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-medium mt-3 text-left">
+        <strong>Preservación total:</strong> La estructura base (Empresa, Fincas, Cuadros, Plan de Cuentas, Cuentas Bancarias, Proveedores y Usuarios) quedará completamente intacta.
+      </div>
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button @click="modalLimpiarDemo = false" type="button" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <form method="post" action="{% url 'finanzas:demo_limpiar' %}">
+          {% csrf_token %}
+          <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition-colors cursor-pointer">
+            Sí, eliminar datos de prueba
+          </button>
+        </form>
+      </div>
+    </div>
+  <!-- MODAL: Coeficiente de Tipo de Cambio Mensual -->
+  <div x-show="modalTipoCambio" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" @click="modalTipoCambio = false"></div>
+    <div class="relative bg-white rounded-3xl shadow-xl max-w-lg w-full p-6 border border-slate-200 z-10 overflow-hidden"
+      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold font-mono text-base">
+            $
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Coeficiente Mensual de Tipo de Cambio</h3>
+            <p class="text-xs text-slate-500">Conversión uniforme de Pesos Argentinos (ARS) a Dólares (USD)</p>
+          </div>
+        </div>
+        <button @click="modalTipoCambio = false" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Formulario para fijar/actualizar cotización de un mes -->
+      <form method="post" action="{% url 'finanzas:tipo_cambio_guardar' %}" class="mt-4 space-y-3.5">
+        {% csrf_token %}
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+          <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Fijar Cotización Oficial por Mes</div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Año</label>
+              <select name="ano" class="w-full text-xs font-mono font-medium rounded-xl border-slate-200 bg-white px-2.5 py-1.5 focus:ring-oliva-500 focus:border-oliva-500">
+                {% for a in anos_choices %}
+                  <option value="{{ a }}" {% if a == 2026 %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Mes</label>
+              <select name="mes" class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-white px-2.5 py-1.5 focus:ring-oliva-500 focus:border-oliva-500">
+                {% for num, nombre in meses_choices %}
+                  <option value="{{ num }}" {% if num == 3 %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-span-2 sm:col-span-1">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">TC ($ ARS/USD)</label>
+              <input type="number" step="0.01" min="1" name="tc" value="{{ tc_vigente|stringformat:'.2f' }}" required class="w-full text-xs font-mono font-bold rounded-xl border-slate-200 bg-white px-2.5 py-1.5 focus:ring-oliva-500 focus:border-oliva-500 text-right">
+            </div>
+          </div>
+          <div class="mt-2.5">
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Fuente / Observación</label>
+            <input type="text" name="fuente" value="Banco Nación (BNA) / Oficial" placeholder="Ej. BNA Divisa Vendedor / Cierre Mensual" class="w-full text-xs rounded-xl border-slate-200 bg-white px-2.5 py-1.5 focus:ring-oliva-500 focus:border-oliva-500">
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              Guardar Cotización Mensual
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Historial de Cotizaciones Fijadas -->
+      <div class="mt-4">
+        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">Cotizaciones Históricas Fijadas</div>
+        <div class="max-h-40 overflow-y-auto border border-slate-200/70 rounded-2xl divide-y divide-slate-100">
+          {% if tipos_cambio_recientes %}
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 sticky top-0">
+                <tr>
+                  <th class="py-2 px-3">Período</th>
+                  <th class="py-2 px-3 text-right">1 USD equivale a</th>
+                  <th class="py-2 px-3">Fuente</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {% for tc_item in tipos_cambio_recientes %}
+                  <tr class="hover:bg-slate-50/80 transition-colors font-mono">
+                    <td class="py-2 px-3 font-semibold text-slate-800 font-sans">
+                      {{ tc_item.get_mes_display }} {{ tc_item.ano }}
+                    </td>
+                    <td class="py-2 px-3 text-right font-bold text-emerald-700">
+                      ${{ tc_item.tc|floatformat:2 }} ARS
+                    </td>
+                    <td class="py-2 px-3 text-[11px] text-slate-400 font-sans truncate max-w-[140px]">
+                      {{ tc_item.fuente|default:"Oficial" }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="p-3 text-center text-xs text-slate-400">
+              No hay cotizaciones previas cargadas. Utiliza el formulario superior para fijar el primer mes.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
     </div>
   </div>
 

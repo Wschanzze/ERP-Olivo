@@ -84,6 +84,15 @@ class CentroDeCosto(TimeStampedModel):
     nombre = models.CharField(max_length=150, verbose_name=_("Nombre del Centro de Costo"))
     tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default='PRODUCTIVO_CAMPO', verbose_name=_("Tipo"))
     finca = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, related_name='centros_de_costo', verbose_name=_("Finca Asociada"))
+    cuenta_contable_defecto = models.ForeignKey(
+        'finanzas.CuentaContable',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='centros_de_costo',
+        verbose_name=_("Cuenta Contable por Defecto"),
+        help_text=_("Cuenta de costo o gasto asociada habitualmente a este centro.")
+    )
     activo = models.BooleanField(default=True, verbose_name=_("Activo"))
 
     class Meta:

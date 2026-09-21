@@ -15,6 +15,7 @@ class OrdenDeTrabajo(TimeStampedModel):
         FERTIRRIEGO = 'FERTIRRIEGO', _('Fertirriego / Nutrición')
         DESMALEZADO = 'DESMALEZADO', _('Desmalezado Mecánico / Químico')
         MANTENIMIENTO_RIEGO = 'MANTENIMIENTO_RIEGO', _('Mantenimiento y Reparación de Riego')
+        RIEGO = 'RIEGO', _('Riego (Registro Hídrico)')
         COSECHA_MANUAL = 'COSECHA_MANUAL', _('Cosecha Manual')
         COSECHA_MECANICA = 'COSECHA_MECANICA', _('Cosecha Mecanizada (Vibrador)')
         LABOR_SUELO = 'LABOR_SUELO', _('Laboreo de Suelo / Subsolado')
@@ -166,3 +167,47 @@ class ParteDiarioInsumo(TimeStampedModel):
 
     def __str__(self):
         return f"{self.insumo.nombre} ({self.cantidad_utilizada} {self.insumo.unidad_medida}) en Parte #{self.parte_diario_id}"
+
+
+class ParteDiarioRiego(TimeStampedModel):
+    """Registro específico de datos hídricos para partes diarios de tipo RIEGO."""
+    class TipoAgua(models.TextChoices):
+        POZO = 'POZO', _('Pozo Propio')
+        CANAL = 'CANAL', _('Canal / Acequia')
+        RESERVORIO = 'RESERVORIO', _('Reservorio / Pileta')
+        RED_PÚBLICA = 'RED', _('Red Pública')
+
+    parte_diario = models.OneToOneField(
+        ParteDiario,
+        on_delete=models.CASCADE,
+        related_name='datos_riego',
+        verbose_name=_("Parte Diario")
+    )
+    tipo_agua = models.CharField(max_length=15, choices=TipoAgua.choices, default=TipoAgua.POZO, verbose_name=_("Fuente de Agua"))
+    horas_bomba = models.DecimalField(max_digits=5, decimal_places=1, default=0.0, verbose_name=_("Horas de Bomba"))
+    caudal_m3_hora = models.DecimalField(max_digits=7, decimal_places=2, default=0.0, verbose_name=_("Caudal (m³/hora)"))
+    conductividad_electrica = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Conductividad Eléctrica (µS/cm)"),
+        help_text=_("Medición de salinidad del agua de riego")
+    )
+    temperatura_agua = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True, verbose_name=_("Temp. Agua (°C)"))
+    observaciones_riego = models.TextField(blank=True, verbose_name=_("Observaciones de Riego"))
+
+    class Meta:
+        verbose_name = _("Datos de Riego")
+        verbose_name_plural = _("Datos de Riego")
+
+    def __str__(self):
+        return f"Riego Parte #{self.parte_diario_id} — {self.total_m3_aplicados:.1f} m³"
+
+    @property
+    def total_m3_aplicados(self):
+        return float(self.horas_bomba) * float(self.caudal_m3_hora)
+
+    @property
+    def m3_por_hectarea(self):
+        ha = float(self.parte_diario.cuadro.hectareas_netas)
+        if ha > 0:
+            return round(self.total_m3_aplicados / ha, 2)
+        return 0

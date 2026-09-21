@@ -1,0 +1,614 @@
+{% load humanize %}
+
+<div class="space-y-6" x-data="{
+    modalNuevoCuadro: false,
+    modalEditarLinea: false,
+    modalEditarNotas: false,
+    vistaModo: 'simplificado',
+    lineaEditando: {
+        id: null,
+        codigo: '',
+        nombre: '',
+        monto_real: 0,
+        monto_presupuestado: 0,
+        observaciones: ''
+    },
+    abrirEditarLinea(id, codigo, nombre, real, presup, obs) {
+        this.lineaEditando = {
+            id: id,
+            codigo: codigo,
+            nombre: nombre,
+            monto_real: real,
+            monto_presupuestado: presup,
+            observaciones: obs || ''
+        };
+        this.modalEditarLinea = true;
+    },
+    seccionesColapsadas: {}
+}">
+
+  {% if not cuadro_activo %}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-8 text-center max-w-lg mx-auto shadow-xs">
+      <div class="w-12 h-12 rounded-xl bg-oliva-50 text-oliva-700 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-slate-800">No hay cuadros de resultados registrados</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4">Crea el primer Estado de Resultados del período para comenzar a consolidar los números de la empresa.</p>
+      <button @click="modalNuevoCuadro = true" class="inline-flex items-center px-4 py-2 bg-oliva-700 hover:bg-oliva-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Crear Estado de Resultados
+      </button>
+    </div>
+  {% else %}
+
+    <!-- 1. Barra de Control y Selector de Período -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        
+        <!-- Selector y Título -->
+        <div class="space-y-1.5 min-w-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider
+              {% if cuadro_activo.estado == 'APROBADO' %}bg-emerald-50 text-emerald-700 border border-emerald-200/80
+              {% elif cuadro_activo.estado == 'REVISION' %}bg-blue-50 text-blue-700 border border-blue-200/80
+              {% else %}bg-amber-50 text-amber-700 border border-amber-200/80{% endif %}">
+              <span class="w-1.5 h-1.5 rounded-full {% if cuadro_activo.estado == 'APROBADO' %}bg-emerald-500{% elif cuadro_activo.estado == 'REVISION' %}bg-blue-500{% else %}bg-amber-500{% endif %}"></span>
+              {{ cuadro_activo.get_estado_display }}
+            </span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+              {{ cuadro_activo.get_tipo_periodo_display }}
+            </span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-mono text-slate-500">
+              {{ cuadro_activo.fecha_inicio|date:"d/m/Y" }} al {{ cuadro_activo.fecha_fin|date:"d/m/Y" }}
+            </span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md flex items-center gap-1.5 font-mono">
+              <span>ARS ($)</span>
+              <span class="text-slate-400">|</span>
+              <span class="text-emerald-700">1 USD = ${{ tc_cuadro|floatformat:2 }}</span>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-black text-slate-900 tracking-tight truncate">
+              {{ cuadro_activo.titulo }}
+            </h2>
+            
+            <!-- Dropdown selector de otros períodos -->
+            {% if cuadros_resultado.count > 1 %}
+              <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                <button @click="open = !open" type="button" class="inline-flex items-center gap-1 text-xs text-oliva-700 hover:text-oliva-900 font-semibold bg-oliva-50 hover:bg-oliva-100/80 px-2 py-1 rounded-lg transition-colors border border-oliva-200/60">
+                  <span>Cambiar período</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div x-show="open" x-cloak class="absolute left-0 mt-1 w-72 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-30">
+                  <div class="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">Períodos Guardados</div>
+                  {% for c in cuadros_resultado %}
+                    <a href="?tab=resultados&cuadro_id={{ c.id }}" class="flex items-center justify-between px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors {% if c.id == cuadro_activo.id %}bg-oliva-50 font-bold text-oliva-800{% endif %}">
+                      <span class="truncate">{{ c.titulo }}</span>
+                      <span class="text-[10px] text-slate-400 font-mono ml-2">{{ c.fecha_fin|date:"Y" }}</span>
+                    </a>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button 
+            @click="modalEditarNotas = true" 
+            class="inline-flex items-center px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Editar Notas &amp; Parámetros
+          </button>
+
+          <a 
+            href="{% url 'finanzas:cuadro_resultado_print' cuadro_activo.id %}" 
+            target="_blank" 
+            class="inline-flex items-center px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Imprimir / Informe Directorio
+          </a>
+
+          <button 
+            @click="modalNuevoCuadro = true" 
+            class="inline-flex items-center px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            + Nuevo Período
+          </button>
+        </div>
+
+      </div>
+
+      <!-- 2. Parámetros Operativos e Industriales (Olivícolas) -->
+      <div class="mt-4 pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100">
+          <div class="text-slate-400 font-medium">Aceituna Cosechada / Molida</div>
+          <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+            {{ cuadro_activo.volumen_aceituna_kg|floatformat:0|intcomma }} <span class="text-[11px] font-normal text-slate-500">kg</span>
+            <span class="text-[10px] text-slate-400 font-normal">({{ cuadro_activo.volumen_aceituna_kg|default_if_none:0|floatformat:0|intcomma|slice:":-3" }} Tn)</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100">
+          <div class="text-slate-400 font-medium">Aceite Virgen Extra Elaborado</div>
+          <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+            {{ cuadro_activo.volumen_aceite_litros|floatformat:0|intcomma }} <span class="text-[11px] font-normal text-slate-500">litros</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100">
+          <div class="text-slate-400 font-medium">Rendimiento Graso Industrial</div>
+          <div class="text-sm font-bold text-emerald-700 font-mono mt-0.5">
+            {{ cuadro_activo.rendimiento_graso_pct|floatformat:2 }}%
+          </div>
+        </div>
+
+        <div class="bg-slate-50/80 rounded-xl p-2.5 border border-slate-100">
+          <div class="text-slate-400 font-medium">Costo de Producción por Litro</div>
+          <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+            ${{ cuadro_activo.costo_unitario_litro_aceite|floatformat:2 }} <span class="text-[11px] font-normal text-slate-500">/ litro aceite</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 3. KPI Cards Ejecutivos de Resultados (Base Uniforme ARS + Equivalente USD) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Ventas Netas Totales -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>Ventas Netas Totales</span>
+          <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md font-mono text-[10px]">100%</span>
+        </div>
+        <div class="mt-2 flex flex-col">
+          <div class="text-2xl font-black text-slate-900 font-mono">
+            ${{ cuadro_simplificado.ventas_totales_ars|default:cuadro_activo.ventas_totales|floatformat:0|intcomma }}
+            <span class="text-xs text-slate-400 font-sans font-medium">ARS</span>
+          </div>
+          <div class="text-xs text-slate-500 font-mono mt-0.5">
+            ≈ u$s{{ cuadro_simplificado.ventas_totales_usd|floatformat:0|intcomma }} USD
+          </div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5 pt-1 border-t border-slate-100">
+          <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+          <span>Facturación neta campo y aceite</span>
+        </div>
+      </div>
+
+      <!-- Margen Bruto (Utilidad Bruta) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>Margen Bruto</span>
+          <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md font-mono text-[10px] font-bold">
+            {{ cuadro_simplificado.margen_bruto_pct|default:cuadro_activo.margen_bruto_pct }}%
+          </span>
+        </div>
+        <div class="mt-2 flex flex-col">
+          <div class="text-2xl font-black text-slate-900 font-mono">
+            ${{ cuadro_simplificado.margen_bruto_ars|default:cuadro_activo.margen_bruto|floatformat:0|intcomma }}
+            <span class="text-xs text-slate-400 font-sans font-medium">ARS</span>
+          </div>
+          <div class="text-xs text-slate-500 font-mono mt-0.5">
+            ≈ u$s{{ cuadro_simplificado.margen_bruto_usd|floatformat:0|intcomma }} USD
+          </div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5 pt-1 border-t border-slate-100">
+          <span class="text-slate-400">Margen s/Vtas:</span>
+          <span class="font-mono font-medium text-emerald-700 font-bold">{{ cuadro_simplificado.margen_bruto_pct }}%</span>
+        </div>
+      </div>
+
+      <!-- EBITDA (Resultado Operativo) -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-oliva-50/50 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>EBITDA Operativo</span>
+          <span class="px-2 py-0.5 bg-oliva-50 text-oliva-800 rounded-md font-mono text-[10px] font-bold">
+            {{ cuadro_simplificado.ebitda_pct|default:cuadro_activo.margen_ebitda_pct }}%
+          </span>
+        </div>
+        <div class="mt-2 flex flex-col">
+          <div class="text-2xl font-black text-slate-900 font-mono">
+            ${{ cuadro_simplificado.ebitda_ars|default:cuadro_activo.ebitda|floatformat:0|intcomma }}
+            <span class="text-xs text-slate-400 font-sans font-medium">ARS</span>
+          </div>
+          <div class="text-xs text-slate-500 font-mono mt-0.5">
+            ≈ u$s{{ cuadro_simplificado.ebitda_usd|floatformat:0|intcomma }} USD
+          </div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5 pt-1 border-t border-slate-100">
+          <span class="text-slate-400">Generación Operativa:</span>
+          <span class="font-mono font-medium text-oliva-800 font-bold">{{ cuadro_simplificado.ebitda_pct }}%</span>
+        </div>
+      </div>
+
+      <!-- Resultado Neto Final -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 {% if cuadro_activo.resultado_neto >= 0 %}bg-emerald-50/50{% else %}bg-rose-50/50{% endif %} rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>Resultado Neto Final</span>
+          <span class="px-2 py-0.5 {% if cuadro_activo.resultado_neto >= 0 %}bg-emerald-50 text-emerald-700{% else %}bg-rose-50 text-rose-700{% endif %} rounded-md font-mono text-[10px] font-bold">
+            {{ cuadro_simplificado.resultado_neto_pct|default:cuadro_activo.margen_neto_pct }}%
+          </span>
+        </div>
+        <div class="mt-2 flex flex-col">
+          <div class="text-2xl font-black {% if cuadro_activo.resultado_neto >= 0 %}text-emerald-700{% else %}text-rose-700{% endif %} font-mono">
+            ${{ cuadro_simplificado.resultado_neto_ars|default:cuadro_activo.resultado_neto|floatformat:0|intcomma }}
+            <span class="text-xs text-slate-400 font-sans font-medium">ARS</span>
+          </div>
+          <div class="text-xs text-slate-500 font-mono mt-0.5">
+            ≈ u$s{{ cuadro_simplificado.resultado_neto_usd|floatformat:0|intcomma }} USD
+          </div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex items-center gap-1.5 pt-1 border-t border-slate-100">
+          <span class="text-slate-400">Margen Neto:</span>
+          <span class="font-mono font-medium text-emerald-700 font-bold">{{ cuadro_simplificado.resultado_neto_pct }}%</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 4. Cuadro de Resultados: Selector de Modo & Tablas -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      
+      <!-- Encabezado con Selector de Modo de Vista -->
+      <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-800" x-text="vistaModo === 'simplificado' ? 'Cuadro de Resultados de Manejo Interno (Gerencial)' : 'Estructura Detallada del Plan de Cuentas Contable'"></h3>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold uppercase font-mono" x-show="vistaModo === 'simplificado'">Vista Gerencial</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold uppercase font-mono" x-show="vistaModo === 'detallado'">Auditoría Contable</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5" x-text="vistaModo === 'simplificado' ? 'Resumen gerencial de ventas, márgenes agroindustriales y resultado neto operativo expresado en ARS y USD.' : 'Detalle exhaustivo de todas las cuentas imputadas según el Plan de Cuentas Oficial.'"></p>
+        </div>
+
+        <!-- Selector Interactivo de Vista -->
+        <div class="inline-flex p-1 bg-slate-200/70 rounded-xl border border-slate-200 text-xs shadow-2xs self-start md:self-auto">
+          <button 
+            type="button" 
+            @click="vistaModo = 'simplificado'"
+            :class="vistaModo === 'simplificado' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+            class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            <span>Vista Gerencial Simplificada</span>
+          </button>
+          <button 
+            type="button" 
+            @click="vistaModo = 'detallado'"
+            :class="vistaModo === 'detallado' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+            class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            <span>Detalle Plan de Cuentas</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLA A: VISTA GERENCIAL SIMPLIFICADA (MANEJO INTERNO EMPRESARIAL) -->
+      <div x-show="vistaModo === 'simplificado'" class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead>
+            <tr class="bg-slate-100/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+              <th class="py-3 px-4 w-5/12">Concepto Gerencial / Margen Operativo</th>
+              <th class="py-3 px-3 text-right w-2/12">Real ($ ARS)</th>
+              <th class="py-3 px-3 text-right w-2/12">Equiv. USD (u$s)</th>
+              <th class="py-3 px-3 text-right w-1/12">Presupuesto ($)</th>
+              <th class="py-3 px-3 text-right w-1/12">Desvío</th>
+              <th class="py-3 px-3 text-right w-1/12">% s/ Ventas</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for bloque in cuadro_simplificado.bloques %}
+              {% if bloque.tipo == 'seccion' %}
+                <!-- Encabezado de Bloque Operativo -->
+                <tr class="{{ bloque.bg_header }} border-t border-slate-200 font-bold">
+                  <td class="py-2.5 px-4 {{ bloque.text_header }} uppercase tracking-wider text-xs font-black">
+                    {{ bloque.titulo }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-xs {{ bloque.text_header }} font-black">
+                    ${{ bloque.subtotal_ars|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-xs {{ bloque.text_header }}">
+                    u$s{{ bloque.subtotal_usd|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-xs text-slate-600">
+                    ${{ bloque.presup_ars|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-xs text-slate-400">-</td>
+                  <td class="py-2.5 px-3 text-right font-mono text-xs {{ bloque.text_header }} font-black">
+                    {{ bloque.pct_ventas }}%
+                  </td>
+                </tr>
+
+                <!-- Items de la sección -->
+                {% for it in bloque.items %}
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-2 px-4 pl-7">
+                      <div class="font-medium text-slate-800">{{ it.label }}</div>
+                      {% if it.obs %}
+                        <div class="text-[11px] text-slate-400 italic mt-0.5">{{ it.obs }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-semibold text-slate-900">
+                      ${{ it.monto_ars|floatformat:0|intcomma }}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-slate-600">
+                      u$s{{ it.monto_usd|floatformat:0|intcomma }}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-slate-500">
+                      ${{ it.presup_ars|floatformat:0|intcomma }}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-[11px]">
+                      {% if it.desvio_monto_ars != 0 %}
+                        <span class="{% if bloque.key == 'ingresos' %}{% if it.desvio_monto_ars >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %}{% else %}{% if it.desvio_monto_ars <= 0 %}text-emerald-700{% else %}text-rose-600{% endif %}{% endif %} font-semibold">
+                          {% if it.desvio_monto_ars > 0 %}+{% endif %}{{ it.desvio_pct }}%
+                        </span>
+                      {% else %}
+                        <span class="text-slate-400">-</span>
+                      {% endif %}
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-slate-600">
+                      {{ it.pct_ventas }}%
+                    </td>
+                  </tr>
+                {% endfor %}
+
+              {% elif bloque.tipo == 'indicador_clave' %}
+                <!-- Fila Resaltada de Indicador Clave / Margen Operativo -->
+                <tr class="{{ bloque.badge_bg }} font-black text-xs border-y-2">
+                  <td class="py-3 px-4">
+                    <div class="uppercase tracking-wider font-extrabold">{{ bloque.titulo }}</div>
+                    <div class="text-[11px] font-normal text-slate-600 mt-0.5">{{ bloque.descripcion }}</div>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-sm font-black">
+                    ${{ bloque.monto_ars|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-xs font-bold">
+                    u$s{{ bloque.monto_usd|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-400">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-400">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-xs font-black">
+                    {{ bloque.pct_ventas }}%
+                  </td>
+                </tr>
+
+              {% elif bloque.tipo == 'indicador_final' %}
+                <!-- Fila Final de Resultado Neto -->
+                <tr class="{{ bloque.badge_bg }} text-white font-black text-sm border-t-2 border-slate-900">
+                  <td class="py-4 px-4">
+                    <div class="uppercase tracking-wider font-black text-sm">{{ bloque.titulo }}</div>
+                    <div class="text-[11px] font-normal text-emerald-100 mt-0.5">{{ bloque.descripcion }}</div>
+                  </td>
+                  <td class="py-4 px-3 text-right font-mono text-base font-black text-emerald-200">
+                    ${{ bloque.monto_ars|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-4 px-3 text-right font-mono text-sm font-bold text-white">
+                    u$s{{ bloque.monto_usd|floatformat:0|intcomma }}
+                  </td>
+                  <td class="py-4 px-3 text-right font-mono text-slate-300">-</td>
+                  <td class="py-4 px-3 text-right font-mono text-slate-300">-</td>
+                  <td class="py-4 px-3 text-right font-mono text-base font-black text-emerald-200">
+                    {{ bloque.pct_ventas }}%
+                  </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLA B: VISTA CONTABLE DETALLADA (PLAN DE CUENTAS 56 SUBCUENTAS) -->
+      <div x-show="vistaModo === 'detallado'" class="overflow-x-auto" x-cloak>
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead>
+            <tr class="bg-slate-100/70 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+              <th class="py-3 px-4 w-5/12">Cuenta Contable / Rubro</th>
+              <th class="py-3 px-3 text-right w-2/12">Real ($)</th>
+              <th class="py-3 px-3 text-right w-2/12">Presupuesto ($)</th>
+              <th class="py-3 px-3 text-right w-1/12">Desvío</th>
+              <th class="py-3 px-3 text-right w-1/12">% s/ Ventas</th>
+              <th class="py-3 px-3 text-center w-1/12">Acción</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+
+            {% for sec in secciones_resultado %}
+              <!-- Encabezado de Sección (Colapsable) -->
+              <tr class="bg-slate-50/90 font-bold border-t-2 border-slate-200/60 hover:bg-slate-100/80 transition-colors">
+                <td colspan="6" class="py-2.5 px-4">
+                  <div class="flex items-center justify-between">
+                    <button 
+                      type="button" 
+                      @click="seccionesColapsadas['{{ sec.key }}'] = !seccionesColapsadas['{{ sec.key }}']"
+                      class="flex items-center space-x-2 text-slate-800 hover:text-oliva-800 transition-colors cursor-pointer text-xs uppercase tracking-wide">
+                      <svg 
+                        class="w-3.5 h-3.5 text-slate-400 transform transition-transform" 
+                        :class="seccionesColapsadas['{{ sec.key }}'] ? '-rotate-90' : 'rotate-0'"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <span>{{ sec.label }}</span>
+                      <span class="text-[10px] font-normal text-slate-400 font-mono">({{ sec.lineas|length }} cuentas)</span>
+                    </button>
+                    
+                    <div class="flex items-center space-x-6 text-xs font-mono">
+                      <span class="text-slate-500">Subtotal Real: <strong class="text-slate-900">${{ sec.total_real|floatformat:0|intcomma }}</strong></span>
+                      <span class="text-slate-400">Presup: ${{ sec.total_presup|floatformat:0|intcomma }}</span>
+                      <span class="px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 font-bold">{{ sec.pct_ventas }}%</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Líneas de la Sección -->
+              {% for linea in sec.lineas %}
+                <tr 
+                  x-show="!seccionesColapsadas['{{ sec.key }}']"
+                  class="hover:bg-slate-50/60 transition-colors group">
+                  
+                  <!-- Código y Nombre de Cuenta -->
+                  <td class="py-2 px-4 pl-8">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-mono text-[11px] text-slate-400 group-hover:text-oliva-700 transition-colors">
+                        {{ linea.cuenta_contable.codigo }}
+                      </span>
+                      <span class="font-medium text-slate-800">{{ linea.cuenta_contable.nombre }}</span>
+                    </div>
+                    {% if linea.observaciones %}
+                      <div class="text-[11px] text-slate-400 italic pl-5 mt-0.5 truncate max-w-md">
+                        {{ linea.observaciones }}
+                      </div>
+                    {% endif %}
+                  </td>
+
+                  <!-- Real -->
+                  <td class="py-2 px-3 text-right font-mono font-medium {% if linea.monto_real > 0 %}text-slate-900{% elif linea.monto_real < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">
+                    ${{ linea.monto_real|floatformat:0|intcomma }}
+                  </td>
+
+                  <!-- Presupuesto -->
+                  <td class="py-2 px-3 text-right font-mono text-slate-500">
+                    ${{ linea.monto_presupuestado|floatformat:0|intcomma }}
+                  </td>
+
+                  <!-- Desvío -->
+                  <td class="py-2 px-3 text-right font-mono text-[11px]">
+                    {% if linea.desvio_monto != 0 %}
+                      <span class="{% if linea.seccion == 'INGRESOS_OPERATIVOS' %}{% if linea.desvio_monto >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %}{% else %}{% if linea.desvio_monto <= 0 %}text-emerald-700{% else %}text-rose-600{% endif %}{% endif %} font-medium">
+                        {% if linea.desvio_monto > 0 %}+{% endif %}{{ linea.desvio_porcentaje }}%
+                      </span>
+                    {% else %}
+                      <span class="text-slate-400">-</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- % sobre Ventas -->
+                  <td class="py-2 px-3 text-right font-mono text-slate-600">
+                    {{ linea.porcentaje_ventas }}%
+                  </td>
+
+                  <!-- Acción: Editar Monto -->
+                  <td class="py-2 px-3 text-center">
+                    <button 
+                      type="button"
+                      @click="abrirEditarLinea({{ linea.id }}, '{{ linea.cuenta_contable.codigo }}', '{{ linea.cuenta_contable.nombre|escapejs }}', '{{ linea.monto_real }}', '{{ linea.monto_presupuestado }}', '{{ linea.observaciones|escapejs }}')"
+                      class="inline-flex items-center justify-center p-1 rounded-lg text-slate-400 hover:text-oliva-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Editar importe de esta línea">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                  </td>
+
+                </tr>
+              {% endfor %}
+
+              <!-- Fila especial de Margen Bruto tras los costos -->
+              {% if sec.key == 'COSTOS_VENTAS' %}
+                <tr class="bg-emerald-50/80 border-y-2 border-emerald-300 font-extrabold text-xs text-emerald-900">
+                  <td class="py-3 px-4 uppercase tracking-wider flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>= UTILIDAD BRUTA (MARGEN BRUTO)</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-sm">${{ cuadro_activo.margen_bruto|floatformat:0|intcomma }}</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-emerald-800">{{ cuadro_activo.margen_bruto_pct }}%</td>
+                  <td></td>
+                </tr>
+              {% endif %}
+
+              <!-- Fila especial de EBITDA tras gastos de estructura -->
+              {% if sec.key == 'GASTOS_COMERCIALIZACION' %}
+                <tr class="bg-oliva-50/80 border-y-2 border-oliva-300 font-extrabold text-xs text-oliva-950">
+                  <td class="py-3 px-4 uppercase tracking-wider flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span>= RESULTADO OPERATIVO (EBITDA)</span>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-sm">${{ cuadro_activo.ebitda|floatformat:0|intcomma }}</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-600">-</td>
+                  <td class="py-3 px-3 text-right font-mono text-oliva-800">{{ cuadro_activo.margen_ebitda_pct }}%</td>
+                  <td></td>
+                </tr>
+              {% endif %}
+
+            {% endfor %}
+
+            <!-- FILA FINAL: RESULTADO NETO DEL EJERCICIO -->
+            <tr class="bg-slate-900 border-t-2 border-slate-950 text-white font-black text-sm">
+              <td class="py-4 px-4 uppercase tracking-wider flex items-center space-x-2">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <span>= RESULTADO NETO DEL EJERCICIO</span>
+              </td>
+              <td class="py-4 px-3 text-right font-mono text-base text-emerald-400">
+                ${{ cuadro_activo.resultado_neto|floatformat:0|intcomma }}
+              </td>
+              <td class="py-4 px-3 text-right font-mono text-slate-400">-</td>
+              <td class="py-4 px-3 text-right font-mono text-slate-400">-</td>
+              <td class="py-4 px-3 text-right font-mono text-emerald-400">
+                {{ cuadro_activo.margen_neto_pct }}%
+              </td>
+              <td></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- 5. Notas Ejecutivas y Conclusiones del Directorio -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-oliva-50 text-oliva-700 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Conclusiones y Notas Ejecutivas para el Directorio</h3>
+            <p class="text-xs text-slate-500">Dictamen analítico sobre márgenes, precios de mercado internacional y evolución de costos de campaña.</p>
+          </div>
+        </div>
+
+        <button 
+          @click="modalEditarNotas = true" 
+          class="text-xs text-oliva-700 hover:text-oliva-900 font-semibold px-2.5 py-1 bg-oliva-50 rounded-lg transition-colors border border-oliva-200/60">
+          Editar Notas
+        </button>
+      </div>
+
+      <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 text-xs text-slate-700 whitespace-pre-line leading-relaxed font-sans">
+        {{ cuadro_activo.notas_gerencia|default:"Sin notas cargadas aún. Haga clic en 'Editar Notas' para incorporar conclusiones analíticas para el Directorio." }}
+      </div>
+    </div>
+
+  {% endif %}
+
+  <!-- INCLUSIÓN DE MODALES -->
+  {% include 'finanzas/partials/cuadro_resultado_modal_crear.html' %}
+  {% include 'finanzas/partials/linea_resultado_modal_editar.html' %}
+  {% include 'finanzas/partials/cuadro_resultado_modal_notas.html' %}
+
+</div>

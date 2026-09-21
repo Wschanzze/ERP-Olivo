@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fichaje por QR | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-md mx-auto">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Fichaje por QR</h1>
+    <p class="text-sm text-slate-500 mt-1">Pegá o ingresá el código UUID del QR del empleado para registrar su asistencia.</p>
+  </div>
+
+  {% if confirmacion %}
+  <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex flex-col items-center gap-4">
+    <div class="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="text-center">
+      {% if creada %}
+        <h2 class="text-lg font-bold text-emerald-800">¡Asistencia registrada!</h2>
+        <p class="text-sm text-emerald-700 mt-1">{{ confirmacion.nombre_completo }} — {{ confirmacion.get_rol_laboral_display }}</p>
+        <p class="text-xs text-emerald-600 font-mono mt-1">{{ asistencia.fecha|date:"d/m/Y" }} · {{ asistencia.created_at|date:"H:i" }} hs · {{ asistencia.finca.nombre }}</p>
+      {% else %}
+        <h2 class="text-lg font-bold text-amber-800">Ya estaba fichado</h2>
+        <p class="text-sm text-amber-700 mt-1">{{ confirmacion.nombre_completo }} ya tiene asistencia registrada hoy.</p>
+      {% endif %}
+    </div>
+    <a href="{% url 'personal:fichaje_qr' %}" class="text-xs font-bold text-emerald-700 hover:underline">→ Fichar otro empleado</a>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+    <p class="text-sm font-semibold text-rose-700">⚠ {{ error }}</p>
+  </div>
+  {% endif %}
+
+  {% if not confirmacion %}
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-2">Código UUID del QR</label>
+        <input
+          type="text"
+          name="uuid"
+          placeholder="Escanear o pegar UUID..."
+          autofocus
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3D4A2A] focus:border-transparent"
+        >
+        <p class="text-[10px] text-slate-400 mt-1 font-mono">Formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</p>
+      </div>
+      <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-[#3D4A2A] text-white text-sm font-bold px-4 py-3 rounded-xl hover:bg-[#2A331D] transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Registrar Asistencia
+      </button>
+    </form>
+
+    <div class="border-t border-slate-100 pt-4 text-center">
+      <p class="text-xs text-slate-500 mb-2">¿Necesitas obtener o imprimir el código QR de un empleado?</p>
+      <a href="{% url 'personal:empleados_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#EAEFE3] text-[#3D4A2A] hover:bg-[#D5DFC9] text-xs font-bold rounded-xl border border-[#D5DFC9] transition-colors shadow-2xs">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+        Ir a Padrón de Legajos → Ver/Imprimir QR
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

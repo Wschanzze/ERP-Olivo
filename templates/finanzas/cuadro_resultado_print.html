@@ -1,0 +1,329 @@
+{% load humanize static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ cuadro.titulo }} - Informe Ejecutivo Directorio</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="{% static 'favicon.ico' %}?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icono.png' %}?v=2">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; font-size: 11px !important; }
+      .page-break { page-break-before: always; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body x-data="{ modo: 'simplificado' }" class="bg-slate-100 text-slate-900 font-sans p-4 sm:p-8 print:p-0">
+
+  <!-- Print Toolbar (Hidden during print) -->
+  <div class="max-w-5xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3 no-print bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+    <div class="flex items-center space-x-2">
+      <a href="/finanzas/?tab=resultados&cuadro_id={{ cuadro.id }}" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Volver a Finanzas
+      </a>
+      <span class="text-slate-300">|</span>
+      <span class="text-xs font-medium text-slate-500">Informe Imprimible para Directorio</span>
+    </div>
+
+    <!-- Toggle de Modo para Impresión -->
+    <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+      <button 
+        type="button"
+        @click="modo = 'simplificado'"
+        :class="modo === 'simplificado' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer">
+        📊 Vista Gerencial
+      </button>
+      <button 
+        type="button"
+        @click="modo = 'detallado'"
+        :class="modo === 'detallado' ? 'bg-white shadow-xs text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer">
+        📑 Plan de Cuentas
+      </button>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+      <button 
+        onclick="window.print()" 
+        class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        Imprimir / PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Document Sheet -->
+  <div class="max-w-5xl mx-auto bg-white p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200/80 print:border-none print:shadow-none print:p-0">
+    
+    <!-- Corporate Header -->
+    <div class="border-b-2 border-slate-900 pb-6 mb-6">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center space-x-4">
+          <img src="{% static 'icono.png' %}" alt="Logo Olivar del Valle" class="w-14 h-14 object-contain">
+          <div>
+            <div class="text-[11px] font-black uppercase tracking-widest text-[#4E5F36]">ERP AGROINDUSTRIAL OLIVÍCOLA</div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 mt-0.5">
+              {{ empresa.razon_social|default:"Olivar del Valle Agroindustrial S.A." }}
+            </h1>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+              División Agronómica, Planta de Extracción Almazara y Fraccionamiento
+            </p>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="inline-block px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-800 uppercase tracking-wide">
+            {{ cuadro.get_estado_display }}
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 mt-1.5">
+            Emisión: {% now "d/m/Y H:i" %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Subtitle Bar -->
+      <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div>
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Documento Ejecutivo</div>
+          <div class="text-base font-extrabold text-slate-800">{{ cuadro.titulo }}</div>
+        </div>
+        <div>
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Período Fiscal / Campaña</div>
+          <div class="font-semibold text-slate-700">{{ cuadro.fecha_inicio|date:"d/m/Y" }} al {{ cuadro.fecha_fin|date:"d/m/Y" }}</div>
+        </div>
+        <div>
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Moneda &amp; Cotización TC</div>
+          <div class="font-semibold text-slate-700">ARS ($) &middot; TC u$s: ${{ tc_cuadro|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Olive Operational Summary -->
+    <div class="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 text-xs">
+      <div>
+        <div class="text-slate-400 font-medium">Aceituna Molida</div>
+        <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+          {{ cuadro.volumen_aceituna_kg|floatformat:0|intcomma }} kg
+        </div>
+      </div>
+      <div>
+        <div class="text-slate-400 font-medium">Aceite Virgen Extra</div>
+        <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+          {{ cuadro.volumen_aceite_litros|floatformat:0|intcomma }} litros
+        </div>
+      </div>
+      <div>
+        <div class="text-slate-400 font-medium">Rendimiento Graso</div>
+        <div class="text-sm font-bold text-emerald-700 font-mono mt-0.5">
+          {{ cuadro.rendimiento_graso_pct|floatformat:2 }}%
+        </div>
+      </div>
+      <div>
+        <div class="text-slate-400 font-medium">Costo por Litro Aceite</div>
+        <div class="text-sm font-bold text-slate-800 font-mono mt-0.5">
+          ${{ cuadro.costo_unitario_litro_aceite|floatformat:2 }} / L
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Executive Financial Summary Table -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="p-3.5 bg-white rounded-xl border-2 border-slate-200 text-center">
+        <div class="text-[10px] uppercase font-bold text-slate-400">Ventas Netas</div>
+        <div class="text-lg font-black font-mono text-slate-900 mt-1">${{ cuadro.ventas_totales|floatformat:0|intcomma }}</div>
+        <div class="text-[10px] text-slate-500 font-medium">u$s {{ cuadro_simplificado.ventas_totales_usd|floatformat:0|intcomma }} &middot; 100%</div>
+      </div>
+
+      <div class="p-3.5 bg-white rounded-xl border-2 border-emerald-200 text-center">
+        <div class="text-[10px] uppercase font-bold text-emerald-700">Margen Bruto</div>
+        <div class="text-lg font-black font-mono text-emerald-800 mt-1">${{ cuadro.margen_bruto|floatformat:0|intcomma }}</div>
+        <div class="text-[10px] text-emerald-700 font-bold">u$s {{ cuadro_simplificado.margen_bruto_usd|floatformat:0|intcomma }} &middot; {{ cuadro.margen_bruto_pct }}%</div>
+      </div>
+
+      <div class="p-3.5 bg-white rounded-xl border-2 border-amber-200 text-center">
+        <div class="text-[10px] uppercase font-bold text-amber-700">EBITDA Operativo</div>
+        <div class="text-lg font-black font-mono text-amber-800 mt-1">${{ cuadro.ebitda|floatformat:0|intcomma }}</div>
+        <div class="text-[10px] text-amber-700 font-bold">u$s {{ cuadro_simplificado.ebitda_usd|floatformat:0|intcomma }} &middot; {{ cuadro.margen_ebitda_pct }}%</div>
+      </div>
+
+      <div class="p-3.5 bg-white rounded-xl border-2 border-slate-900 text-center">
+        <div class="text-[10px] uppercase font-bold text-slate-400">Resultado Neto</div>
+        <div class="text-lg font-black font-mono {% if cuadro.resultado_neto >= 0 %}text-emerald-700{% else %}text-rose-700{% endif %} mt-1">
+          ${{ cuadro.resultado_neto|floatformat:0|intcomma }}
+        </div>
+        <div class="text-[10px] text-slate-700 font-bold">u$s {{ cuadro_simplificado.resultado_neto_usd|floatformat:0|intcomma }} &middot; {{ cuadro.margen_neto_pct }}%</div>
+      </div>
+    </div>
+
+    <!-- Vista Simplificada Gerencial -->
+    <div x-show="modo === 'simplificado'" class="mb-6">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider">
+            <th class="py-2.5 px-3">Estructura Operativa y Financiera Olivícola</th>
+            <th class="py-2.5 px-3 text-right">Monto (ARS)</th>
+            <th class="py-2.5 px-3 text-right">Equiv. (USD)</th>
+            <th class="py-2.5 px-3 text-right">Presupuesto</th>
+            <th class="py-2.5 px-3 text-right">% s/ Vtas</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for b in cuadro_simplificado.bloques %}
+            {% if b.tipo == 'seccion' %}
+              <tr class="{{ b.bg_header }} font-bold {{ b.text_header }} border-t border-slate-200">
+                <td class="py-2 px-3 tracking-wide">{{ b.titulo }}</td>
+                <td class="py-2 px-3 text-right font-mono font-extrabold">${{ b.subtotal_ars|floatformat:0|intcomma }}</td>
+                <td class="py-2 px-3 text-right font-mono text-slate-500">u$s {{ b.subtotal_usd|floatformat:0|intcomma }}</td>
+                <td class="py-2 px-3 text-right font-mono text-slate-400">${{ b.presup_ars|floatformat:0|intcomma }}</td>
+                <td class="py-2 px-3 text-right font-mono font-bold">{{ b.pct_ventas }}%</td>
+              </tr>
+              {% for it in b.items %}
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                  <td class="py-1.5 px-3 pl-6 text-slate-700">{{ it.label }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-900 font-semibold">${{ it.monto_ars|floatformat:0|intcomma }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-400">u$s {{ it.monto_usd|floatformat:0|intcomma }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-400">${{ it.presup_ars|floatformat:0|intcomma }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-500">{{ it.pct_ventas }}%</td>
+                </tr>
+              {% endfor %}
+            {% elif b.tipo == 'indicador_clave' %}
+              <tr class="{{ b.badge_bg }}">
+                <td class="py-2 px-3 font-extrabold uppercase text-[11px]">{{ b.titulo }}</td>
+                <td class="py-2 px-3 text-right font-mono font-black">${{ b.monto_ars|floatformat:0|intcomma }}</td>
+                <td class="py-2 px-3 text-right font-mono font-bold">u$s {{ b.monto_usd|floatformat:0|intcomma }}</td>
+                <td class="py-2 px-3 text-right font-mono text-slate-500">-</td>
+                <td class="py-2 px-3 text-right font-mono font-extrabold">{{ b.pct_ventas }}%</td>
+              </tr>
+            {% elif b.tipo == 'indicador_final' %}
+              <tr class="{{ b.badge_bg }}">
+                <td class="py-2.5 px-3 uppercase tracking-wider text-xs font-black">{{ b.titulo }}</td>
+                <td class="py-2.5 px-3 text-right font-mono font-black text-xs">${{ b.monto_ars|floatformat:0|intcomma }}</td>
+                <td class="py-2.5 px-3 text-right font-mono font-extrabold text-xs">u$s {{ b.monto_usd|floatformat:0|intcomma }}</td>
+                <td class="py-2.5 px-3 text-right font-mono">-</td>
+                <td class="py-2.5 px-3 text-right font-mono font-black text-xs">{{ b.pct_ventas }}%</td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Structured P&L Table (Detalle Plan de Cuentas) -->
+    <div x-show="modo === 'detallado'" class="mb-6">
+      <table class="w-full text-left text-xs text-slate-700 border-collapse">
+        <thead>
+          <tr class="bg-slate-100 border-b-2 border-slate-300 text-[10px] font-extrabold uppercase tracking-wider text-slate-700">
+            <th class="py-2.5 px-3">Cuenta Contable / Rubro</th>
+            <th class="py-2.5 px-3 text-right">Real ($)</th>
+            <th class="py-2.5 px-3 text-right">Presupuesto ($)</th>
+            <th class="py-2.5 px-3 text-right">Desvío</th>
+            <th class="py-2.5 px-3 text-right">% s/ Vtas</th>
+            <th class="py-2.5 px-3">Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sec in secciones_resultado %}
+            <!-- Subencabezado de Sección -->
+            <tr class="bg-slate-50 border-t border-slate-200 font-bold text-slate-800">
+              <td class="py-2 px-3 uppercase tracking-wide">{{ sec.label }}</td>
+              <td class="py-2 px-3 text-right font-mono font-extrabold">${{ sec.total_real|floatformat:0|intcomma }}</td>
+              <td class="py-2 px-3 text-right font-mono text-slate-500">${{ sec.total_presup|floatformat:0|intcomma }}</td>
+              <td class="py-2 px-3 text-right font-mono text-slate-500">-</td>
+              <td class="py-2 px-3 text-right font-mono text-slate-700">{{ sec.pct_ventas }}%</td>
+              <td></td>
+            </tr>
+
+            <!-- Líneas -->
+            {% for linea in sec.lineas %}
+              {% if linea.monto_real != 0 or linea.monto_presupuestado != 0 %}
+                <tr class="border-b border-slate-100 hover:bg-slate-50">
+                  <td class="py-1.5 px-3 pl-6">
+                    <span class="font-mono text-slate-400 text-[10px] mr-2">{{ linea.cuenta_contable.codigo }}</span>
+                    <span>{{ linea.cuenta_contable.nombre }}</span>
+                  </td>
+                  <td class="py-1.5 px-3 text-right font-mono">${{ linea.monto_real|floatformat:0|intcomma }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-500">${{ linea.monto_presupuestado|floatformat:0|intcomma }}</td>
+                  <td class="py-1.5 px-3 text-right font-mono text-[10px] {% if linea.desvio_monto < 0 %}text-rose-600{% else %}text-emerald-700{% endif %}">
+                    {% if linea.desvio_monto != 0 %}{{ linea.desvio_porcentaje }}%{% else %}-{% endif %}
+                  </td>
+                  <td class="py-1.5 px-3 text-right font-mono text-slate-600">{{ linea.porcentaje_ventas }}%</td>
+                  <td class="py-1.5 px-3 text-slate-500 italic text-[11px] truncate max-w-xs">{{ linea.observaciones }}</td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+
+            <!-- Margen Bruto Subtotal -->
+            {% if sec.key == 'COSTOS_VENTAS' %}
+              <tr class="bg-emerald-50 border-y-2 border-emerald-400 font-extrabold text-emerald-950">
+                <td class="py-2.5 px-3 uppercase">= UTILIDAD BRUTA (MARGEN BRUTO)</td>
+                <td class="py-2.5 px-3 text-right font-mono">${{ cuadro.margen_bruto|floatformat:0|intcomma }}</td>
+                <td class="py-2.5 px-3 text-right font-mono text-slate-600">-</td>
+                <td class="py-2.5 px-3 text-right font-mono text-slate-600">-</td>
+                <td class="py-2.5 px-3 text-right font-mono text-emerald-800">{{ cuadro.margen_bruto_pct }}%</td>
+                <td></td>
+              </tr>
+            {% endif %}
+
+            <!-- EBITDA Subtotal -->
+            {% if sec.key == 'GASTOS_COMERCIALIZACION' %}
+              <tr class="bg-amber-50 border-y-2 border-amber-400 font-extrabold text-amber-950">
+                <td class="py-2.5 px-3 uppercase">= RESULTADO OPERATIVO (EBITDA)</td>
+                <td class="py-2.5 px-3 text-right font-mono">${{ cuadro.ebitda|floatformat:0|intcomma }}</td>
+                <td class="py-2.5 px-3 text-right font-mono text-slate-600">-</td>
+                <td class="py-2.5 px-3 text-right font-mono text-slate-600">-</td>
+                <td class="py-2.5 px-3 text-right font-mono text-amber-800">{{ cuadro.margen_ebitda_pct }}%</td>
+                <td></td>
+              </tr>
+            {% endif %}
+
+          {% endfor %}
+
+          <!-- RESULTADO NETO FINAL -->
+          <tr class="bg-slate-900 text-white font-black text-sm border-t-2 border-slate-950">
+            <td class="py-3 px-3 uppercase tracking-wider">= RESULTADO NETO DEL EJERCICIO</td>
+            <td class="py-3 px-3 text-right font-mono text-emerald-400">${{ cuadro.resultado_neto|floatformat:0|intcomma }}</td>
+            <td class="py-3 px-3 text-right font-mono text-slate-400">-</td>
+            <td class="py-3 px-3 text-right font-mono text-slate-400">-</td>
+            <td class="py-3 px-3 text-right font-mono text-emerald-400">{{ cuadro.margen_neto_pct }}%</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Management Analysis & Conclusions -->
+    <div class="mt-6 p-5 bg-slate-50 rounded-2xl border border-slate-200">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+        Análisis y Conclusiones de la Gerencia General
+      </h3>
+      <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
+        {{ cuadro.notas_gerencia|default:"El presente informe fue confeccionado a partir de los asientos y registros contables del Plan de Cuentas Olivícola de la empresa, sujeto a aprobación definitiva del Directorio." }}
+      </p>
+    </div>
+
+    <!-- Sign-off Block -->
+    <div class="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-xs text-slate-600">
+      <div>
+        <div class="border-b border-slate-300 w-48 mx-auto mb-2 pb-8"></div>
+        <div class="font-bold text-slate-800">Dirección General / Directorio</div>
+        <div class="text-[11px] text-slate-400">{{ empresa.razon_social }}</div>
+      </div>
+      <div>
+        <div class="border-b border-slate-300 w-48 mx-auto mb-2 pb-8"></div>
+        <div class="font-bold text-slate-800">Gerencia de Administración y Finanzas</div>
+        <div class="text-[11px] text-slate-400">Responsable de Contabilidad y Control de Gestión</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

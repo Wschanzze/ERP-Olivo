@@ -1,0 +1,63 @@
+{% load static %}
+<div class="bg-sky-50 border border-sky-200 rounded-2xl p-5 space-y-4">
+  <div class="flex items-center gap-2 mb-1">
+    <div class="w-6 h-6 rounded-lg bg-sky-600 flex items-center justify-center">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+      </svg>
+    </div>
+    <h4 class="text-sm font-bold text-sky-900">Datos de Riego</h4>
+    <span class="text-[10px] font-mono text-sky-600 bg-sky-100 px-2 py-0.5 rounded-full border border-sky-200">Registro Hídrico</span>
+  </div>
+
+  <form method="post" action="{% url 'parte_diario:riego_create' parte_id=parte_id %}" class="space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="parte_diario" value="{{ parte_id }}">
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-sky-800 mb-1">Fuente de Agua</label>
+        <select name="tipo_agua" class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400">
+          <option value="POZO">Pozo Propio</option>
+          <option value="CANAL">Canal / Acequia</option>
+          <option value="RESERVORIO">Reservorio / Pileta</option>
+          <option value="RED">Red Pública</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-sky-800 mb-1">Horas de Bomba</label>
+        <input type="number" name="horas_bomba" step="0.5" min="0" value="0.0"
+               class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-sky-800 mb-1">Caudal (m³/h)</label>
+        <input type="number" name="caudal_m3_hora" step="0.01" min="0" value="0.0"
+               class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
+               x-model.number="caudal" @input="calcTotal()">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-sky-800 mb-1">Conductividad (µS/cm)</label>
+        <input type="number" name="conductividad_electrica" step="0.01" min="0" placeholder="Opcional"
+               class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-sky-800 mb-1">Temp. Agua (°C)</label>
+        <input type="number" name="temperatura_agua" step="0.1" placeholder="Opcional"
+               class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-sky-800 mb-1">Observaciones de Riego</label>
+      <textarea name="observaciones_riego" rows="2" placeholder="Presión de línea, roturas, problemas..."
+                class="w-full rounded-xl border border-sky-200 bg-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"></textarea>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="inline-flex items-center gap-2 bg-sky-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-sky-800 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        Guardar Datos de Riego
+      </button>
+    </div>
+  </form>
+</div>

@@ -29,17 +29,40 @@
       {{ cuadro.get_sistema_riego_display }}
     </span>
   </td>
+  <!-- Estado Fenológico / Semáforo Fitosanitario -->
+  <td class="py-3 px-4 whitespace-nowrap">
+    {% with reg=cuadro.registro_fenologico_actual %}
+      {% if reg %}
+        {% if reg.semaforo == 'verde' %}
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            {{ reg.get_fase_vegetativa_display }}
+          </span>
+        {% elif reg.semaforo == 'amarillo' %}
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            {{ reg.get_fase_vegetativa_display }}
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+            {{ reg.get_fase_vegetativa_display }}
+          </span>
+        {% endif %}
+      {% else %}
+        <span class="text-xs text-slate-400 font-mono">Sin registros</span>
+      {% endif %}
+    {% endwith %}
+  </td>
   <td class="py-3 px-4 text-center whitespace-nowrap">
-    {% if cuadro.activo %}
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        Activo
-      </span>
-    {% else %}
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/60">
-        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-        Inactivo
-      </span>
-    {% endif %}
+    <button 
+      hx-get="{% url 'campos:fenologia_create' %}?cuadro={{ cuadro.pk }}"
+      hx-target="#modal-container"
+      hx-swap="innerHTML"
+      class="text-[11px] font-semibold text-[#3D4A2A] hover:text-[#252E19] hover:underline px-2.5 py-1 rounded-lg bg-[#EAEFE3]/80 hover:bg-[#EAEFE3] border border-[#D5DFC9]/60 transition-colors"
+      title="Registrar estado fenológico"
+    >
+      + Fenología
+    </button>
   </td>
 </tr>

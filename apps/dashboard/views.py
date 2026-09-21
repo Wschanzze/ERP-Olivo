@@ -1,4 +1,5 @@
 import json
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.utils import timezone
 from django.db.models import Sum, F, Count
@@ -12,9 +13,31 @@ from apps.parte_diario.models import ParteDiario
 class DashboardView(TemplateView):
     template_name = 'dashboard/index.html'
 
+    def get(self, request, *args, **kwargs):
+        tab = request.GET.get('tab')
+        if tab:
+            return redirect(f'/finanzas/?tab={tab}')
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Inicio y Accesos Directos | ERP Olivícola'
+
+        # ── Campaña activa y disponibles ──────────────────────────────────────
+        ano_actual = timezone.now().year
+        campana_default = f"{ano_actual}/{ano_actual + 1}"
+        campana_activa = self.request.GET.get('campana', campana_default)
+        context['campana_activa'] = campana_activa
+
+        try:
+            campanas_disponibles = list(
+                LoteDeCosecha.objects.values_list('campana', flat=True).distinct().order_by('-campana')
+            )
+            if campana_activa not in campanas_disponibles:
+                campanas_disponibles.insert(0, campana_activa)
+            context['campanas_disponibles'] = campanas_disponibles
+        except Exception:
+            context['campanas_disponibles'] = [campana_activa]
 
         # Métricas en tiempo real para insignias
         try:
@@ -44,6 +67,17 @@ class DashboardView(TemplateView):
             costos_total = CostoPorCentro.objects.aggregate(Sum('importe_ars'))['importe_ars__sum'] or 0
         except Exception:
             costos_total = 0
+
+        # Cosecha y Costo por Kg de la campaña activa
+        try:
+            lotes_campana = LoteDeCosecha.objects.filter(campana=campana_activa)
+            kg_cosechados_campana = lotes_campana.aggregate(Sum('kg_cosechados'))['kg_cosechados__sum'] or 0
+            if kg_cosechados_campana and kg_cosechados_campana > 0 and costos_total > 0:
+                costo_por_kg = round(float(costos_total) / float(kg_cosechados_campana), 2)
+            else:
+                costo_por_kg = None
+        except Exception:
+            kg_cosechados_campana, costo_por_kg = 0, None
 
         try:
             cajas_total = Cuenta.objects.filter(activa=True, moneda='ARS').aggregate(Sum('saldo_actual'))['saldo_actual__sum'] or 0
@@ -104,6 +138,18 @@ class DashboardView(TemplateView):
                 'tipo_archivo': 'Control de Inventario'
             },
             {
+                'id': 'ordenes_compra',
+                'titulo': 'Órdenes de Compra y Recepciones',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/ordenes-compra/',
+                'icono': 'document_arrow_down',
+                'color': 'amber',
+                'badge': 'Gestión de Compras',
+                'descripcion': 'Flujo formal de compras con control de recepciones y deuda proveedor.',
+                'tipo_archivo': 'Compras de Insumos'
+            },
+            {
                 'id': 'valorizacion_ppp',
                 'titulo': 'Valorización de Depósitos al Costo PPP',
                 'categoria': 'almazara',
@@ -117,14 +163,14 @@ class DashboardView(TemplateView):
             },
             {
                 'id': 'partes_labor',
-                'titulo': 'Partes Diarios de Labor y Cosecha',
+                'titulo': 'Partes Diarios de Labor, Riego y Cosecha',
                 'categoria': 'almazara',
                 'categoria_nombre': 'Almazara & Depósitos',
                 'url': '/parte-diario/',
                 'icono': 'clipboard',
                 'color': 'oliva',
                 'badge': f"{partes_count} partes emitidos",
-                'descripcion': 'Descarga automática de stock y cómputo de jornales aplicados.',
+                'descripcion': 'Descarga automática de stock, datos de riego y jornales.',
                 'tipo_archivo': 'Operaciones de Campo'
             },
             {
@@ -138,6 +184,18 @@ class DashboardView(TemplateView):
                 'badge': f"{asistencia_hoy_count}/{empleados_count} registrados hoy",
                 'descripcion': 'Marcación de presentismo, ausencias y suspensiones climáticas.',
                 'tipo_archivo': 'Carga Operativa'
+            },
+            {
+                'id': 'fichaje_qr',
+                'titulo': 'Fichaje por QR en Cuadrillas',
+                'categoria': 'personal',
+                'categoria_nombre': 'Personal & Nómina',
+                'url': '/personal/fichaje-qr/',
+                'icono': 'qr_code',
+                'color': 'sky',
+                'badge': 'Escaneo QR Móvil',
+                'descripcion': 'Fichaje instantáneo de asistencia escaneando el código QR del legajo.',
+                'tipo_archivo': 'Control de Asistencia'
             },
             {
                 'id': 'padron_personal',
@@ -159,8 +217,8 @@ class DashboardView(TemplateView):
                 'url': '/liquidacion/',
                 'icono': 'banknotes',
                 'color': 'emerald',
-                'badge': 'Cálculo Quincenal',
-                'descripcion': 'Devengamiento asincrónico Celery de haberes rurales.',
+                'badge': 'Recibos PDF',
+                'descripcion': 'Devengamiento de haberes y descarga de recibos PDF profesionales.',
                 'tipo_archivo': 'Liquidación Salarial'
             },
             {
@@ -230,6 +288,7 @@ class DashboardView(TemplateView):
             'asistencia_hoy_count': asistencia_hoy_count,
             'costos_total': costos_total,
             'cajas_total': cajas_total,
+            'kg_cosechados_campana': kg_cosechados_campana,
+            'costo_por_kg': costo_por_kg,
         }
         return context
-

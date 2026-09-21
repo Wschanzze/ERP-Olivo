@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import TimeStampedModel, Finca
@@ -59,6 +60,13 @@ class Empleado(TimeStampedModel):
     telefono = models.CharField(max_length=40, blank=True, verbose_name=_("Teléfono"))
     direccion = models.CharField(max_length=200, blank=True, verbose_name=_("Dirección"))
     cbu_alias = models.CharField(max_length=60, blank=True, verbose_name=_("CBU / Alias Bancario"))
+    codigo_qr_uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name=_("Código QR Único"),
+        help_text=_("Identificador único para el fichaje por escaneo de QR")
+    )
     activo = models.BooleanField(default=True, verbose_name=_("Activo"))
 
     class Meta:

@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 10pt; color: #1a1a1a; background: white; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 3px solid #3D4A2A; margin-bottom: 16px; }
+  .empresa-nombre { font-size: 16pt; font-weight: 900; color: #3D4A2A; letter-spacing: -0.5px; }
+  .empresa-sub { font-size: 8pt; color: #6b7280; margin-top: 2px; }
+  .recibo-titulo { text-align: right; }
+  .recibo-titulo h2 { font-size: 14pt; font-weight: 700; color: #3D4A2A; }
+  .recibo-titulo p { font-size: 8pt; color: #6b7280; }
+
+  .seccion-header { background: #3D4A2A; color: white; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 5px 10px; margin: 16px 0 8px; border-radius: 4px; }
+
+  .datos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 24px; margin-bottom: 12px; }
+  .dato-item label { font-size: 7pt; text-transform: uppercase; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
+  .dato-item span { display: block; font-size: 9.5pt; font-weight: 600; color: #111827; margin-top: 2px; }
+
+  .tabla-conceptos { width: 100%; border-collapse: collapse; }
+  .tabla-conceptos thead tr { border-bottom: 1.5px solid #3D4A2A; }
+  .tabla-conceptos thead th { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; color: #6b7280; padding: 6px 8px; text-align: left; }
+  .tabla-conceptos thead th.num { text-align: right; }
+  .tabla-conceptos tbody td { padding: 5px 8px; font-size: 9pt; border-bottom: 0.5px solid #f3f4f6; }
+  .tabla-conceptos tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tabla-conceptos .rem { color: #065f46; }
+  .tabla-conceptos .norem { color: #1e40af; }
+  .tabla-conceptos .ret { color: #991b1b; }
+
+  .totales-box { margin-top: 16px; border: 1.5px solid #3D4A2A; border-radius: 8px; overflow: hidden; }
+  .totales-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 14px; border-bottom: 0.5px solid #e5e7eb; }
+  .totales-row:last-child { border-bottom: none; }
+  .totales-row.neto { background: #3D4A2A; color: white; }
+  .totales-row label { font-size: 8.5pt; font-weight: 600; }
+  .totales-row span { font-size: 9.5pt; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .totales-row.neto span { font-size: 13pt; }
+
+  .footer { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .firma-box { border-top: 1px solid #9ca3af; padding-top: 8px; text-align: center; }
+  .firma-box p { font-size: 7.5pt; color: #6b7280; }
+  .watermark { text-align: center; margin-top: 24px; font-size: 7pt; color: #d1d5db; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <img src="{% static 'icono.png' %}" alt="Logo" style="height: 48px; width: 48px; object-fit: contain;">
+    <div>
+      <div class="empresa-nombre">Olivar del Valle</div>
+      <div class="empresa-sub">Olivar del Valle Agroindustrial S.A. · CUIT 30-71458923-4</div>
+      <div class="empresa-sub">Ruta Nacional 60 Km 1140, Aimogasta, La Rioja</div>
+    </div>
+  </div>
+  <div class="recibo-titulo">
+    <h2>Recibo de Haberes</h2>
+    <p>Período: {{ liq.periodo }}</p>
+    <p>N° Recibo: #{{ liq.pk|stringformat:"06d" }}</p>
+    <p>Estado: {{ liq.get_estado_display }}</p>
+  </div>
+</div>
+
+<div class="seccion-header">Datos del Empleado</div>
+<div class="datos-grid">
+  <div class="dato-item"><label>Apellido y Nombre</label><span>{{ liq.empleado.nombre_completo }}</span></div>
+  <div class="dato-item"><label>N° Legajo</label><span>{{ liq.empleado.legajo }}</span></div>
+  <div class="dato-item"><label>CUIL</label><span>{{ liq.empleado.dni_cuil }}</span></div>
+  <div class="dato-item"><label>Categoría / Puesto</label><span>{{ liq.empleado.get_rol_laboral_display }}</span></div>
+  <div class="dato-item"><label>Modalidad</label><span>{{ liq.empleado.get_modalidad_display }}</span></div>
+  <div class="dato-item"><label>Finca Habitual</label><span>{{ liq.empleado.finca_habitual.nombre }}</span></div>
+  <div class="dato-item"><label>Fecha Ingreso</label><span>{{ liq.empleado.fecha_ingreso }}</span></div>
+  <div class="dato-item"><label>Días Computados</label><span>{{ liq.dias_jornales_computados }}</span></div>
+  <div class="dato-item"><label>Horas Extras</label><span>{{ liq.horas_extras }}</span></div>
+</div>
+
+<div class="seccion-header">Detalle de Conceptos</div>
+<table class="tabla-conceptos">
+  <thead>
+    <tr>
+      <th>Cód.</th>
+      <th>Concepto</th>
+      <th>Tipo</th>
+      <th class="num">Unid. / %</th>
+      <th class="num">Importe (ARS)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in liq.items.all %}
+    <tr>
+      <td class="font-mono">{{ item.codigo_concepto }}</td>
+      <td>{{ item.descripcion }}</td>
+      <td>
+        {% if item.tipo == 'REMUNERATIVO' %}
+          <span class="rem">Rem.</span>
+        {% elif item.tipo == 'NO_REMUNERATIVO' %}
+          <span class="norem">No Rem.</span>
+        {% else %}
+          <span class="ret">Retención</span>
+        {% endif %}
+      </td>
+      <td class="num">{{ item.cantidad_o_porcentaje }}</td>
+      <td class="num">{% if item.tipo == 'RETENCION' %}({{ item.importe_ars|floatformat:2 }}){% else %}{{ item.importe_ars|floatformat:2 }}{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:12px">Sin ítems de liquidación detallados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="totales-box">
+  <div class="totales-row"><label>Total Remunerativo Bruto</label><span>$ {{ liq.total_bruto_remunerativo_ars|floatformat:2 }}</span></div>
+  <div class="totales-row"><label>Total No Remunerativo</label><span>$ {{ liq.total_no_remunerativo_ars|floatformat:2 }}</span></div>
+  <div class="totales-row" style="color:#991b1b"><label>Retenciones / Descuentos</label><span>($ {{ liq.total_retenciones_ars|floatformat:2 }})</span></div>
+  <div class="totales-row neto"><label>SUELDO NETO A COBRAR</label><span>$ {{ liq.neto_a_cobrar_ars|floatformat:2 }}</span></div>
+</div>
+
+<div class="footer">
+  <div class="firma-box">
+    <p>Firma y aclaración del Empleado</p>
+    <p>Recibí conforme — DNI: {{ liq.empleado.dni_cuil }}</p>
+  </div>
+  <div class="firma-box">
+    <p>Sello y Firma de la Empresa</p>
+    <p>Olivar del Valle Agroindustrial S.A.</p>
+  </div>
+</div>
+
+<div class="watermark">Documento generado electrónicamente por ERP Olivícola · {{ liq.periodo }} · N° {{ liq.pk }}</div>
+
+</body>
+</html>

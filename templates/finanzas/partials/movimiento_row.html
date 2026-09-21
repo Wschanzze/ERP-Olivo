@@ -13,9 +13,12 @@
       <span class="text-[11px] text-slate-400 font-normal">{{ mov.cuenta_corriente.razon_social }}</span>
     {% endif %}
   </td>
-  <td class="py-3.5 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
+  <td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap">
     {% if mov.comprobante_nro %}
-      {{ mov.comprobante_tipo }} <span class="text-slate-600">#{{ mov.comprobante_nro }}</span>
+      <a href="{% url 'finanzas:comprobante_print' mov.pk %}" target="_blank" title="Ver comprobante" class="inline-flex items-center space-x-1 text-slate-600 hover:text-oliva-700 group-hover:underline">
+        <span>{{ mov.comprobante_tipo }}</span>
+        <span class="text-slate-900 font-bold">#{{ mov.comprobante_nro }}</span>
+      </a>
     {% else %}
       <span class="text-slate-300">-</span>
     {% endif %}
@@ -23,11 +26,9 @@
   <td class="py-3.5 px-4 text-right font-mono font-bold text-xs whitespace-nowrap tabular-nums tracking-tight {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-slate-900{% else %}text-blue-800{% endif %}">
     {% if mov.tipo == 'EGRESO' %}-{% elif mov.tipo == 'INGRESO' %}+{% endif %}{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}
   </td>
-  <td class="py-3.5 px-4 text-center text-xs whitespace-nowrap">
-    {% if mov.conciliado %}
-      <span class="text-emerald-500 font-bold">✓</span>
-    {% else %}
-      <span class="text-slate-300">—</span>
-    {% endif %}
+  <td class="py-3.5 px-4 text-center whitespace-nowrap">
+    <a href="{% url 'finanzas:comprobante_print' mov.pk %}" target="_blank" title="Imprimir Factura / Comprobante con Logo" class="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+    </a>
   </td>
 </tr>

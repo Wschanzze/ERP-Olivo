@@ -7,6 +7,22 @@ class CategoriaInsumo(TimeStampedModel):
     """Categoría para clasificar insumos agropecuarios y de fábrica."""
     nombre = models.CharField(max_length=80, unique=True, verbose_name=_("Nombre de Categoría"))
     descripcion = models.TextField(blank=True, verbose_name=_("Descripción"))
+    cuenta_contable_activo = models.ForeignKey(
+        'finanzas.CuentaContable',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='categorias_insumo_activo',
+        verbose_name=_("Cuenta Contable de Existencias (Activo)")
+    )
+    cuenta_contable_gasto = models.ForeignKey(
+        'finanzas.CuentaContable',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='categorias_insumo_gasto',
+        verbose_name=_("Cuenta Contable de Consumo/Gasto")
+    )
 
     class Meta:
         verbose_name = _("Categoría de Insumo")
@@ -74,6 +90,15 @@ class Insumo(TimeStampedModel):
         decimal_places=2, 
         default=0.00, 
         verbose_name=_("Costo Unitario PPP (USD)")
+    )
+    cuenta_contable = models.ForeignKey(
+        'finanzas.CuentaContable',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='insumos_vinculados',
+        verbose_name=_("Cuenta Contable Específica"),
+        help_text=_("Opcional: Si no se especifica, toma las cuentas de su categoría.")
     )
     activo = models.BooleanField(default=True, verbose_name=_("Activo"))
 
@@ -271,3 +296,127 @@ class ItemRemito(TimeStampedModel):
 
     def __str__(self):
         return f"{self.insumo.nombre} ({self.cantidad_recibida} {self.insumo.unidad_medida})"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MÓDULO ÓRDENES DE COMPRA
+# ──────────────────────────────────────────────────────────────────────────────
+
+class OrdenDeCompra(TimeStampedModel):
+    """Solicitud formal de compra de insumos a un proveedor."""
+    class Estado(models.TextChoices):
+        BORRADOR   = 'BORRADOR',   _('Borrador')
+        APROBADA   = 'APROBADA',   _('Aprobada / Enviada al proveedor')
+        RECIBIDA   = 'RECIBIDA',   _('Recibida Totalmente')
+        RECIBIDA_PARCIAL = 'RECIBIDA_PARCIAL', _('Recibida Parcialmente')
+        ANULADA    = 'ANULADA',    _('Anulada')
+
+    proveedor = models.ForeignKey(
+        'finanzas.CuentaCorriente',
+        on_delete=models.PROTECT,
+        related_name='ordenes_compra',
+        limit_choices_to={'tipo_entidad': 'PROVEEDOR'},
+        verbose_name=_("Proveedor")
+    )
+    finca_destino = models.ForeignKey(Finca, on_delete=models.PROTECT, related_name='ordenes_compra', verbose_name=_("Finca Destino"))
+    numero = models.CharField(max_length=30, unique=True, verbose_name=_("N° de OC"))
+    fecha_emision = models.DateField(verbose_name=_("Fecha de Emisión"))
+    fecha_entrega_estimada = models.DateField(null=True, blank=True, verbose_name=_("Fecha Estimada de Entrega"))
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.BORRADOR, verbose_name=_("Estado"))
+    # Opción 1: registrar la deuda al aprobar la OC (antes de recibir la factura)
+    registrar_deuda_al_aprobar = models.BooleanField(
+        default=False,
+        verbose_name=_("Registrar deuda al aprobar OC"),
+        help_text=_("Si está activo, la deuda se acredita en la cuenta corriente del proveedor al aprobar la OC. Si no, se espera al momento de recepción/factura.")
+    )
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+    total_estimado_ars = models.DecimalField(max_digits=14, decimal_places=2, default=0.00, verbose_name=_("Total Estimado (ARS)"))
+
+    class Meta:
+        verbose_name = _("Orden de Compra")
+        verbose_name_plural = _("Órdenes de Compra")
+        ordering = ['-fecha_emision']
+
+    def __str__(self):
+        return f"OC {self.numero} — {self.proveedor.razon_social} ({self.get_estado_display()})"
+
+    def recalcular_total(self):
+        total = sum(item.subtotal_ars for item in self.items.all())
+        self.total_estimado_ars = total
+        self.save(update_fields=['total_estimado_ars', 'updated_at'])
+
+
+class ItemOrdenDeCompra(TimeStampedModel):
+    """Ítem de insumo dentro de una Orden de Compra."""
+    orden = models.ForeignKey(OrdenDeCompra, on_delete=models.CASCADE, related_name='items', verbose_name=_("OC"))
+    insumo = models.ForeignKey(Insumo, on_delete=models.PROTECT, verbose_name=_("Insumo"))
+    cantidad_solicitada = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Cantidad Solicitada"))
+    precio_unitario_estimado_ars = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name=_("Precio Unitario Est. (ARS)"))
+
+    class Meta:
+        verbose_name = _("Ítem de OC")
+        verbose_name_plural = _("Ítems de OC")
+
+    def __str__(self):
+        return f"{self.insumo.nombre} × {self.cantidad_solicitada}"
+
+    @property
+    def subtotal_ars(self):
+        return round(self.cantidad_solicitada * self.precio_unitario_estimado_ars, 2)
+
+
+class RecepcionMercaderia(TimeStampedModel):
+    """Recepción física de mercadería contra una Orden de Compra."""
+    class Estado(models.TextChoices):
+        PENDIENTE   = 'PENDIENTE',   _('Pendiente de Confirmación')
+        CONFIRMADA  = 'CONFIRMADA',  _('Confirmada — Stock Impactado')
+        ANULADA     = 'ANULADA',     _('Anulada')
+
+    orden = models.ForeignKey(OrdenDeCompra, on_delete=models.PROTECT, related_name='recepciones', verbose_name=_("Orden de Compra"))
+    deposito_destino = models.ForeignKey(Deposito, on_delete=models.PROTECT, verbose_name=_("Depósito de Ingreso"))
+    fecha_recepcion = models.DateField(verbose_name=_("Fecha de Recepción"))
+    numero_remito_proveedor = models.CharField(max_length=60, blank=True, verbose_name=_("N° Remito Proveedor"))
+    numero_factura_proveedor = models.CharField(max_length=60, blank=True, verbose_name=_("N° Factura Proveedor"))
+    # Opción 2 (alternativa a registrar_deuda_al_aprobar): registrar la deuda al recibir la factura
+    registrar_deuda_al_confirmar = models.BooleanField(
+        default=True,
+        verbose_name=_("Registrar deuda en cta. cte. al confirmar"),
+        help_text=_("Si está activo, al confirmar la recepción se actualizará la cuenta corriente del proveedor con el importe real de la factura.")
+    )
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name=_("Responsable Recepción"))
+    estado = models.CharField(max_length=15, choices=Estado.choices, default=Estado.PENDIENTE, verbose_name=_("Estado"))
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+    total_real_ars = models.DecimalField(max_digits=14, decimal_places=2, default=0.00, verbose_name=_("Total Real Facturado (ARS)"))
+
+    class Meta:
+        verbose_name = _("Recepción de Mercadería")
+        verbose_name_plural = _("Recepciones de Mercadería")
+        ordering = ['-fecha_recepcion']
+
+    def __str__(self):
+        return f"Recepción OC {self.orden.numero} — {self.fecha_recepcion} ({self.get_estado_display()})"
+
+
+class ItemRecepcion(TimeStampedModel):
+    """Detalle de cada insumo recibido en una recepción de mercadería."""
+    recepcion = models.ForeignKey(RecepcionMercaderia, on_delete=models.CASCADE, related_name='items', verbose_name=_("Recepción"))
+    insumo = models.ForeignKey(Insumo, on_delete=models.PROTECT, verbose_name=_("Insumo"))
+    cantidad_en_oc = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Cant. en OC"))
+    cantidad_recibida = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Cant. Real Recibida"))
+    precio_unitario_real_ars = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name=_("Precio Unitario Real (ARS)"))
+    movimiento_stock = models.ForeignKey(
+        MovimientoStock,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name=_("Movimiento de Stock Generado")
+    )
+
+    class Meta:
+        verbose_name = _("Ítem de Recepción")
+        verbose_name_plural = _("Ítems de Recepción")
+
+    def __str__(self):
+        return f"{self.insumo.nombre}: recibido {self.cantidad_recibida}"
+
+    @property
+    def subtotal_real_ars(self):
+        return round(self.cantidad_recibida * self.precio_unitario_real_ars, 2)

@@ -1,0 +1,247 @@
+{% load humanize static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ nombre_doc }} - {{ pto_vta }}-{{ nro_formateado }} | Olivar del Valle S.A.</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="{% static 'favicon.ico' %}?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icono.png' %}?v=2">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; color: #000 !important; font-size: 11px !important; }
+      .print-border { border: 1px solid #1e293b !important; }
+      .print-shadow-none { box-shadow: none !important; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans p-4 sm:p-8">
+
+  <!-- Action Bar (Hidden during printing) -->
+  <div class="max-w-4xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3 no-print bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+    <div class="flex items-center space-x-2">
+      <a href="javascript:window.close()" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-4 h-4 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        Cerrar Pestaña
+      </a>
+      <span class="text-slate-300">|</span>
+      <span class="text-xs font-medium text-slate-500">Documento Oficial de Tesorería</span>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+      <button 
+        onclick="window.print()" 
+        class="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        Imprimir / Guardar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Document Sheet -->
+  <div class="max-w-4xl mx-auto bg-white p-8 sm:p-10 rounded-2xl shadow-sm border border-slate-300 print-border print-shadow-none">
+
+    <!-- Header Box with Standard AFIP Structure -->
+    <div class="relative border-2 border-slate-800 rounded-xl p-5 mb-4">
+      
+      <!-- Central AFIP Letter Badge -->
+      <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white border-2 border-slate-800 rounded-lg px-4 py-1 flex flex-col items-center shadow-xs">
+        <span class="text-2xl font-black text-slate-900 leading-none">{{ letra }}</span>
+        <span class="text-[9px] font-bold text-slate-600 tracking-wider">COD. {{ cod_afip }}</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-8 pt-2">
+        <!-- Left Side: Emisor -->
+        <div class="border-r border-slate-200 pr-6">
+          <div class="flex items-center space-x-3 mb-2">
+            <img src="{% static 'icono.png' %}" alt="Logo Olivar del Valle" class="w-12 h-12 object-contain">
+            <div>
+              <h1 class="text-base font-black tracking-tight text-slate-900 leading-tight">
+                {{ empresa.razon_social|default:"Olivar del Valle Agroindustrial S.A." }}
+              </h1>
+              <p class="text-[11px] text-slate-500 font-medium">Explotación Agrícola y Almazara de Aceite de Oliva</p>
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-600 space-y-0.5 mt-3">
+            <p><span class="font-bold text-slate-700">Domicilio Fiscal:</span> Ruta Nacional 60 Km 1140, Aimogasta, La Rioja</p>
+            <p><span class="font-bold text-slate-700">Condición frente al IVA:</span> <span class="font-semibold text-emerald-800">IVA Responsable Inscripto</span></p>
+          </div>
+        </div>
+
+        <!-- Right Side: Comprobante & Datos Fiscales -->
+        <div class="pl-6 text-right sm:text-left">
+          <div class="text-right">
+            <h2 class="text-lg font-black text-slate-900 uppercase tracking-tight">{{ nombre_doc }}</h2>
+            <p class="text-sm font-mono font-bold text-slate-800 mt-0.5">
+              Punto de Venta: <span class="text-slate-600">{{ pto_vta }}</span> &nbsp; Comp. Nro: <span class="text-slate-950 font-black">{{ nro_formateado }}</span>
+            </p>
+            <p class="text-xs text-slate-600 font-medium mt-1">
+              Fecha de Emisión: <span class="font-bold text-slate-900">{{ mov.fecha|date:"d/m/Y" }}</span>
+            </p>
+          </div>
+          <div class="text-[11px] text-slate-600 space-y-0.5 mt-4 text-right">
+            <p><span class="font-bold text-slate-700">CUIT:</span> 30-71458923-4</p>
+            <p><span class="font-bold text-slate-700">Ingresos Brutos:</span> 30-71458923-4</p>
+            <p><span class="font-bold text-slate-700">Inicio de Actividades:</span> 01/03/2012</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receptor / Cliente / Proveedor Information Box -->
+    <div class="border border-slate-300 rounded-xl p-4 mb-4 bg-slate-50/60 text-xs">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            {% if mov.tipo == 'INGRESO' %}Cliente / Receptor{% else %}Beneficiario / Proveedor{% endif %}
+          </span>
+          <span class="text-sm font-extrabold text-slate-900 block mt-0.5">
+            {% if mov.cuenta_corriente %}
+              {{ mov.cuenta_corriente.razon_social }}
+            {% else %}
+              Operación Directa / {{ mov.concepto }}
+            {% endif %}
+          </span>
+          <p class="text-[11px] text-slate-500 mt-1">
+            <span class="font-semibold text-slate-600">CUIT / Doc:</span> 
+            {% if mov.cuenta_corriente %}{{ mov.cuenta_corriente.cuit }}{% else %}Consumidor Final{% endif %}
+          </p>
+        </div>
+
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Condición Comercial &amp; Cuenta</span>
+          <p class="text-[11px] text-slate-700 mt-1">
+            <span class="font-semibold text-slate-600">Condición IVA:</span> 
+            {% if mov.cuenta_corriente and mov.cuenta_corriente.tipo_entidad == 'CLIENTE' %}
+              IVA Responsable Inscripto / Cliente Mayorista
+            {% elif mov.cuenta_corriente %}
+              Proveedor de Insumos / Servicios
+            {% else %}
+              Consumidor Final
+            {% endif %}
+          </p>
+          <p class="text-[11px] text-slate-700 mt-0.5">
+            <span class="font-semibold text-slate-600">Medio de Pago / Cuenta:</span> {{ mov.cuenta.nombre }} ({{ mov.cuenta.get_tipo_display }})
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table of Items / Concepts -->
+    <div class="border border-slate-300 rounded-xl overflow-hidden mb-4">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-100 border-b border-slate-300 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+            <th class="py-2.5 px-3">Código</th>
+            <th class="py-2.5 px-3">Descripción / Concepto</th>
+            <th class="py-2.5 px-3">Imputación (Finca / C. Costo)</th>
+            <th class="py-2.5 px-3 text-right">Cant.</th>
+            <th class="py-2.5 px-3 text-right">Subtotal Neto</th>
+            <th class="py-2.5 px-3 text-right">Alícuota IVA</th>
+            <th class="py-2.5 px-3 text-right">Total ({{ mov.moneda }})</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          <tr>
+            <td class="py-3 px-3 font-mono font-bold text-slate-500 text-[11px]">OP-{{ mov.pk|stringformat:"05d" }}</td>
+            <td class="py-3 px-3">
+              <span class="font-bold text-slate-900 block text-xs">{{ mov.concepto }}</span>
+              {% if mov.comprobante_tipo %}
+                <span class="text-[10px] text-slate-500 font-mono">Ref: {{ mov.comprobante_tipo }} #{{ mov.comprobante_nro }}</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-3 text-slate-600 text-[11px]">
+              {{ mov.finca.nombre|default:"Finca Central" }} / {{ mov.centro_de_costo.nombre|default:"General" }}
+            </td>
+            <td class="py-3 px-3 text-right font-mono">1.00</td>
+            <td class="py-3 px-3 text-right font-mono font-medium text-slate-700 tabular-nums">
+              ${{ neto_gravado|floatformat:2 }}
+            </td>
+            <td class="py-3 px-3 text-right font-mono text-slate-600 text-[11px]">
+              {% if aplica_iva %}21,00%{% else %}0,00%{% endif %}
+            </td>
+            <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+              ${{ mov.importe|floatformat:2 }}
+            </td>
+          </tr>
+          <!-- Spacer empty rows for formal invoice feel -->
+          <tr class="h-10 text-slate-300">
+            <td colspan="7" class="py-1 px-3 italic text-[10px] text-slate-400">
+              * Registro certificado en libro contable y tesorería automatizada.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary and Totals Box -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mb-6">
+      <!-- Left side: Exchange rate notes and remarks -->
+      <div class="border border-slate-200 rounded-xl p-3.5 text-[11px] text-slate-600 space-y-1.5 bg-slate-50/50">
+        <p class="font-bold text-slate-800">Observaciones y Régimen Cambiario:</p>
+        <p>• Operación imputada a {{ mov.cuenta.nombre }} en moneda oficial {{ mov.moneda }}.</p>
+        {% if importe_usd and mov.moneda == 'ARS' %}
+          <p class="text-emerald-800 font-semibold">
+            • Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Equivalente: <span class="font-black">u$s {{ importe_usd|floatformat:2 }} USD</span>.
+          </p>
+        {% elif importe_ars and mov.moneda == 'USD' %}
+          <p class="text-emerald-800 font-semibold">
+            • Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Contravalor: <span class="font-black">${{ importe_ars|floatformat:2 }} ARS</span>.
+          </p>
+        {% endif %}
+        <p class="text-[10px] text-slate-400 mt-2">
+          Documento emitido conforme a las resoluciones generales vigentes de facturación agroindustrial y comercial.
+        </p>
+      </div>
+
+      <!-- Right side: Financial Totals -->
+      <div class="border border-slate-300 rounded-xl overflow-hidden text-xs">
+        <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+          <span class="font-medium text-slate-600">Subtotal Neto Gravado:</span>
+          <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ neto_gravado|floatformat:2 }}</span>
+        </div>
+        <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+          <span class="font-medium text-slate-600">IVA Liquidado ({% if aplica_iva %}21%{% else %}0%{% endif %}):</span>
+          <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ iva_liquidado|floatformat:2 }}</span>
+        </div>
+        <div class="flex justify-between items-center py-3 px-4 bg-slate-900 text-white">
+          <span class="font-extrabold uppercase tracking-wide text-xs">Total Comprobante:</span>
+          <span class="font-mono font-black text-base tabular-nums">{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFIP CAE, Barcode and Authorized Signature Bar -->
+    <div class="border-t-2 border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-6">
+      <!-- Barcode simulation -->
+      <div class="flex items-center space-x-4">
+        <div class="bg-slate-100 p-2 rounded border border-slate-300 font-mono text-[9px] tracking-widest text-slate-700 select-none">
+          <div class="text-[8px] text-slate-400 font-sans uppercase font-bold mb-0.5">Código de Barras Fiscal</div>
+          ||| | |||| || ||| || |||| | ||||| ||| ||
+          <div class="text-[8px] text-slate-500 font-mono mt-0.5">30714589234{{ cod_afip }}{{ pto_vta }}{{ cae_num }}</div>
+        </div>
+        <div class="text-[10px] text-slate-600 space-y-0.5">
+          <p><span class="font-bold text-slate-800">CAE N°:</span> <span class="font-mono font-bold text-slate-900">{{ cae_num }}</span></p>
+          <p><span class="font-bold text-slate-800">Fecha Vto. CAE:</span> <span class="font-mono">{{ vto_cae|date:"d/m/Y" }}</span></p>
+          <p class="text-[9px] text-slate-400">Comprobante Autorizado Electrónicamente</p>
+        </div>
+      </div>
+
+      <!-- Signature & Stamp Box -->
+      <div class="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-6">
+        <div class="inline-block border-b border-slate-400 pb-1 mb-1 px-8">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Firma Autorizada</span>
+          <span class="text-xs font-serif italic text-slate-700">Olivar del Valle S.A.</span>
+        </div>
+        <div class="text-[9px] text-slate-400">Administración y Tesorería Central</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

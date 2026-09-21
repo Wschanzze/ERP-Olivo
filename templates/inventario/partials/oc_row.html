@@ -1,0 +1,26 @@
+<tr class="hover:bg-slate-50/70 transition-colors" id="oc-row-{{ orden.pk }}">
+  <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A]">
+    <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">{{ orden.numero }}</span>
+  </td>
+  <td class="py-3 px-4 font-semibold text-slate-900 text-xs">{{ orden.proveedor.razon_social }}</td>
+  <td class="py-3 px-4 text-xs text-slate-600">{{ orden.finca_destino.nombre }}</td>
+  <td class="py-3 px-4 text-xs text-slate-500 font-mono">{{ orden.fecha_emision }}</td>
+  <td class="py-3 px-4 text-xs text-slate-500 font-mono">{{ orden.fecha_entrega_estimada|default:"—" }}</td>
+  <td class="py-3 px-4 text-center">
+    {% if orden.estado == 'BORRADOR' %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Borrador</span>
+    {% elif orden.estado == 'APROBADA' %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">Aprobada</span>
+    {% elif orden.estado == 'RECIBIDA' %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Recibida</span>
+    {% elif orden.estado == 'RECIBIDA_PARCIAL' %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Parcial</span>
+    {% elif orden.estado == 'ANULADA' %}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Anulada</span>
+    {% endif %}
+  </td>
+  <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">$ {{ orden.total_estimado_ars|floatformat:2 }}</td>
+  <td class="py-3 px-4 text-center">
+    <a href="{% url 'inventario:recepcion_create' %}?orden={{ orden.pk }}" class="text-xs font-semibold text-[#3D4A2A] hover:underline px-2 py-1 rounded-lg hover:bg-[#EAEFE3] transition-colors">+ Recepción</a>
+  </td>
+</tr>

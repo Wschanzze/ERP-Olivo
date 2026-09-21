@@ -111,5 +111,14 @@
 
   </div>
 
+  <!-- Sección de Riego (Métricas Hídricas) -->
+  <div id="riego-container" class="mt-6">
+    {% if parte.datos_riego %}
+      {% include 'parte_diario/partials/riego_resumen.html' with riego=parte.datos_riego %}
+    {% else %}
+      {% include 'parte_diario/partials/riego_form.html' with parte_id=parte.id %}
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

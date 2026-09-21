@@ -1,0 +1,98 @@
+<!-- MODAL: Editar Importe de Línea Contable -->
+<div 
+  x-show="modalEditarLinea" 
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+>
+  <div 
+    class="bg-white rounded-2xl shadow-xl border border-slate-200/80 w-full max-w-md overflow-hidden"
+    @click.away="modalEditarLinea = false"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0 scale-95"
+    x-transition:enter-end="opacity-100 scale-100"
+  >
+    <!-- Header -->
+    <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+      <div>
+        <div class="text-[10px] font-mono text-oliva-700 font-bold" x-text="lineaEditando.codigo"></div>
+        <h3 class="text-sm font-bold text-slate-900 truncate" x-text="lineaEditando.nombre"></h3>
+      </div>
+      <button @click="modalEditarLinea = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form 
+      method="POST" 
+      :action="'/finanzas/cuadros-resultado/linea/' + lineaEditando.id + '/editar/'" 
+      class="p-5 space-y-4 text-xs"
+    >
+      {% csrf_token %}
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Monto Real del Ejercicio ($) *</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono">$</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            name="monto_real" 
+            required
+            x-model="lineaEditando.monto_real" 
+            class="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-oliva-500 focus:ring-1 focus:ring-oliva-500 transition-colors font-mono font-bold text-slate-800 text-sm"
+          />
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">Importe consolidado imputado a esta cuenta contable.</p>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Monto Presupuestado ($)</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono">$</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            name="monto_presupuestado" 
+            x-model="lineaEditando.monto_presupuestado" 
+            class="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-oliva-500 focus:ring-1 focus:ring-oliva-500 transition-colors font-mono text-slate-800 text-xs"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Observaciones / Criterio Agronómico o Industrial</label>
+        <input 
+          type="text" 
+          name="observaciones" 
+          x-model="lineaEditando.observaciones" 
+          placeholder="ej: Desvío por incremento en costo de fletes o mayor rinde" 
+          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-oliva-500 focus:ring-1 focus:ring-oliva-500 transition-colors text-slate-800 text-xs"
+        />
+      </div>
+
+      <!-- Footer -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+        <button 
+          type="button" 
+          @click="modalEditarLinea = false" 
+          class="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="px-4 py-1.5 text-xs font-bold text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-xs transition-colors"
+        >
+          Actualizar Línea
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

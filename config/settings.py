@@ -1,8 +1,13 @@
 import os
+import shutil
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Detectar si estamos en el entorno serverless de Vercel
+IS_VERCEL = 'VERCEL' in os.environ
 
 # Cargar variables de entorno desde .env
 load_dotenv(BASE_DIR / '.env')
@@ -10,7 +15,15 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-erp-olivo-fallback-key-2025')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*,.vercel.app,localhost,127.0.0.1').split(',') if h.strip()]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://*.now.sh',
+]
+csrf_env = os.getenv('CSRF_TRUSTED_ORIGINS')
+if csrf_env:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in csrf_env.split(',') if origin.strip()])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -19,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     
     # Paquetes de terceros
     'rest_framework',
@@ -71,20 +85,44 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Configuración de Base de Datos (PostgreSQL 16)
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.postgresql')
+# Configuración de Base de Datos
+DATABASE_URL = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
+USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() in ('true', '1')
 
-if DB_ENGINE == 'django.db.backends.sqlite3' or os.getenv('USE_SQLITE', 'False').lower() in ('true', '1'):
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
+elif USE_SQLITE or (IS_VERCEL and not os.getenv('DB_HOST')):
+    if IS_VERCEL:
+        # En Vercel Serverless Functions, la raíz es de solo lectura. Sólo /tmp es escribible.
+        sqlite_path = Path('/tmp') / 'db.sqlite3'
+        seed_db = BASE_DIR / 'db_seed.sqlite3'
+        if not seed_db.exists():
+            seed_db = BASE_DIR / 'db.sqlite3'
+        if seed_db.exists() and not sqlite_path.exists():
+            try:
+                shutil.copy2(seed_db, sqlite_path)
+            except Exception:
+                pass
+    else:
+        sqlite_path = BASE_DIR / 'db.sqlite3'
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': sqlite_path,
         }
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
             'NAME': os.getenv('DB_NAME', 'erp_olivo_db'),
             'USER': os.getenv('DB_USER', 'erp_user'),
             'PASSWORD': os.getenv('DB_PASSWORD', 'erp_password_secret'),
@@ -117,12 +155,21 @@ USE_TZ = True
 
 # Archivos Estáticos y Media
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+if (BASE_DIR / 'Public').exists():
+    STATICFILES_DIRS.append(BASE_DIR / 'Public')
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if IS_VERCEL:
+    MEDIA_ROOT = Path('/tmp') / 'media'
+else:
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

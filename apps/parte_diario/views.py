@@ -65,3 +65,34 @@ class OrdenTrabajoCreateView(CreateView):
     fields = ['cuadro', 'tipo_labor', 'fecha_programada', 'fecha_limite', 'responsable', 'instrucciones_tecnicas', 'estado']
     template_name = 'parte_diario/partials/orden_form_modal.html'
     success_url = reverse_lazy('parte_diario:ordenes_list')
+
+
+class RiegoCreateView(CreateView):
+    """Crea o actualiza los datos de riego asociados a un parte diario."""
+    from .models import ParteDiarioRiego
+    model = ParteDiarioRiego
+    fields = ['tipo_agua', 'horas_bomba', 'caudal_m3_hora', 'conductividad_electrica', 'temperatura_agua', 'observaciones_riego']
+    template_name = 'parte_diario/partials/riego_form.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['parte_id'] = self.kwargs.get('parte_id')
+        return ctx
+
+    def form_valid(self, form):
+        from .models import ParteDiario, ParteDiarioRiego
+        parte_id = self.kwargs.get('parte_id')
+        parte = get_object_or_404(ParteDiario, pk=parte_id)
+        # Upsert: si ya existe un registro de riego para este parte, actualizarlo
+        try:
+            riego_existente = parte.datos_riego
+            for field in self.fields:
+                setattr(riego_existente, field, form.cleaned_data.get(field))
+            riego_existente.save()
+            riego = riego_existente
+        except ParteDiarioRiego.DoesNotExist:
+            form.instance.parte_diario = parte
+            riego = form.save()
+        if self.request.headers.get('HX-Request'):
+            return render(self.request, 'parte_diario/partials/riego_resumen.html', {'riego': riego})
+        return redirect('parte_diario:parte_detail', pk=parte_id)

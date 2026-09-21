@@ -96,3 +96,68 @@ class InscripcionCreateView(CreateView):
     fields = ['dni_cuil', 'nombre', 'apellido', 'telefono', 'puesto_aspirado', 'finca_postulada', 'alta_temprana_afip_numero', 'apto_medico', 'observaciones']
     template_name = 'personal/partials/inscripcion_form_modal.html'
     success_url = reverse_lazy('personal:inscripciones_list')
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# QR FICHAJE
+# ──────────────────────────────────────────────────────────────────────────────
+import io
+import qrcode
+from django.views import View
+
+
+class EmpleadoQRView(View):
+    """Genera y sirve la imagen PNG del código QR único del empleado."""
+    def get(self, request, pk):
+        empleado = get_object_or_404(Empleado, pk=pk)
+        # El UUID del empleado es el dato codificado en el QR
+        qr_data = str(empleado.codigo_qr_uuid)
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color='#3D4A2A', back_color='white')
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+class EmpleadoQRPageView(View):
+    """Página que muestra el QR del empleado para imprimir."""
+    def get(self, request, pk):
+        empleado = get_object_or_404(Empleado, pk=pk)
+        return render(request, 'personal/empleado_qr.html', {'empleado': empleado})
+
+
+class FichajeQRView(View):
+    """Endpoint de fichaje por QR — registra asistencia al escanear el QR del empleado."""
+    def get(self, request):
+        return render(request, 'personal/fichaje_qr.html', {})
+
+    def post(self, request):
+        uuid_str = request.POST.get('uuid', '').strip()
+        if not uuid_str:
+            return render(request, 'personal/fichaje_qr.html', {'error': 'UUID no recibido.'})
+        try:
+            empleado = Empleado.objects.get(codigo_qr_uuid=uuid_str, activo=True)
+        except (Empleado.DoesNotExist, Exception):
+            return render(request, 'personal/fichaje_qr.html', {'error': f'Código QR no reconocido: {uuid_str}'})
+        hoy = timezone.now().date()
+        finca_asistencia = empleado.finca_habitual or Finca.objects.filter(activa=True).first()
+        asistencia, creada = RegistroAsistencia.objects.get_or_create(
+            empleado=empleado,
+            fecha=hoy,
+            defaults={
+                'finca': finca_asistencia,
+                'estado': RegistroAsistencia.Estado.PRESENTE,
+                'horas_normales': 8.0,
+                'horas_extras': 0.0,
+                'jornal_computado': 1.0,
+                'observaciones': f"Fichaje QR móvil ({timezone.now().strftime('%H:%M:%S')} hs)"
+            }
+        )
+        return render(request, 'personal/fichaje_qr.html', {
+            'confirmacion': empleado,
+            'creada': creada,
+            'asistencia': asistencia,
+        })

@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/cerrar/', views.cerrar_parte_htmx, name='parte_cerrar'),
     path('ordenes/', views.OrdenesTrabajoListView.as_view(), name='ordenes_list'),
     path('ordenes/crear/', views.OrdenTrabajoCreateView.as_view(), name='orden_create'),
+    path('<int:parte_id>/riego/', views.RiegoCreateView.as_view(), name='riego_create'),
 ]

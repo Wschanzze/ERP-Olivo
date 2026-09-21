@@ -8,4 +8,6 @@ urlpatterns = [
     path('cuadros/crear/', views.CuadroCreateView.as_view(), name='cuadro_create'),
     path('cosechas/', views.CosechasListView.as_view(), name='cosechas_list'),
     path('cosechas/crear/', views.CosechaCreateView.as_view(), name='cosecha_create'),
+    path('fenologia/crear/', views.RegistroFenologicoCreateView.as_view(), name='fenologia_create'),
+    path('eventos/crear/', views.EventoCuadroCreateView.as_view(), name='evento_create'),
 ]

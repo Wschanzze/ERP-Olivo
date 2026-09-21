@@ -1,0 +1,152 @@
+<div class="space-y-5 text-slate-800">
+
+  <!-- Cabecera del Modal -->
+  <div class="flex items-start justify-between pb-4 border-b border-slate-200/80">
+    <div class="flex items-center space-x-3.5">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#3D4A2A] to-[#252E19] text-white flex items-center justify-center font-mono font-extrabold text-lg shadow-md border border-[#52633A]/50 flex-shrink-0">
+        {{ cuenta.codigo|slice:":1" }}
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 select-all">{{ cuenta.codigo }}</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full {% if cuenta.clase == 'ACTIVO' or cuenta.clase == 'ACTIVO_REG' %}bg-oliva-50 text-oliva-800 border border-oliva-200{% elif cuenta.clase == 'PASIVO' %}bg-slate-100 text-slate-800 border border-slate-200{% elif cuenta.clase == 'PATRIMONIO_NETO' %}bg-purple-50 text-purple-800 border border-purple-200{% elif cuenta.clase == 'RESULTADO_POSITIVO' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif cuenta.clase == 'RESULTADO_NEGATIVO' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-slate-100 text-slate-700{% endif %}">
+            {{ cuenta.get_clase_display|default:"Rubro" }}
+          </span>
+          {% if cuenta.es_imputable %}
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+            Imputable
+          </span>
+          {% else %}
+          <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+            Rubro Agrupador
+          </span>
+          {% endif %}
+        </div>
+        <h2 class="text-xl font-extrabold text-slate-900 mt-1 leading-snug">{{ cuenta.nombre }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ficha Técnica Contable -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/70 text-xs">
+    <div>
+      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Saldo Habitual</span>
+      <span class="font-bold text-slate-800 mt-0.5 block font-mono">
+        {% if cuenta.saldo_habitual %}
+          <span class="{% if cuenta.saldo_habitual == 'DEUDOR' %}text-emerald-700{% else %}text-blue-700{% endif %}">
+            {{ cuenta.get_saldo_habitual_display }}
+          </span>
+        {% else %}
+          <span class="text-slate-400">—</span>
+        {% endif %}
+      </span>
+    </div>
+
+    <div>
+      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Nivel Jerárquico</span>
+      <span class="font-bold text-slate-800 mt-0.5 block font-mono">Nivel {{ cuenta.nivel }} de 6</span>
+    </div>
+
+    <div class="sm:col-span-2">
+      <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Cuenta Superior (Padre)</span>
+      <span class="font-mono text-slate-700 mt-0.5 block text-[11px] truncate" title="{{ cuenta.padre }}">
+        {% if cuenta.padre %}
+          [{{ cuenta.padre.codigo }}] {{ cuenta.padre.nombre }}
+        {% else %}
+          <span class="text-slate-400 italic">Raíz del Plan de Cuentas</span>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Criterio Agroindustrial Olivícola (Nota del Excel) -->
+  <div class="p-4 rounded-2xl border {% if cuenta.nota %}bg-amber-50/60 border-amber-200/80 text-amber-900{% else %}bg-slate-50/60 border-slate-200/60 text-slate-500{% endif %} space-y-1.5">
+    <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider {% if cuenta.nota %}text-amber-800{% else %}text-slate-400{% endif %}">
+      <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+      </svg>
+      <span>Criterio y Nota Técnica Olivícola (Excel)</span>
+    </div>
+    <p class="text-xs leading-relaxed">
+      {% if cuenta.nota %}
+        {{ cuenta.nota }}
+      {% else %}
+        Esta cuenta corresponde a la estructura base y no cuenta con anotaciones agronómicas específicas en la planilla.
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Entidades Vinculadas en el ERP -->
+  <div class="space-y-2 pt-1">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Entidades Operativas Enlazadas</h3>
+    
+    <div class="space-y-2 text-xs">
+      <!-- Cajas y Bancos -->
+      {% if cajas_vinculadas %}
+      <div class="bg-blue-50/70 border border-blue-200/70 rounded-xl p-3">
+        <span class="text-[11px] font-bold text-blue-900 block mb-1">Cajas y Bancos Asociados:</span>
+        <ul class="list-disc list-inside space-y-0.5 text-blue-800 text-[11px]">
+          {% for c in cajas_vinculadas %}
+          <li><strong>{{ c.nombre }}</strong> ({{ c.get_tipo_display }} - Saldo: {{ c.moneda }} ${{ c.saldo_actual|floatformat:2 }})</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Categorías de Insumos Activo -->
+      {% if categorias_activo %}
+      <div class="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-3">
+        <span class="text-[11px] font-bold text-emerald-900 block mb-1">Categorías de Insumos (Stock de Activo):</span>
+        <ul class="list-disc list-inside space-y-0.5 text-emerald-800 text-[11px]">
+          {% for cat in categorias_activo %}
+          <li>{{ cat.nombre }} ({{ cat.insumos.count }} insumos)</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Categorías de Insumos Gasto -->
+      {% if categorias_gasto %}
+      <div class="bg-red-50/70 border border-red-200/70 rounded-xl p-3">
+        <span class="text-[11px] font-bold text-red-900 block mb-1">Categorías de Insumos (Consumo / Gasto):</span>
+        <ul class="list-disc list-inside space-y-0.5 text-red-800 text-[11px]">
+          {% for cat in categorias_gasto %}
+          <li>{{ cat.nombre }} ({{ cat.insumos.count }} insumos)</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Centros de Costo -->
+      {% if centros_costo %}
+      <div class="bg-purple-50/70 border border-purple-200/70 rounded-xl p-3">
+        <span class="text-[11px] font-bold text-purple-900 block mb-1">Centros de Costo Asociados:</span>
+        <ul class="list-disc list-inside space-y-0.5 text-purple-800 text-[11px]">
+          {% for cc in centros_costo %}
+          <li><strong>{{ cc.nombre }}</strong> (Código: {{ cc.codigo }} • {{ cc.get_tipo_display }})</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if not cajas_vinculadas and not categorias_activo and not categorias_gasto and not centros_costo %}
+      <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-slate-500 text-[11px] flex items-center justify-between">
+        <span>No hay cajas, categorías de insumo ni centros de costo vinculados a esta cuenta.</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pie del modal con botón de cierre -->
+  <div class="pt-4 border-t border-slate-200/80 flex items-center justify-between">
+    <span class="text-[11px] text-slate-400 font-mono">ID Contable: #{{ cuenta.id }}</span>
+    <button 
+      type="button" 
+      @click="modalOpen = false; modalDetalle = false" 
+      class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
+    >
+      Cerrar
+    </button>
+  </div>
+
+</div>

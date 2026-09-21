@@ -1,0 +1,10 @@
+[project]
+name = "erp-olivo"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.vercel]
+entrypoint = "config.wsgi:application"
+
+[tool.vercel.scripts]
+build = "python build_vercel.py"

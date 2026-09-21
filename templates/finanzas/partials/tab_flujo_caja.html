@@ -1,132 +1,213 @@
-<!-- Flujo de Caja — Resumen ejecutivo + gráfico + tabla -->
+{% load humanize %}
+
+<!-- Flujo de Caja — Resumen ejecutivo + selector + gráfico + tabla -->
 <div class="space-y-6">
 
+  <!-- Selector de Período de Análisis -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-oliva-50 text-oliva-700 flex items-center justify-center">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">Período de Flujo</span>
+        <span class="text-xs font-bold text-slate-800">{{ periodo_flujo_label|default:"1° Trimestre 2026" }}</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <a
+        href="?tab=flujo&periodo_flujo=q1_2026"
+        class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all {% if periodo_flujo == 'q1_2026' or not periodo_flujo %}bg-[#3D4A2A] text-white shadow-xs{% else %}bg-slate-100 hover:bg-slate-200 text-slate-600{% endif %}"
+      >
+        1° Trimestre 2026 (Ene - Mar)
+      </a>
+      <a
+        href="?tab=flujo&periodo_flujo=ano_2026"
+        class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all {% if periodo_flujo == 'ano_2026' %}bg-[#3D4A2A] text-white shadow-xs{% else %}bg-slate-100 hover:bg-slate-200 text-slate-600{% endif %}"
+      >
+        Año 2026 Completo
+      </a>
+      <a
+        href="?tab=flujo&periodo_flujo=ultimos_6"
+        class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all {% if periodo_flujo == 'ultimos_6' %}bg-[#3D4A2A] text-white shadow-xs{% else %}bg-slate-100 hover:bg-slate-200 text-slate-600{% endif %}"
+      >
+        Últimos 6 Meses
+      </a>
+    </div>
+  </div>
+
   <!-- KPI Cards superiores -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
 
     <!-- Saldo ARS -->
     <div class="bg-gradient-to-br from-oliva-700 to-oliva-900 rounded-2xl p-5 text-white shadow">
       <p class="text-[10px] font-bold uppercase tracking-widest text-oliva-200">Liquidez ARS</p>
       <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">${{ total_ars|floatformat:2 }}</p>
-      <p class="text-[11px] text-oliva-300 mt-1">Saldo consolidado en pesos</p>
+      <p class="text-[11px] text-oliva-300 mt-1">Saldo en cuentas en pesos</p>
     </div>
 
     <!-- Saldo USD -->
     <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-2xl p-5 text-white shadow">
       <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Liquidez USD</p>
       <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">u$s{{ total_usd|floatformat:2 }}</p>
-      <p class="text-[11px] text-emerald-300 mt-1">Saldo consolidado en dólares</p>
+      <p class="text-[11px] text-emerald-300 mt-1">Saldo en cuentas en dólares</p>
     </div>
 
-    <!-- Ingresos del mes -->
+    <!-- Ingresos del Período -->
     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingresos del mes</p>
-      <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2 tabular-nums">${{ ingresos_mes|floatformat:2 }}</p>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingresos del Período</p>
+      <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2 tabular-nums">${{ ingresos_periodo_total|floatformat:2 }}</p>
       <div class="flex items-center mt-1 space-x-1">
         <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
         </svg>
-        <span class="text-[11px] text-slate-400">Cobros y otros ingresos</span>
+        <span class="text-[11px] text-slate-500 font-medium">
+          {% if ingresos_usd_total > 0 %}Incluye u$s{{ ingresos_usd_total|floatformat:0 }}{% else %}Cobros y ventas{% endif %}
+        </span>
       </div>
     </div>
 
-    <!-- Egresos del mes -->
+    <!-- Egresos del Período -->
     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Egresos del mes</p>
-      <p class="text-2xl font-extrabold font-mono text-red-500 mt-2 tabular-nums">${{ egresos_mes|floatformat:2 }}</p>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Egresos del Período</p>
+      <p class="text-2xl font-extrabold font-mono text-rose-500 mt-2 tabular-nums">${{ egresos_periodo_total|floatformat:2 }}</p>
       <div class="flex items-center mt-1 space-x-1">
-        <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3 h-3 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
         </svg>
-        <span class="text-[11px] text-slate-400">Pagos y gastos del período</span>
+        <span class="text-[11px] text-slate-400">Insumos, haberes y servicios</span>
       </div>
     </div>
+
+    <!-- Flujo Neto Operativo -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs col-span-2 lg:col-span-1">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Flujo Neto del Período</p>
+      <p class="text-2xl font-extrabold font-mono {% if flujo_neto_periodo >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %} mt-2 tabular-nums">
+        {% if flujo_neto_periodo >= 0 %}+{% endif %}${{ flujo_neto_periodo|floatformat:2 }}
+      </p>
+      <div class="flex items-center mt-1 space-x-1">
+        <span class="text-[11px] font-semibold {% if flujo_neto_periodo >= 0 %}text-emerald-600{% else %}text-rose-500{% endif %}">
+          {% if flujo_neto_periodo >= 0 %}Superávit operativo{% else %}Déficit del período{% endif %}
+        </span>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Gráfico de barras + tabla últimos 6 meses -->
+  <!-- Gráfico de barras + posición de cuentas -->
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-    <!-- Gráfico SVG inline -->
+    <!-- Gráfico SVG dinámico con Alpine.js -->
     <div class="lg:col-span-3 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-2xs">
       <div class="flex items-center justify-between mb-5">
         <div>
-          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Flujo de Caja — Últimos 6 Meses</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Ingresos vs egresos por mes</p>
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Flujo de Fondos — {{ periodo_flujo_label|default:"Q1 2026" }}</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ingresos vs egresos mensuales consolidados en ARS</p>
         </div>
         <div class="flex items-center space-x-3 text-[10px] font-medium text-slate-500">
           <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-oliva-600 inline-block"></span><span>Ingresos</span></span>
-          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-400 inline-block"></span><span>Egresos</span></span>
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-rose-400 inline-block"></span><span>Egresos</span></span>
         </div>
       </div>
 
-      <!-- Gráfico con Alpine.js + SVG dinámico -->
-      <div
-        x-data="flujoChart({{ grafico_data_json }})"
-        class="relative"
-      >
-        <svg viewBox="0 0 600 220" :viewBox="'0 0 ' + svgW + ' ' + svgH" class="w-full" style="height:200px;">
-          <!-- Líneas de referencia -->
-          <template x-for="(line, i) in gridLines" :key="i">
-            <line :x1="padL" :y1="line.y" :x2="svgW - padR" :y2="line.y" stroke="#e2e8f0" stroke-width="1"/>
-          </template>
+      <!-- Gráfico de Barras con HTML/CSS Nativo (Sin errores de namespace SVG) -->
+      <div class="relative pt-6 pb-2">
+        <!-- Ticks y Líneas de Fondo Guía -->
+        <div class="absolute inset-x-0 top-6 bottom-16 flex flex-col justify-between pointer-events-none opacity-40">
+          {% for tick in grafico_ticks %}
+            <div class="border-b border-dashed border-slate-300 w-full relative">
+              <span class="absolute -top-2.5 right-0 text-[9px] font-mono font-medium text-slate-400 bg-white px-1">
+                {{ tick.label }}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
 
-          <!-- Barras de ingresos (izquierda de cada grupo) -->
-          <template x-for="(d, i) in data" :key="'ing-' + i">
-            <rect
-              :x="barX(i, 0)"
-              :y="barY(d.ingresos)"
-              :width="barW"
-              :height="barH(d.ingresos)"
-              rx="3"
-              fill="#4d7c0f"
-              opacity="0.85"
-            />
-          </template>
+        <!-- Columnas de Barras por Mes -->
+        <div class="relative z-10 flex items-end justify-around h-52 px-2 sm:px-6">
+          {% for d in grafico_data %}
+            <div class="flex-1 flex flex-col items-center justify-end h-full max-w-[120px] px-1 group">
+              
+              <!-- Contenedor de las dos barras (Ingresos y Egresos) -->
+              <div class="flex items-end justify-center space-x-2 sm:space-x-3 w-full h-36">
+                <!-- Barra Ingresos (Verde Oliva / Esmeralda) -->
+                <div class="relative flex flex-col items-center flex-1 max-w-[42px] h-full justify-end group/bar">
+                  <span class="text-[10px] font-black font-mono text-emerald-700 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap">
+                    ${{ d.ingresos_m }}M
+                  </span>
+                  <div 
+                    style="height: max({{ d.pct_ingresos_css }}%, 8px);" 
+                    class="w-full rounded-t-lg bg-gradient-to-t from-[#3D4A2A] via-[#556939] to-[#7B9A55] shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
+                    title="{{ d.mes }} - Ingresos: ${{ d.ingresos|floatformat:0 }}"
+                  >
+                    <div class="absolute inset-0 bg-white/15 rounded-t-lg opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
+                  </div>
+                </div>
 
-          <!-- Barras de egresos (derecha de cada grupo) -->
-          <template x-for="(d, i) in data" :key="'egr-' + i">
-            <rect
-              :x="barX(i, 1)"
-              :y="barY(d.egresos)"
-              :width="barW"
-              :height="barH(d.egresos)"
-              rx="3"
-              fill="#f87171"
-              opacity="0.85"
-            />
-          </template>
+                <!-- Barra Egresos (Rojo / Coral) -->
+                <div class="relative flex flex-col items-center flex-1 max-w-[42px] h-full justify-end group/bar">
+                  <span class="text-[10px] font-black font-mono text-rose-600 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap">
+                    ${{ d.egresos_m }}M
+                  </span>
+                  <div 
+                    style="height: max({{ d.pct_egresos_css }}%, 8px);" 
+                    class="w-full rounded-t-lg bg-gradient-to-t from-rose-700 via-rose-500 to-rose-400 shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
+                    title="{{ d.mes }} - Egresos: ${{ d.egresos|floatformat:0 }}"
+                  >
+                    <div class="absolute inset-0 bg-white/15 rounded-t-lg opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
+                  </div>
+                </div>
+              </div>
 
-          <!-- Etiquetas de mes -->
-          <template x-for="(d, i) in data" :key="'lbl-' + i">
-            <text
-              :x="groupCenterX(i)"
-              :y="svgH - padB + 14"
-              text-anchor="middle"
-              font-size="10"
-              fill="#94a3b8"
-              font-family="sans-serif"
-              x-text="d.mes"
-            />
-          </template>
-        </svg>
+              <!-- Línea Base y Etiqueta de Mes -->
+              <div class="w-full border-t-2 border-slate-200 mt-2 pt-2 text-center">
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wider block">{{ d.mes }}</span>
+                <span class="inline-block mt-0.5 px-2 py-0.5 text-[10px] font-mono font-bold rounded-md {% if d.neto >= 0 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+                  {% if d.neto >= 0 %}+{% endif %}${{ d.neto_m }}M
+                </span>
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Leyenda de valores consolidados abajo del gráfico -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-around gap-2 text-center text-[11px] text-slate-600 font-mono bg-slate-50/70 p-2.5 rounded-xl">
+          {% for d in grafico_data %}
+            {% if d.ingresos > 0 or d.egresos > 0 %}
+            <div class="px-2">
+              <span class="font-bold text-slate-800">{{ d.mes }}:</span>
+              <span class="text-emerald-700 font-bold">${{ d.ingresos_m }}M</span>
+              <span class="text-slate-400">/</span>
+              <span class="text-rose-600 font-bold">${{ d.egresos_m }}M</span>
+              <span class="text-[10px] font-semibold {% if d.neto >= 0 %}text-emerald-600{% else %}text-rose-500{% endif %}">
+                (Neto: {% if d.neto >= 0 %}+{% endif %}${{ d.neto_m }}M)
+              </span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
       </div>
     </div>
 
     <!-- Saldos por cuenta -->
     <div class="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-2xs flex flex-col">
       <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Posición por Cuenta</h3>
-      <div class="space-y-2 flex-1 overflow-y-auto">
+      <div class="space-y-2.5 flex-1 overflow-y-auto max-h-[260px] pr-1">
         {% for c in cuentas %}
-        <div class="flex items-center justify-between py-2 px-3 rounded-xl {% if c.saldo_actual >= 0 %}bg-slate-50{% else %}bg-red-50{% endif %} border border-slate-100">
+        <div class="flex items-center justify-between py-2.5 px-3 rounded-xl {% if c.saldo_actual >= 0 %}bg-slate-50{% else %}bg-red-50{% endif %} border border-slate-100">
           <div class="min-w-0">
             <p class="text-xs font-semibold text-slate-800 truncate">{{ c.nombre }}</p>
-            <p class="text-[10px] text-slate-400">{{ c.get_tipo_display }}</p>
+            <p class="text-[10px] text-slate-400">{{ c.get_tipo_display }}{% if c.banco_nombre %} · {{ c.banco_nombre }}{% endif %}</p>
           </div>
           <div class="text-right ml-3 shrink-0">
             <p class="text-sm font-extrabold font-mono {% if c.saldo_actual >= 0 %}text-slate-900{% else %}text-red-500{% endif %} tabular-nums">
               {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
             </p>
-            <span class="text-[10px] font-mono text-slate-400">{{ c.moneda }}</span>
+            <span class="text-[10px] font-mono font-bold text-slate-400">{{ c.moneda }}</span>
           </div>
         </div>
         {% empty %}
@@ -136,14 +217,14 @@
     </div>
   </div>
 
-  <!-- Tabla de movimientos recientes -->
+  <!-- Tabla de movimientos del período analizado -->
   <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
     <div class="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50">
       <div class="flex items-center space-x-2">
         <div class="w-2 h-2 rounded-full bg-oliva-600"></div>
-        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Últimos Movimientos</h3>
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest">Movimientos Financieros Registrados</h3>
       </div>
-      <span class="text-[11px] text-slate-400 font-mono">{{ movimientos_recientes|length }} registros</span>
+      <span class="text-[11px] text-slate-400 font-mono">{{ movimientos_flujo|default:movimientos_recientes|length }} registros</span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
@@ -154,17 +235,33 @@
             <th class="py-3 px-4">Cuenta</th>
             <th class="py-3 px-4">Concepto</th>
             <th class="py-3 px-4 text-right">Importe</th>
-            <th class="py-3 px-4 text-center">Conciliado</th>
+            <th class="py-3 px-4 text-center">Moneda</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-xs">
-          {% for mov in movimientos_recientes %}
-          {% include 'finanzas/partials/movimiento_row.html' with mov=mov %}
+          {% for mov in movimientos_flujo|default:movimientos_recientes %}
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-3 px-4 font-mono text-slate-600 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase
+                {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                {% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200
+                {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                {{ mov.get_tipo_display }}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-medium text-slate-800">{{ mov.cuenta.nombre }}</td>
+            <td class="py-3 px-4 text-slate-600 max-w-md truncate">{{ mov.concepto }}</td>
+            <td class="py-3 px-4 text-right font-mono font-bold tabular-nums whitespace-nowrap {% if mov.tipo == 'INGRESO' %}text-emerald-700{% else %}text-rose-600{% endif %}">
+              {% if mov.tipo == 'INGRESO' %}+{% else %}-{% endif %}{% if mov.moneda == 'USD' %}u$s{% else %}${% endif %}{{ mov.importe|floatformat:2 }}
+            </td>
+            <td class="py-3 px-4 text-center font-mono text-[10px] font-bold text-slate-500">{{ mov.moneda }}</td>
+          </tr>
           {% empty %}
           <tr>
             <td colspan="6" class="py-12 text-center text-slate-400">
-              <p>No hay movimientos registrados.</p>
-              <p class="text-xs mt-1">Usá "Nuevo Movimiento" para asentar un ingreso o egreso.</p>
+              <p>No hay movimientos registrados para el período seleccionado.</p>
+              <p class="text-xs mt-1">Usá "Nuevo Movimiento" o seleccioná otro período arriba.</p>
             </td>
           </tr>
           {% endfor %}
@@ -173,24 +270,3 @@
     </div>
   </div>
 </div>
-
-<script>
-function flujoChart(data) {
-  const svgW = 600, svgH = 220;
-  const padL = 10, padR = 10, padT = 10, padB = 28;
-  const n = data.length;
-  const groupW = (svgW - padL - padR) / n;
-  const gap = 4, barW = (groupW - gap * 3) / 2;
-  const maxVal = Math.max(...data.map(d => Math.max(d.ingresos, d.egresos)), 1);
-  const chartH = svgH - padT - padB;
-
-  return {
-    data, svgW, svgH, padL, padR, padT, padB, barW,
-    gridLines: [0.25, 0.5, 0.75, 1].map(f => ({ y: padT + chartH * (1 - f) })),
-    barX(i, side) { return padL + i * groupW + gap + side * (barW + gap); },
-    barY(v) { return padT + chartH * (1 - v / maxVal); },
-    barH(v) { return chartH * (v / maxVal); },
-    groupCenterX(i) { return padL + i * groupW + groupW / 2; },
-  };
-}
-</script>

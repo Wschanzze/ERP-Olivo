@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Nueva Recepción de Mercadería | ERP Olivícola{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-2xl">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Nueva Recepción de Mercadería</h1>
+    <p class="text-sm text-slate-500 mt-1">Registrá la mercadería recibida contra una Orden de Compra.</p>
+  </div>
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-5">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Orden de Compra</label>
+          {{ form.orden }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Depósito de Ingreso</label>
+          {{ form.deposito_destino }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha de Recepción</label>
+          {{ form.fecha_recepcion }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">N° Remito Proveedor</label>
+          {{ form.numero_remito_proveedor }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">N° Factura Proveedor</label>
+          {{ form.numero_factura_proveedor }}
+        </div>
+        <div class="col-span-2">
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+            {{ form.registrar_deuda_al_confirmar }}
+            Registrar deuda en Cta. Cte. del proveedor al confirmar esta recepción
+          </label>
+          <p class="text-[10px] text-slate-400 mt-1">Actualizará el saldo del proveedor con el importe real facturado.</p>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Observaciones</label>
+          {{ form.observaciones }}
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+        <a href="{% url 'inventario:ordenes_compra_list' %}" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancelar</a>
+        <button type="submit" class="inline-flex items-center gap-2 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors">
+          Guardar Recepción
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

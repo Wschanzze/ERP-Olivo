@@ -1,0 +1,685 @@
+{% load static %}
+<!-- Plan de Cuentas Agropecuario e Industrial Olivícola -->
+<div 
+  class="space-y-6"
+  x-data="{
+    search: '',
+    filterClass: 'all',
+    onlyImputable: false,
+    modalMapeo: false,
+    activeMapeoTab: 'cajas',
+    collapsedNodes: {},
+
+    init() {
+      this.$nextTick(() => {
+        this.collapseToLevel(2);
+      });
+    },
+
+    toggleNode(code) {
+      this.collapsedNodes[code] = !this.collapsedNodes[code];
+    },
+
+    isNodeCollapsed(code) {
+      return !!this.collapsedNodes[code];
+    },
+
+    expandAll() {
+      this.collapsedNodes = {};
+    },
+
+    collapseToLevel(level) {
+      const newMap = {};
+      document.querySelectorAll('#plan-cuentas-tree [data-es-padre=\'1\']').forEach(el => {
+        const n = parseInt(el.getAttribute('data-nivel') || '1');
+        const code = el.getAttribute('data-codigo');
+        if (code && n >= level) {
+          newMap[code] = true;
+        }
+      });
+      this.collapsedNodes = newMap;
+    },
+
+    matchesRow(el) {
+      if (this.search && this.search.trim() !== '') {
+        const q = this.search.toLowerCase().trim();
+        const c = (el.getAttribute('data-codigo') || '').toLowerCase();
+        const n = (el.getAttribute('data-nombre') || '').toLowerCase();
+        const not = (el.getAttribute('data-nota') || '').toLowerCase();
+        if (!c.includes(q) && !n.includes(q) && !not.includes(q)) return false;
+        return true;
+      }
+
+      if (this.onlyImputable && el.getAttribute('data-imputable') !== '1') {
+        return false;
+      }
+
+      if (this.filterClass !== 'all') {
+        if (this.filterClass === 'imputables' && el.getAttribute('data-imputable') !== '1') return false;
+        if (this.filterClass === 'biologico' && el.getAttribute('data-bio') !== '1') return false;
+        if (this.filterClass === 'industrial' && el.getAttribute('data-ind') !== '1') return false;
+        if (this.filterClass === 'exportacion' && el.getAttribute('data-exp') !== '1') return false;
+        if (this.filterClass === 'ACTIVO' && !['ACTIVO', 'ACTIVO_REG'].includes(el.getAttribute('data-clase'))) return false;
+        if (this.filterClass === 'PASIVO' && el.getAttribute('data-clase') !== 'PASIVO') return false;
+        if (this.filterClass === 'PATRIMONIO_NETO' && el.getAttribute('data-clase') !== 'PATRIMONIO_NETO') return false;
+        if (this.filterClass === 'RESULTADO_POSITIVO' && el.getAttribute('data-clase') !== 'RESULTADO_POSITIVO') return false;
+        if (this.filterClass === 'RESULTADO_NEGATIVO' && el.getAttribute('data-clase') !== 'RESULTADO_NEGATIVO') return false;
+      }
+
+      const ancestrosStr = el.getAttribute('data-ancestros') || '';
+      if (ancestrosStr) {
+        const ancestros = ancestrosStr.trim().split(/\s+/);
+        for (let i = 0; i < ancestros.length; i++) {
+          if (this.collapsedNodes[ancestros[i]]) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+  }"
+>
+
+  <!-- Tarjetas KPI Superiores -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total Cuentas -->
+    <div class="bg-gradient-to-br from-[#2D381E] to-[#1B2311] rounded-2xl p-5 text-white shadow-sm border border-[#404F2B]">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-[#B2C69E]">Plan Estructurado</p>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white font-mono">6 Niveles</span>
+      </div>
+      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">{{ stats.total|default:"228" }} <span class="text-xs font-normal text-slate-300">cuentas</span></p>
+      <p class="text-[11px] text-[#A2B38F] mt-1">{{ stats.imputables|default:"148" }} operativas / imputables</p>
+    </div>
+
+    <!-- Activos Biológicos (NIC 41) -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:border-emerald-200 transition-colors">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Activos Biológicos</p>
+        <span class="text-emerald-700 text-sm">🌿</span>
+      </div>
+      <p class="text-2xl font-extrabold font-mono text-emerald-800 mt-2 tabular-nums">{{ stats.biologicas|default:"12" }} <span class="text-xs font-normal text-slate-400">cuentas</span></p>
+      <p class="text-[11px] text-slate-500 mt-1">Olivar en desarrollo &amp; aceituna en pie</p>
+    </div>
+
+    <!-- Industria & Almazara -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:border-amber-200 transition-colors">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-amber-700">Industria &amp; Almazara</p>
+        <span class="text-amber-700 text-sm">🏭</span>
+      </div>
+      <p class="text-2xl font-extrabold font-mono text-amber-800 mt-2 tabular-nums">{{ stats.industriales|default:"38" }} <span class="text-xs font-normal text-slate-400">cuentas</span></p>
+      <p class="text-[11px] text-slate-500 mt-1">Molienda, aceite granel/botella, orujo</p>
+    </div>
+
+    <!-- Enlaces con el ERP -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:border-blue-200 transition-colors">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-700">Entidades Enlazadas</p>
+        <span class="text-blue-600 text-sm">🔗</span>
+      </div>
+      <p class="text-2xl font-extrabold font-mono text-blue-800 mt-2 tabular-nums">{{ stats.vinculadas|default:"9" }} <span class="text-xs font-normal text-slate-400">activas</span></p>
+      <p class="text-[11px] text-slate-500 mt-1">Cajas, Insumos y Centros de Costo</p>
+    </div>
+  </div>
+
+  <!-- Panel de Control y Filtros -->
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs space-y-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      
+      <!-- Buscador predictivo en vivo -->
+      <div class="relative flex-1 max-w-lg">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          x-model="search" 
+          placeholder="Buscar por código (1.1.5...), nombre (aceite, olivar...) o notas..."
+          class="w-full pl-10 pr-9 py-2 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-oliva-500 focus:ring-2 focus:ring-oliva-500/20 text-xs rounded-xl transition-all duration-150 text-slate-800 placeholder-slate-400"
+        />
+        <button 
+          x-show="search.length > 0" 
+          @click="search = ''" 
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Botones de Acción y Mapeo -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Abrir Mapeo de Entidades -->
+        <button 
+          @click="modalMapeo = true" 
+          class="inline-flex items-center px-3.5 py-1.5 bg-oliva-50 hover:bg-oliva-100 border border-oliva-200 text-oliva-800 text-xs font-semibold rounded-xl transition-all shadow-2xs"
+        >
+          <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Mapeo de Entidades
+        </button>
+
+        <!-- Sincronizar desde Excel -->
+        <form method="post" action="{% url 'finanzas:sincronizar_plan_cuentas' %}" class="inline">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button 
+            type="submit" 
+            onclick="return confirm('¿Desea re-sincronizar el Plan de Cuentas desde el archivo Excel en la raíz?')"
+            class="inline-flex items-center px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-all shadow-2xs hover:shadow-xs"
+            title="Lee el archivo Plan_de_Cuentas_Empresa_Olivicola.xlsx y actualiza la base de datos"
+          >
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Sincronizar Excel
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Píldoras de Filtro por Clase y Especialidad -->
+    <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1.5">Filtros:</span>
+
+      <button 
+        @click="filterClass = 'all'; onlyImputable = false" 
+        :class="filterClass === 'all' && !onlyImputable ? 'bg-slate-800 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        Todas ({{ stats.total|default:"228" }})
+      </button>
+
+      <button 
+        @click="filterClass = 'imputables'; onlyImputable = true" 
+        :class="filterClass === 'imputables' ? 'bg-oliva-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer flex items-center space-x-1"
+      >
+        <span>Solo Imputables</span>
+        <span class="text-[9px] px-1 py-0.2 rounded bg-black/20 text-white">{{ stats.imputables|default:"148" }}</span>
+      </button>
+
+      <button 
+        @click="filterClass = 'ACTIVO'; onlyImputable = false" 
+        :class="filterClass === 'ACTIVO' ? 'bg-oliva-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        1. Activos ({{ stats.activos|default:"90" }})
+      </button>
+
+      <button 
+        @click="filterClass = 'PASIVO'; onlyImputable = false" 
+        :class="filterClass === 'PASIVO' ? 'bg-slate-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        2. Pasivos ({{ stats.pasivos|default:"24" }})
+      </button>
+
+      <button 
+        @click="filterClass = 'PATRIMONIO_NETO'; onlyImputable = false" 
+        :class="filterClass === 'PATRIMONIO_NETO' ? 'bg-slate-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        3. Patrimonio ({{ stats.patrimonio|default:"8" }})
+      </button>
+
+      <button 
+        @click="filterClass = 'RESULTADO_POSITIVO'; onlyImputable = false" 
+        :class="filterClass === 'RESULTADO_POSITIVO' ? 'bg-emerald-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        4.1 Ingresos ({{ stats.ingresos|default:"15" }})
+      </button>
+
+      <button 
+        @click="filterClass = 'RESULTADO_NEGATIVO'; onlyImputable = false" 
+        :class="filterClass === 'RESULTADO_NEGATIVO' ? 'bg-red-700 text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors cursor-pointer"
+      >
+        4.2 Costos y Gastos ({{ stats.egresos|default:"51" }})
+      </button>
+
+      <!-- Píldoras especiales de negocio -->
+      <span class="text-slate-300 mx-1">|</span>
+
+      <button 
+        @click="filterClass = 'biologico'; onlyImputable = false" 
+        :class="filterClass === 'biologico' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors font-medium cursor-pointer"
+      >
+        🌿 Activos Biológicos (NIC 41)
+      </button>
+
+      <button 
+        @click="filterClass = 'industrial'; onlyImputable = false" 
+        :class="filterClass === 'industrial' ? 'bg-amber-600 text-white shadow-xs font-bold' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors font-medium cursor-pointer"
+      >
+        🏭 Almazara &amp; Fábrica
+      </button>
+
+      <button 
+        @click="filterClass = 'exportacion'; onlyImputable = false" 
+        :class="filterClass === 'exportacion' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
+        class="px-2.5 py-1 text-[11px] rounded-lg transition-colors font-medium cursor-pointer"
+      >
+        🚢 Exportación (USD)
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenedor del Visor Interactivo en Árbol del Plan de Cuentas -->
+  <div class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden">
+    
+    <!-- Barra Superior de Control del Árbol Jerárquico -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-3.5 bg-gradient-to-r from-[#1E2713] via-[#2D3A1D] to-[#1E2713] text-white border-b border-[#3D4A2A]">
+      <div class="flex items-center space-x-3">
+        <span class="w-8 h-8 rounded-xl bg-[#3D4A2A] text-emerald-400 flex items-center justify-center text-sm shadow-inner border border-[#52633A]/60">
+          🌲
+        </span>
+        <div>
+          <h2 class="text-xs sm:text-sm font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
+            <span>Visor Interactivo en Árbol (Tree-View)</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-normal">228 cuentas</span>
+          </h2>
+          <p class="text-[11px] text-[#B2C69E] mt-0.5">Navegación jerárquica con ramas plegables • Clic en cualquier fila o flecha para abrir o cerrar</p>
+        </div>
+      </div>
+
+      <!-- Botones de Acción Rápida para el Árbol -->
+      <div class="flex items-center space-x-1.5 self-start sm:self-auto">
+        <button 
+          type="button" 
+          @click="expandAll()" 
+          class="inline-flex items-center px-2.5 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-[11px] font-semibold rounded-lg transition-colors border border-white/15 cursor-pointer shadow-2xs"
+          title="Expandir todas las ramas y subcuentas"
+        >
+          <span class="mr-1">🌿</span> Expandir Todo
+        </button>
+        <button 
+          type="button" 
+          @click="collapseToLevel(2)" 
+          class="inline-flex items-center px-2.5 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-[11px] font-semibold rounded-lg transition-colors border border-white/15 cursor-pointer shadow-2xs"
+          title="Colapsar a Capítulos y Rubros (Nivel 1 y 2)"
+        >
+          <span class="mr-1">📂</span> Rubros (Nivel 2)
+        </button>
+        <button 
+          type="button" 
+          @click="collapseToLevel(1)" 
+          class="inline-flex items-center px-2.5 py-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-[11px] font-semibold rounded-lg transition-colors border border-white/15 cursor-pointer shadow-2xs"
+          title="Colapsar solo a los 5 grupos de Nivel 1"
+        >
+          <span class="mr-1">📁</span> Capítulos (Nivel 1)
+        </button>
+      </div>
+    </div>
+
+    <!-- Encabezado de columnas de la tabla -->
+    <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+      <div class="col-span-6 md:col-span-5">Código y Rubro / Cuenta</div>
+      <div class="col-span-2 hidden md:block text-left">Clase Contable</div>
+      <div class="col-span-2 hidden md:block text-center">Saldo Habitual</div>
+      <div class="col-span-3 md:col-span-2 text-center">Tipo / Nivel</div>
+      <div class="col-span-3 md:col-span-1 text-right">Detalle</div>
+    </div>
+
+    <!-- Lista interactiva de Cuentas con soporte para plegar/desplegar ramas -->
+    <div id="plan-cuentas-tree" class="divide-y divide-slate-100 max-h-[750px] overflow-y-auto custom-scrollbar">
+      {% for acc in cuentas_plan %}
+      <div 
+        x-show="matchesRow($el)"
+        data-codigo="{{ acc.codigo }}"
+        data-ancestros="{{ acc.ancestros_codigos_str }}"
+        data-es-padre="{% if acc.es_padre %}1{% else %}0{% endif %}"
+        data-nombre="{{ acc.nombre|lower }}"
+        data-nota="{{ acc.nota|lower }}"
+        data-clase="{{ acc.clase }}"
+        data-imputable="{% if acc.es_imputable %}1{% else %}0{% endif %}"
+        data-nivel="{{ acc.nivel }}"
+        data-bio="{% if 'biológ' in acc.nombre|lower or 'olivar' in acc.nombre|lower or 'aceituna' in acc.nombre|lower or 'biológ' in acc.nota|lower or 'olivar' in acc.nota|lower or 'aceituna' in acc.nota|lower %}1{% else %}0{% endif %}"
+        data-ind="{% if 'aceite' in acc.nombre|lower or 'molienda' in acc.nombre|lower or 'almazara' in acc.nombre|lower or 'fraccionado' in acc.nombre|lower or 'extracción' in acc.nombre|lower or 'extraccion' in acc.nombre|lower or 'conserva' in acc.nombre|lower or 'orujo' in acc.nombre|lower or 'hueso' in acc.nombre|lower or 'aceite' in acc.nota|lower %}1{% else %}0{% endif %}"
+        data-exp="{% if 'export' in acc.nombre|lower or 'usd' in acc.nombre|lower or 'exterior' in acc.nombre|lower or 'export' in acc.nota|lower %}1{% else %}0{% endif %}"
+        {% if acc.es_padre %}@click="toggleNode('{{ acc.codigo }}')"{% endif %}
+        class="grid grid-cols-12 gap-2 px-4 py-2.5 items-center text-xs transition-colors select-none {% if acc.nivel == 1 %}bg-[#2D381E]/10 font-bold border-l-4 border-[#3D4A2A] text-slate-900 cursor-pointer hover:bg-[#2D381E]/15{% elif acc.nivel == 2 %}bg-slate-50/80 font-semibold border-l-4 border-[#617446] text-slate-800 cursor-pointer hover:bg-slate-100{% elif acc.es_padre %}bg-slate-50/40 font-medium border-l-2 border-slate-300 text-slate-800 cursor-pointer hover:bg-slate-100/70{% else %}text-slate-700 hover:bg-slate-50/90 border-l-2 border-transparent{% endif %}"
+      >
+        <!-- Columna 1: Código + Identación + Flecha/Icono + Nombre -->
+        <div 
+          class="col-span-6 md:col-span-5 flex items-center min-w-0"
+          style="padding-left: {% if acc.nivel == 1 %}0.25rem{% elif acc.nivel == 2 %}1.25rem{% elif acc.nivel == 3 %}2.25rem{% elif acc.nivel == 4 %}3.25rem{% elif acc.nivel == 5 %}4.25rem{% else %}5.25rem{% endif %};"
+        >
+          <!-- Chevron interactivo si es rama padre, o viñeta de hoja si es imputable -->
+          <span class="mr-2 flex-shrink-0 flex items-center justify-center w-5 h-5">
+            {% if acc.es_padre %}
+              <button 
+                type="button" 
+                @click.stop="toggleNode('{{ acc.codigo }}')"
+                class="w-5 h-5 rounded hover:bg-slate-200/80 text-slate-600 flex items-center justify-center transition-transform duration-150 focus:outline-hidden cursor-pointer"
+                title="Plegar / Desplegar rama {{ acc.codigo }}"
+              >
+                <svg 
+                  class="w-3.5 h-3.5 transition-transform duration-150 transform" 
+                  :class="isNodeCollapsed('{{ acc.codigo }}') ? '-rotate-90 text-slate-400' : 'rotate-0 text-oliva-700'" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            {% elif acc.es_imputable %}
+              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block ring-2 ring-emerald-100" title="Cuenta Imputable"></span>
+            {% else %}
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300 inline-block"></span>
+            {% endif %}
+          </span>
+
+          <div class="flex items-center space-x-2 truncate min-w-0">
+            <span class="font-mono text-[11px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-medium select-all">
+              {{ acc.codigo }}
+            </span>
+            <span 
+              class="truncate {% if acc.nivel == 1 %}text-slate-900 font-extrabold text-[13px]{% elif acc.nivel == 2 %}text-slate-900 font-bold{% elif acc.es_imputable %}text-slate-800 font-normal{% else %}text-slate-800 font-semibold{% endif %}"
+              title="{{ acc.nombre }}"
+            >
+              {{ acc.nombre }}
+            </span>
+            {% if acc.es_padre and acc.total_descendientes %}
+              <span 
+                class="text-[9px] px-1.5 py-0.2 rounded-full font-mono flex-shrink-0"
+                :class="isNodeCollapsed('{{ acc.codigo }}') ? 'bg-amber-100 text-amber-800 font-semibold border border-amber-300/60 shadow-2xs' : 'bg-slate-200/80 text-slate-600'"
+                title="{{ acc.total_descendientes }} cuentas bajo esta rama ({{ acc.hijos_count }} directas)"
+              >
+                {{ acc.total_descendientes }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Columna 2: Clase Contable -->
+        <div class="col-span-2 hidden md:block text-left truncate">
+          {% if acc.clase %}
+          <span class="text-[10px] font-medium px-2 py-0.5 rounded-full {% if acc.clase == 'ACTIVO' %}bg-oliva-50 text-oliva-800 border border-oliva-200{% elif acc.clase == 'ACTIVO_REG' %}bg-amber-50 text-amber-800 border border-amber-200{% elif acc.clase == 'PASIVO' %}bg-slate-100 text-slate-800 border border-slate-200{% elif acc.clase == 'PATRIMONIO_NETO' %}bg-purple-50 text-purple-800 border border-purple-200{% elif acc.clase == 'RESULTADO_POSITIVO' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif acc.clase == 'RESULTADO_NEGATIVO' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-slate-100 text-slate-700{% endif %}">
+            {{ acc.get_clase_display }}
+          </span>
+          {% else %}
+          <span class="text-slate-400 text-[10px]">Rubro General</span>
+          {% endif %}
+        </div>
+
+        <!-- Columna 3: Saldo Habitual -->
+        <div class="col-span-2 hidden md:block text-center">
+          {% if acc.saldo_habitual %}
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-semibold {% if acc.saldo_habitual == 'DEUDOR' %}text-emerald-700 bg-emerald-50 border border-emerald-200/50{% else %}text-blue-700 bg-blue-50 border border-blue-200/50{% endif %}">
+              {{ acc.get_saldo_habitual_display }}
+            </span>
+          {% else %}
+            <span class="text-slate-300 font-mono text-[11px]">—</span>
+          {% endif %}
+        </div>
+
+        <!-- Columna 4: Tipo / Nivel & Especialidad -->
+        <div class="col-span-3 md:col-span-2 text-center flex items-center justify-center space-x-1.5">
+          {% if acc.es_imputable %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+              Imputable
+            </span>
+          {% else %}
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] text-slate-500 bg-slate-100 font-mono">
+              Nivel {{ acc.nivel }}
+            </span>
+          {% endif %}
+
+          <!-- Badges de negocio -->
+          {% if 'biológ' in acc.nombre|lower or 'olivar' in acc.nombre|lower or 'aceituna' in acc.nombre|lower or 'biológ' in acc.nota|lower %}
+            <span title="Activo Biológico (NIC 41 / RT 22)" class="text-xs cursor-help">🌿</span>
+          {% endif %}
+          {% if 'aceite' in acc.nombre|lower or 'molienda' in acc.nombre|lower or 'almazara' in acc.nombre|lower or 'fraccionado' in acc.nombre|lower or 'conserva' in acc.nombre|lower or 'orujo' in acc.nombre|lower %}
+            <span title="Proceso Industrial / Almazara" class="text-xs cursor-help">🏭</span>
+          {% endif %}
+          {% if 'export' in acc.nombre|lower or 'usd' in acc.nombre|lower or 'exterior' in acc.nombre|lower or 'export' in acc.nota|lower %}
+            <span title="Operación de Exportación (USD)" class="text-xs cursor-help">🚢</span>
+          {% endif %}
+        </div>
+
+        <!-- Columna 5: Acciones y Vínculos -->
+        <div class="col-span-3 md:col-span-1 text-right flex items-center justify-end space-x-1.5">
+          <!-- Vínculos activos en el ERP -->
+          {% with c_cajas=acc.cuentas_financieras.count c_act=acc.categorias_insumo_activo.count c_gas=acc.categorias_insumo_gasto.count c_cc=acc.centros_de_costo.count %}
+            {% if c_cajas or c_act or c_gas or c_cc %}
+            <span 
+              class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-800"
+              title="Entidades del ERP enlazadas: {{ c_cajas }} cajas/bancos, {{ c_act }} insumos stock, {{ c_gas }} insumos consumo, {{ c_cc }} centros de costo"
+            >
+              🔗
+            </span>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Botón de Detalle con HTMX al modal universal -->
+          <button 
+            type="button"
+            hx-get="{% url 'finanzas:cuenta_contable_detail' acc.id %}"
+            hx-target="#modal-body"
+            @click.stop="modalOpen = true"
+            class="inline-flex items-center p-1.5 rounded-lg transition-colors {% if acc.nota %}text-amber-500 hover:text-amber-600 hover:bg-amber-50{% else %}text-slate-400 hover:text-slate-600 hover:bg-slate-100{% endif %} cursor-pointer"
+            title="{% if acc.nota %}Nota técnica: {{ acc.nota|truncatechars:70 }}{% else %}Ver detalle de cuenta{% endif %}"
+          >
+            {% if acc.nota %}
+              <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            {% else %}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            {% endif %}
+          </button>
+        </div>
+      </div>
+      {% empty %}
+      <div class="py-16 text-center text-slate-400 text-xs">
+        <p class="font-semibold text-slate-500">No hay cuentas cargadas en el Plan de Cuentas.</p>
+        <p class="mt-1">Hacé clic en "Sincronizar Excel" para cargarlas desde el archivo en la raíz.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- MODAL: Mapeo de Entidades Operativas -->
+  <div 
+    x-show="modalMapeo" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4"
+    @click.self="modalMapeo = false"
+  >
+    <div 
+      x-show="modalMapeo"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 relative overflow-hidden"
+    >
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900">Mapeo de Entidades con el Plan de Cuentas</h3>
+          <p class="text-xs text-slate-500">Vincula tus Cajas, Insumos y Centros de Costo con las cuentas contables para asientos automáticos.</p>
+        </div>
+        <button @click="modalMapeo = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sub-pestañas del modal de mapeo -->
+      <div class="py-3 flex space-x-2 border-b border-slate-100">
+        <button 
+          type="button"
+          @click="activeMapeoTab = 'cajas'" 
+          :class="activeMapeoTab === 'cajas' ? 'bg-oliva-700 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-3 py-1.5 text-xs rounded-xl transition-colors cursor-pointer"
+        >
+          Cajas y Bancos ({{ cajas_bancos|length }})
+        </button>
+        <button 
+          type="button"
+          @click="activeMapeoTab = 'insumos'" 
+          :class="activeMapeoTab === 'insumos' ? 'bg-oliva-700 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-3 py-1.5 text-xs rounded-xl transition-colors cursor-pointer"
+        >
+          Categorías de Insumo ({{ categorias_insumo|length }})
+        </button>
+        <button 
+          type="button"
+          @click="activeMapeoTab = 'centros'" 
+          :class="activeMapeoTab === 'centros' ? 'bg-oliva-700 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+          class="px-3 py-1.5 text-xs rounded-xl transition-colors cursor-pointer"
+        >
+          Centros de Costo ({{ centros_costo|length }})
+        </button>
+      </div>
+
+      <!-- Contenido Tab 1: Cajas y Bancos -->
+      <div x-show="activeMapeoTab === 'cajas'" class="py-4 max-h-96 overflow-y-auto custom-scrollbar space-y-3">
+        {% for caja in cajas_bancos %}
+        <form method="post" action="{% url 'finanzas:vincular_entidad_rapida' %}" class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/70 gap-3">
+          {% csrf_token %}
+          <input type="hidden" name="entidad_tipo" value="caja">
+          <input type="hidden" name="entidad_id" value="{{ caja.id }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-xs text-slate-900 truncate">{{ caja.nombre }}</p>
+            <p class="text-[11px] text-slate-500 font-mono">{{ caja.get_tipo_display }} • {{ caja.moneda }}</p>
+          </div>
+
+          <div class="flex items-center space-x-2 flex-1">
+            <select name="cuenta_contable_id" class="w-full text-xs py-1.5 px-2.5 bg-white border border-slate-300 rounded-xl focus:ring-1 focus:ring-oliva-500">
+              <option value="">-- Sin cuenta contable --</option>
+              {% for cta in cuentas_imputables %}
+              <option value="{{ cta.id }}" {% if caja.cuenta_contable_id == cta.id %}selected{% endif %}>
+                {{ cta.codigo }} - {{ cta.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="px-3 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white text-xs font-semibold rounded-xl transition-colors">
+              Guardar
+            </button>
+          </div>
+        </form>
+        {% empty %}
+        <p class="text-xs text-slate-400 p-4 text-center">No hay cuentas bancarias o cajas registradas.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Contenido Tab 2: Categorías de Insumos -->
+      <div x-show="activeMapeoTab === 'insumos'" class="py-4 max-h-96 overflow-y-auto custom-scrollbar space-y-3">
+        {% for cat in categorias_insumo %}
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-slate-900">{{ cat.nombre }}</span>
+            <span class="text-[11px] text-slate-400 font-mono">{{ cat.insumos.count }} insumos</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <!-- Cuenta de Activo (Existencias) -->
+            <form method="post" action="{% url 'finanzas:vincular_entidad_rapida' %}" class="space-y-1">
+              {% csrf_token %}
+              <input type="hidden" name="entidad_tipo" value="categoria_insumo">
+              <input type="hidden" name="entidad_id" value="{{ cat.id }}">
+              <input type="hidden" name="campo" value="activo">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <label class="text-[10px] uppercase font-bold text-slate-500 block">Cuenta de Activo (Stock)</label>
+              <div class="flex space-x-1.5">
+                <select name="cuenta_contable_id" class="w-full text-[11px] py-1 px-2 bg-white border border-slate-300 rounded-lg">
+                  <option value="">-- Sin cuenta --</option>
+                  {% for cta in cuentas_imputables %}
+                  <option value="{{ cta.id }}" {% if cat.cuenta_contable_activo_id == cta.id %}selected{% endif %}>
+                    {{ cta.codigo }} - {{ cta.nombre }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="px-2 py-1 bg-oliva-700 text-white text-[11px] rounded-lg">✓</button>
+              </div>
+            </form>
+
+            <!-- Cuenta de Gasto / Consumo -->
+            <form method="post" action="{% url 'finanzas:vincular_entidad_rapida' %}" class="space-y-1">
+              {% csrf_token %}
+              <input type="hidden" name="entidad_tipo" value="categoria_insumo">
+              <input type="hidden" name="entidad_id" value="{{ cat.id }}">
+              <input type="hidden" name="campo" value="gasto">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <label class="text-[10px] uppercase font-bold text-slate-500 block">Cuenta de Consumo (Gasto)</label>
+              <div class="flex space-x-1.5">
+                <select name="cuenta_contable_id" class="w-full text-[11px] py-1 px-2 bg-white border border-slate-300 rounded-lg">
+                  <option value="">-- Sin cuenta --</option>
+                  {% for cta in cuentas_imputables %}
+                  <option value="{{ cta.id }}" {% if cat.cuenta_contable_gasto_id == cta.id %}selected{% endif %}>
+                    {{ cta.codigo }} - {{ cta.nombre }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="px-2 py-1 bg-oliva-700 text-white text-[11px] rounded-lg">✓</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-400 p-4 text-center">No hay categorías de insumos registradas.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Contenido Tab 3: Centros de Costo -->
+      <div x-show="activeMapeoTab === 'centros'" class="py-4 max-h-96 overflow-y-auto custom-scrollbar space-y-3">
+        {% for cc in centros_costo %}
+        <form method="post" action="{% url 'finanzas:vincular_entidad_rapida' %}" class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/70 gap-3">
+          {% csrf_token %}
+          <input type="hidden" name="entidad_tipo" value="centro_costo">
+          <input type="hidden" name="entidad_id" value="{{ cc.id }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-xs text-slate-900 truncate">{{ cc.nombre }}</p>
+            <p class="text-[11px] text-slate-500 font-mono">Código: {{ cc.codigo }} • {{ cc.get_tipo_display }}</p>
+          </div>
+
+          <div class="flex items-center space-x-2 flex-1">
+            <select name="cuenta_contable_id" class="w-full text-xs py-1.5 px-2.5 bg-white border border-slate-300 rounded-xl focus:ring-1 focus:ring-oliva-500">
+              <option value="">-- Sin cuenta contable --</option>
+              {% for cta in cuentas_imputables %}
+              <option value="{{ cta.id }}" {% if cc.cuenta_contable_defecto_id == cta.id %}selected{% endif %}>
+                {{ cta.codigo }} - {{ cta.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="px-3 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white text-xs font-semibold rounded-xl transition-colors">
+              Guardar
+            </button>
+          </div>
+        </form>
+        {% empty %}
+        <p class="text-xs text-slate-400 p-4 text-center">No hay centros de costo registrados.</p>
+        {% endfor %}
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex justify-end">
+        <button 
+          type="button" 
+          @click="modalMapeo = false" 
+          class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Fichaje — {{ empleado.nombre_completo }} | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-lg mx-auto">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Código QR de Fichaje</h1>
+    <p class="text-sm text-slate-500 mt-1">Imprimí este QR y entregalo al empleado para el fichaje diario.</p>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-8 flex flex-col items-center gap-6">
+    <div class="w-12 h-12 rounded-2xl bg-[#3D4A2A] flex items-center justify-center text-white text-xl font-black">
+      {{ empleado.nombre|slice:":1" }}{{ empleado.apellido|slice:":1" }}
+    </div>
+    <div class="text-center">
+      <h2 class="text-xl font-bold text-slate-900">{{ empleado.nombre_completo }}</h2>
+      <p class="text-sm text-slate-500">{{ empleado.get_rol_laboral_display }} · Legajo {{ empleado.legajo }}</p>
+      <p class="text-xs font-mono text-slate-400 mt-1">{{ empleado.codigo_qr_uuid }}</p>
+    </div>
+
+    <div class="border-4 border-[#3D4A2A] rounded-2xl p-3 bg-white shadow-sm">
+      <img src="{% url 'personal:empleado_qr_imagen' pk=empleado.pk %}" alt="QR Fichaje {{ empleado.nombre_completo }}" class="w-48 h-48 object-contain">
+    </div>
+
+    <div class="flex gap-3 w-full">
+      <a href="{% url 'personal:empleado_qr_imagen' pk=empleado.pk %}" download="qr_{{ empleado.legajo }}.png"
+         class="flex-1 inline-flex items-center justify-center gap-2 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Descargar PNG
+      </a>
+      <button onclick="window.print()" class="flex-1 inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-slate-200 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Imprimir
+      </button>
+    </div>
+
+    <a href="{% url 'personal:fichaje_qr' %}" class="text-xs text-[#3D4A2A] font-semibold hover:underline">→ Ir a pantalla de fichaje por QR</a>
+  </div>
+</div>
+{% endblock %}

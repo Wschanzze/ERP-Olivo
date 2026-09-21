@@ -21,9 +21,9 @@
   >
     <!-- Logo + Título (visible cuando está expandida) -->
     <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 overflow-hidden min-w-0 sidebar-open-only" x-show="sidebarOpen">
-      <!-- Ícono de Olivo -->
-      <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-[#3D4A2A] to-[#252E19] flex items-center justify-center p-1.5 shadow-md border border-[#52633A]/60">
-        <img src="{% static 'img/olives_12006391.png' %}" alt="Olivas ERP" class="w-6 h-6 object-contain drop-shadow" />
+      <!-- Ícono Oficial de la Empresa (Sin remarco verde, ampliado) -->
+      <div class="flex-shrink-0 flex items-center justify-center">
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo Empresa" class="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
       </div>
       <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0">
         <span class="font-bold text-sm tracking-wider text-white uppercase truncate">ERP Olivícola</span>
@@ -31,138 +31,459 @@
       </div>
     </a>
 
-    <!-- Botón Toggle de Colapso con Persistencia -->
+    <!-- Ícono cuando está colapsada (Sin remarco verde, clic expande la sidebar) -->
     <button 
+      type="button"
       @click="toggleSidebar()" 
-      class="flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors flex items-center justify-center p-1.5 ml-1"
-      :class="sidebarOpen ? 'p-1.5 ml-1' : 'w-10 h-10 bg-[#253018]/80 border border-[#3E4F28] shadow-sm'"
-      :title="sidebarOpen ? 'Colapsar menú lateral' : 'Expandir menú lateral'"
+      x-show="!sidebarOpen"
+      class="flex items-center justify-center hover:opacity-90 hover:scale-105 transition-all cursor-pointer p-1"
+      title="Expandir menú lateral"
     >
-      <svg class="w-5 h-5 transition-transform duration-300" :class="!sidebarOpen ? 'rotate-180 text-emerald-400' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <img src="{% static 'icono.png' %}?v=2" alt="Logo Empresa" class="w-12 h-12 object-contain drop-shadow-md" />
+    </button>
+
+    <!-- Botón Toggle de Colapso (visible cuando está expandida) -->
+    <button 
+      type="button"
+      x-show="sidebarOpen"
+      @click="toggleSidebar()" 
+      class="flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors flex items-center justify-center p-1.5 ml-1 cursor-pointer"
+      title="Colapsar menú lateral"
+    >
+      <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
       </svg>
     </button>
   </div>
 
-  <!-- Navegación de Módulos (Scrollable interno con min-h-0 para nunca empujar el pie de página) -->
-  <nav class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
-    
-    <!-- Inicio / Launchpad de Accesos Directos -->
-    <a 
-      href="{% url 'dashboard:index' %}" 
-      title="Inicio & Accesos"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Inicio & Accesos</span>
-    </a>
+  <!-- Navegación de Módulos (Scrollable interno con min-h-0 agrupado en listas desplegables) -->
+  <nav 
+    class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden"
+    :class="ready ? 'sidebar-ready' : ''"
+    x-data="{
+      ready: false,
+      openGroups: (function() {
+        let saved = {};
+        try {
+          saved = JSON.parse(localStorage.getItem('erp_sidebar_groups') || '{}');
+        } catch(e) {}
+        
+        const currentApp = '{{ request.resolver_match.app_name|default:'' }}';
+        let currentGroup = '';
+        if (currentApp === 'dashboard') currentGroup = 'tableros';
+        else if (currentApp === 'campos' || currentApp === 'parte_diario') currentGroup = 'campo';
+        else if (currentApp === 'personal' || currentApp === 'liquidacion') currentGroup = 'personal';
+        else if (currentApp === 'finanzas') currentGroup = 'finanzas';
+        else if (currentApp === 'costos') currentGroup = 'costos';
+        else if (currentApp === 'inventario') currentGroup = 'inventario';
 
-    <!-- Tablero Ejecutivo BI -->
-    <a 
-      href="{% url 'dashboard:tablero' %}?vista=tablero" 
-      title="Tablero Ejecutivo (BI)"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Tablero Ejecutivo (BI)</span>
-    </a>
+        // Si el usuario navegó a un grupo DIFERENTE al anterior, abrimos el nuevo grupo
+        try {
+          let lastGroup = localStorage.getItem('erp_sidebar_last_group') || '';
+          if (currentGroup && currentGroup !== lastGroup) {
+            saved[currentGroup] = true;
+            localStorage.setItem('erp_sidebar_last_group', currentGroup);
+            localStorage.setItem('erp_sidebar_groups', JSON.stringify(saved));
+          }
+        } catch(e) {}
 
-    <!-- Campos y Cuadros -->
-    <a 
-      href="{% url 'campos:cuadros_list' %}" 
-      title="Campos y Cuadros"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'campos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Campos y Cuadros</span>
-    </a>
+        return {
+          tableros: saved.tableros !== undefined ? Boolean(saved.tableros) : (currentGroup === 'tableros'),
+          campo: saved.campo !== undefined ? Boolean(saved.campo) : (currentGroup === 'campo'),
+          personal: saved.personal !== undefined ? Boolean(saved.personal) : (currentGroup === 'personal'),
+          finanzas: saved.finanzas !== undefined ? Boolean(saved.finanzas) : (currentGroup === 'finanzas'),
+          costos: saved.costos !== undefined ? Boolean(saved.costos) : (currentGroup === 'costos'),
+          inventario: saved.inventario !== undefined ? Boolean(saved.inventario) : (currentGroup === 'inventario')
+        };
+      })(),
+      saveGroups() {
+        try {
+          localStorage.setItem('erp_sidebar_groups', JSON.stringify(this.openGroups));
+        } catch(e) {}
+      },
+      toggleGroup(group) {
+        if (!sidebarOpen) {
+          toggleSidebar();
+          this.openGroups[group] = true;
+          this.saveGroups();
+          return;
+        }
+        this.openGroups[group] = !this.openGroups[group];
+        this.saveGroups();
+      }
+    }"
+    x-init="$nextTick(() => { setTimeout(() => { ready = true; }, 60); })"
+  >
 
-    <!-- Partes Diarios y OTs -->
-    <a 
-      href="{% url 'parte_diario:partes_list' %}" 
-      title="Partes Diarios"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'parte_diario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Partes Diarios</span>
-    </a>
+    <!-- 1. RUBRO: TABLEROS & BI -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('tableros')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'dashboard' %}bg-white/5 text-white{% endif %}"
+        title="Tableros &amp; BI"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Tableros &amp; BI</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.tableros ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
 
-    <!-- Personal y Asistencia -->
-    <a 
-      href="{% url 'personal:asistencia_diaria' %}" 
-      title="Personal y Cuadrillas"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'personal' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Personal y Cuadrillas</span>
-    </a>
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.tableros) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <a 
+            href="{% url 'dashboard:index' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Inicio &amp; Accesos</span>
+          </a>
+          <a 
+            href="{% url 'dashboard:tablero' %}?vista=tablero" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Tablero Ejecutivo (BI)</span>
+          </a>
+        </div>
+      </div>
+    </div>
 
-    <!-- Liquidación de Haberes -->
-    <a 
-      href="{% url 'liquidacion:periodos_list' %}" 
-      title="Liquidación Sueldos"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Liquidación Sueldos</span>
-    </a>
+    <!-- 2. RUBRO: CAMPO & OPERACIONES -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('campo')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'campos' or request.resolver_match.app_name == 'parte_diario' %}bg-white/5 text-white{% endif %}"
+        title="Campo &amp; Operaciones"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Campo &amp; Operaciones</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.campo ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
 
-    <!-- Finanzas y Tesorería -->
-    <a 
-      href="{% url 'finanzas:dashboard' %}" 
-      title="Finanzas & Cuentas"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'finanzas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Finanzas & Cuentas</span>
-    </a>
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.campo) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <a 
+            href="{% url 'campos:cuadros_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Campos y Cuadros</span>
+          </a>
+          <a 
+            href="{% url 'parte_diario:partes_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Partes Diarios de Labor</span>
+          </a>
+        </div>
+      </div>
+    </div>
 
-    <!-- Costos y Gestión -->
-    <a 
-      href="{% url 'costos:dashboard' %}" 
-      title="Costos por Centro"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Costos por Centro</span>
-    </a>
+    <!-- 3. RUBRO: PERSONAL & CUADRILLAS -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('personal')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'personal' or request.resolver_match.app_name == 'liquidacion' %}bg-white/5 text-white{% endif %}"
+        title="Personal &amp; Cuadrillas"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Personal &amp; Cuadrillas</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">4</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.personal ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
 
-    <!-- Inventario y Depósito -->
-    <a 
-      href="{% url 'inventario:insumos_list' %}" 
-      title="Depósitos & Insumos"
-      :class="!sidebarOpen ? 'justify-center px-0' : 'px-3'"
-      class="sidebar-item-link px-3 flex items-center py-2 text-sm font-medium rounded-xl transition-colors duration-150 group {% if request.resolver_match.app_name == 'inventario' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white shadow-md border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-    >
-      <svg :class="!sidebarOpen ? 'mr-0' : 'mr-3'" class="sidebar-item-icon mr-3 w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-      </svg>
-      <span x-show="sidebarOpen" class="sidebar-open-only whitespace-nowrap transition-opacity truncate">Depósitos & Insumos</span>
-    </a>
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.personal) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <a 
+            href="{% url 'personal:empleados_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Legajos de Personal</span>
+          </a>
+          <a 
+            href="{% url 'personal:asistencia_diaria' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Asistencia Cuadrillas</span>
+          </a>
+          <a 
+            href="{% url 'personal:fichaje_qr' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'fichaje-qr' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'fichaje-qr' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Fichaje por QR</span>
+          </a>
+          <a 
+            href="{% url 'liquidacion:periodos_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'liquidacion' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Liquidación de Haberes</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. RUBRO: FINANZAS & CONTABILIDAD -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('finanzas')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'finanzas' %}bg-white/5 text-white{% endif %}"
+        title="Finanzas &amp; Contabilidad"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">8</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.finanzas ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
+
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.finanzas) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <!-- Resultados del Período (P&L / Cuadro de Resultados) -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=resultados" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-emerald-300/90 hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-emerald-400{% else %}bg-emerald-500 group-hover:bg-emerald-300{% endif %}"></span>
+            <span class="truncate font-medium flex items-center justify-between w-full">
+              <span>Resultados del Período</span>
+              <span class="text-[9px] px-1 py-0.1 rounded bg-amber-500/20 text-amber-300 font-mono">P&amp;L</span>
+            </span>
+          </a>
+
+          <!-- Plan de Cuentas (Destacado Árbol) -->
+          <a 
+            href="{% url 'finanzas:plan_cuentas' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate font-medium flex items-center gap-1.5">
+              <span>Plan de Cuentas</span>
+              <span class="text-[9px] px-1 py-0.1 rounded bg-emerald-500/20 text-emerald-300 font-mono">Árbol</span>
+            </span>
+          </a>
+
+          <!-- Tesorería & Flujo -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=flujo" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Tesorería &amp; Flujo</span>
+          </a>
+
+          <!-- Cajas y Bancos -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=caja" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Cajas y Bancos</span>
+          </a>
+
+          <!-- Proveedores -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=proveedores" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Cuentas Proveedores</span>
+          </a>
+
+          <!-- Clientes -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=clientes" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Cuentas Clientes</span>
+          </a>
+
+          <!-- Cheques -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=cheques" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Cheques en Cartera</span>
+          </a>
+
+          <!-- Conciliaciones -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=conciliacion" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Conciliaciones Bancarias</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. RUBRO: COSTOS & GESTIÓN -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('costos')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'costos' %}bg-white/5 text-white{% endif %}"
+        title="Costos &amp; Gestión"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Costos &amp; Gestión</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">1</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.costos ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
+
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.costos) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <a 
+            href="{% url 'costos:dashboard' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'costos' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Costos por Centro</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. RUBRO: INVENTARIO & COMPRAS -->
+    <div class="rounded-xl overflow-hidden transition-colors duration-150">
+      <button 
+        type="button" 
+        @click="toggleGroup('inventario')"
+        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'inventario' %}bg-white/5 text-white{% endif %}"
+        title="Inventario &amp; Compras"
+      >
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
+        </div>
+        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
+          <svg 
+            class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
+            :class="openGroups.inventario ? 'rotate-90' : 'rotate-0'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </button>
+
+      <div 
+        class="sidebar-submenu-wrapper"
+        :class="(sidebarOpen && openGroups.inventario) ? 'is-open' : ''"
+      >
+        <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
+          <a 
+            href="{% url 'inventario:insumos_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'insumos_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'insumos_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Stock de Insumos</span>
+          </a>
+          <a 
+            href="{% url 'inventario:ordenes_compra_list' %}" 
+            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'ordenes-compra' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'ordenes-compra' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Órdenes de Compra</span>
+          </a>
+        </div>
+      </div>
+    </div>
 
   </nav>
 

@@ -10,4 +10,8 @@ urlpatterns = [
     path('asistencia/marcar/', views.marcar_asistencia_htmx, name='asistencia_marcar'),
     path('inscripciones/', views.InscripcionesListView.as_view(), name='inscripciones_list'),
     path('inscripciones/crear/', views.InscripcionCreateView.as_view(), name='inscripcion_create'),
+    # QR Fichaje
+    path('<int:pk>/qr/imagen/', views.EmpleadoQRView.as_view(), name='empleado_qr_imagen'),
+    path('<int:pk>/qr/', views.EmpleadoQRPageView.as_view(), name='empleado_qr_page'),
+    path('fichaje-qr/', views.FichajeQRView.as_view(), name='fichaje_qr'),
 ]
