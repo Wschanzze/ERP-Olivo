@@ -23,3 +23,15 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+from django.http import HttpResponseBadRequest
+
+def custom_bad_request(request, exception=None):
+    error_msg = str(exception) if exception else "Solicitud incorrecta"
+    host = request.headers.get('host', request.META.get('HTTP_HOST', 'desconocido'))
+    return HttpResponseBadRequest(
+        f"<h2>Error 400 - Bad Request</h2><p><strong>Detalle:</strong> {error_msg}</p><p><strong>Host:</strong> {host}</p>",
+        content_type="text/html"
+    )
+
+handler400 = 'config.urls.custom_bad_request'

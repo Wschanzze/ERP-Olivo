@@ -15,15 +15,25 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-erp-olivo-fallback-key-2025')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*,.vercel.app,localhost,127.0.0.1').split(',') if h.strip()]
+# Soporte para proxies reversos (Vercel)
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Permitir todos los hosts en Vercel (incluyendo previews y dominios personalizados)
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.vercel.app',
     'https://*.now.sh',
+    'http://localhost:*',
+    'http://127.0.0.1:*',
 ]
 csrf_env = os.getenv('CSRF_TRUSTED_ORIGINS')
 if csrf_env:
-    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in csrf_env.split(',') if origin.strip()])
+    for origin in csrf_env.split(','):
+        origin = origin.strip()
+        if origin and origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
