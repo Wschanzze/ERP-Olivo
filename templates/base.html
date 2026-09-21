@@ -106,34 +106,6 @@
       html.sidebar-collapsed .sidebar-item-icon {
         margin-right: 0 !important;
       }
-      html.sidebar-collapsed .sidebar-submenu-wrapper {
-        display: none !important;
-      }
-    }
-
-    /* Submenús en cascada/acordeón con animación CSS Grid */
-    .sidebar-submenu-wrapper {
-      display: grid;
-      grid-template-rows: 0fr;
-      opacity: 0;
-      visibility: hidden;
-    }
-    .sidebar-submenu-wrapper.is-open {
-      grid-template-rows: 1fr;
-      opacity: 1;
-      visibility: visible;
-    }
-    .sidebar-submenu-inner {
-      overflow: hidden;
-      min-height: 0;
-    }
-
-    /* Las transiciones SOLO se activan cuando la barra lateral está lista (evita el efecto de despliegue al navegar) */
-    .sidebar-ready .sidebar-submenu-wrapper {
-      transition: grid-template-rows 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms ease-in-out;
-    }
-    .sidebar-ready .sidebar-chevron {
-      transition: transform 200ms ease-in-out;
     }
   </style>
 
@@ -174,6 +146,7 @@
   }"
   @resize.window.debounce.100ms="windowWidth = window.innerWidth"
   @keydown.escape.window="mobileMenuOpen = false; modalOpen = false;"
+  @keydown.window="if (($event.ctrlKey || $event.metaKey) && $event.key === 'k') { $event.preventDefault(); if (window.innerWidth < 1024) { mobileMenuOpen = true; } window.dispatchEvent(new CustomEvent('focus-sidebar-search')); }"
 >
 
   <!-- Backdrop oscuro móvil para cuando el drawer lateral está abierto -->

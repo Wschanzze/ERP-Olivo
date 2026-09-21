@@ -2,7 +2,7 @@ import json
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.utils import timezone
-from django.db.models import Sum, F, Count
+from django.db.models import Sum, F, Count, Q
 from apps.campos.models import Cuadro, LoteDeCosecha
 from apps.inventario.models import Insumo
 from apps.personal.models import Empleado, RegistroAsistencia
@@ -99,20 +99,9 @@ class DashboardView(TemplateView):
         except Exception:
             cajas_total, cheques_count, proveedores_count, clientes_count = 0, 0, 0, 0
 
-        # Catálogo de Accesos Directos y Carpetas de Consulta estilo ERP CloudSuite
+        # Catálogo de Accesos Directos y Carpetas del Hub Operativo
         accesos = [
-            {
-                'id': 'costos_cuadro',
-                'titulo': 'Consulta de Estructura de Costos por Cuadro',
-                'categoria': 'finanzas',
-                'categoria_nombre': 'Costos & Finanzas',
-                'url': '/costos/',
-                'icono': 'chart_pie',
-                'color': 'emerald',
-                'badge': f"${costos_total:,.0f}",
-                'descripcion': 'Imputación ABC de mano de obra, insumos fitosanitarios y riego por lote.',
-                'tipo_archivo': 'Consulta Analítica'
-            },
+            # 🌿 CAMPO & PRODUCCIÓN
             {
                 'id': 'catastro_cuadros',
                 'titulo': 'Catastro y Superficie de Cuadros',
@@ -122,93 +111,133 @@ class DashboardView(TemplateView):
                 'icono': 'tree',
                 'color': 'oliva',
                 'badge': f"{cuadros_count} cuadros ({ha_totales:.0f} ha)",
-                'descripcion': 'Superficies netas, densidades y marcos de riego por goteo.',
+                'descripcion': 'Superficies netas, densidades, marcos de plantación y riego por goteo.',
                 'tipo_archivo': 'Catastro Agrícola'
             },
             {
+                'id': 'partes_labor',
+                'titulo': 'Partes Diarios de Labor y Riego',
+                'categoria': 'campo',
+                'categoria_nombre': 'Campo & Olivos',
+                'url': '/parte-diario/',
+                'icono': 'clipboard',
+                'color': 'oliva',
+                'badge': f"{partes_count} partes emitidos",
+                'descripcion': 'Descarga de labores de campo, aplicación fitosanitaria y riego.',
+                'tipo_archivo': 'Operaciones Agrícolas'
+            },
+            {
+                'id': 'costos_cuadro',
+                'titulo': 'Estructura de Costos por Lote y Centro',
+                'categoria': 'campo',
+                'categoria_nombre': 'Campo & Olivos',
+                'url': '/costos/',
+                'icono': 'chart_pie',
+                'color': 'emerald',
+                'badge': f"${costos_total:,.0f} ARS",
+                'descripcion': 'Imputación ABC de jornales, insumos fitosanitarios y labores por cuadro.',
+                'tipo_archivo': 'Consulta de Costos'
+            },
+            {
                 'id': 'rendimiento_variedad',
-                'titulo': 'Consulta de Rendimiento por Variedad',
+                'titulo': 'Rendimiento y Cosecha por Variedad',
                 'categoria': 'campo',
                 'categoria_nombre': 'Campo & Olivos',
                 'url': '/campos/?variedad=ARAUCO',
                 'icono': 'filter',
                 'color': 'oliva',
-                'badge': 'Arauco / Arbequina / Picual',
+                'badge': f"{kg_cosechados_campana:,.0f} kg en {campana_activa}",
                 'descripcion': 'Comportamiento productivo y fechas óptimas de cosecha por variedad.',
                 'tipo_archivo': 'Análisis Varietal'
             },
+
+            # 💵 FINANZAS & TESORERÍA
             {
-                'id': 'stock_insumos',
-                'titulo': 'Consulta de Stock Crítico de Insumos',
-                'categoria': 'almazara',
-                'categoria_nombre': 'Almazara & Depósitos',
-                'url': '/inventario/',
-                'icono': 'cube',
-                'color': 'amber',
-                'badge': f"{insumos_criticos} bajo mínimo" if insumos_criticos > 0 else f"{insumos_count} en orden",
-                'descripcion': 'Fitosanitarios, fertilizantes y lubricantes en punto de reposición.',
-                'tipo_archivo': 'Control de Inventario'
+                'id': 'resultado_periodo',
+                'titulo': 'Resultado del Período (P&L Gerencial)',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=resultados',
+                'icono': 'chart_bar',
+                'color': 'emerald',
+                'badge': 'P&L Trimestral',
+                'descripcion': 'Cuadro de resultados en Pesos y Dólares con margen bruto y EBITDA.',
+                'tipo_archivo': 'Estado de Resultados'
             },
             {
-                'id': 'ordenes_compra',
-                'titulo': 'Órdenes de Compra y Recepciones',
-                'categoria': 'almazara',
-                'categoria_nombre': 'Almazara & Depósitos',
-                'url': '/inventario/ordenes-compra/',
+                'id': 'posicion_cajas',
+                'titulo': 'Posición de Cajas, Bancos y Arqueo',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=caja',
+                'icono': 'building_library',
+                'color': 'emerald',
+                'badge': f"${cajas_total:,.0f} ARS",
+                'descripcion': 'Arqueo de tesorería diaria en efectivo, bancos y billeteras virtuales.',
+                'tipo_archivo': 'Tesorería'
+            },
+            {
+                'id': 'facturas_proveedores',
+                'titulo': 'Cuentas por Pagar a Proveedores',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=proveedores',
                 'icono': 'document_arrow_down',
                 'color': 'amber',
-                'badge': 'Gestión de Compras',
-                'descripcion': 'Flujo formal de compras con control de recepciones y deuda proveedor.',
-                'tipo_archivo': 'Compras de Insumos'
+                'badge': f"{proveedores_count} proveedores",
+                'descripcion': 'Vencimientos de proveedores de insumos, servicios de cosecha y fletes.',
+                'tipo_archivo': 'Cuentas por Pagar'
             },
             {
-                'id': 'valorizacion_ppp',
-                'titulo': 'Valorización de Depósitos al Costo PPP',
-                'categoria': 'almazara',
-                'categoria_nombre': 'Almazara & Depósitos',
-                'url': '/inventario/',
-                'icono': 'calculator',
-                'color': 'slate',
-                'badge': 'PPP en ARS',
-                'descripcion': 'Valuación monetaria contable de insumos y consumibles de almazara.',
-                'tipo_archivo': 'Consulta Valorizada'
+                'id': 'clientes_cobranzas',
+                'titulo': 'Cuentas y Cobranzas de Clientes',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=clientes',
+                'icono': 'document_arrow_up',
+                'color': 'emerald',
+                'badge': f"{clientes_count} clientes",
+                'descripcion': 'Cobranzas de venta de aceite de oliva a granel y aceitunas de mesa.',
+                'tipo_archivo': 'Cuentas por Cobrar'
             },
             {
-                'id': 'partes_labor',
-                'titulo': 'Partes Diarios de Labor, Riego y Cosecha',
-                'categoria': 'almazara',
-                'categoria_nombre': 'Almazara & Depósitos',
-                'url': '/parte-diario/',
-                'icono': 'clipboard',
+                'id': 'libro_iva',
+                'titulo': 'Libro de IVA Compras & Ventas AFIP',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=libro_iva',
+                'icono': 'document_text',
+                'color': 'amber',
+                'badge': 'Régimen AFIP / ARCA',
+                'descripcion': 'Desglose impositivo de alícuotas 21%, 10.5%, percepciones y exportación.',
+                'tipo_archivo': 'Libro Impositivo'
+            },
+            {
+                'id': 'cartera_cheques',
+                'titulo': 'Cartera y Vencimientos de Cheques',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/?tab=cheques',
+                'icono': 'credit_card',
+                'color': 'amber',
+                'badge': f"{cheques_count} en cartera",
+                'descripcion': 'Control de cheques diferidos propios y de clientes listos para depositar o endosar.',
+                'tipo_archivo': 'Valores a Depositar'
+            },
+            {
+                'id': 'plan_cuentas',
+                'titulo': 'Plan de Cuentas Contable (Árbol)',
+                'categoria': 'finanzas',
+                'categoria_nombre': 'Finanzas & Control',
+                'url': '/finanzas/plan-cuentas/',
+                'icono': 'folder_tree',
                 'color': 'oliva',
-                'badge': f"{partes_count} partes emitidos",
-                'descripcion': 'Descarga automática de stock, datos de riego y jornales.',
-                'tipo_archivo': 'Operaciones de Campo'
+                'badge': '56 Cuentas',
+                'descripcion': 'Nomenclador contable con cuentas de activo biológico, almazara y egresos.',
+                'tipo_archivo': 'Estructura Contable'
             },
-            {
-                'id': 'asistencia_cuadrillas',
-                'titulo': 'Carga Rápida de Asistencia de Cuadrillas',
-                'categoria': 'personal',
-                'categoria_nombre': 'Personal & Nómina',
-                'url': '/personal/asistencia/',
-                'icono': 'user_check',
-                'color': 'sky',
-                'badge': f"{asistencia_hoy_count}/{empleados_count} registrados hoy",
-                'descripcion': 'Marcación de presentismo, ausencias y suspensiones climáticas.',
-                'tipo_archivo': 'Carga Operativa'
-            },
-            {
-                'id': 'fichaje_qr',
-                'titulo': 'Fichaje por QR en Cuadrillas',
-                'categoria': 'personal',
-                'categoria_nombre': 'Personal & Nómina',
-                'url': '/personal/fichaje-qr/',
-                'icono': 'qr_code',
-                'color': 'sky',
-                'badge': 'Escaneo QR Móvil',
-                'descripcion': 'Fichaje instantáneo de asistencia escaneando el código QR del legajo.',
-                'tipo_archivo': 'Control de Asistencia'
-            },
+
+            # 👥 PERSONAL & CUADRILLAS
             {
                 'id': 'padron_personal',
                 'titulo': 'Padrón de Personal Rural y Legajos',
@@ -222,8 +251,32 @@ class DashboardView(TemplateView):
                 'tipo_archivo': 'Legajos y RRHH'
             },
             {
+                'id': 'asistencia_cuadrillas',
+                'titulo': 'Asistencia Diaria de Cuadrillas',
+                'categoria': 'personal',
+                'categoria_nombre': 'Personal & Nómina',
+                'url': '/personal/asistencia/',
+                'icono': 'user_check',
+                'color': 'sky',
+                'badge': f"{asistencia_hoy_count}/{empleados_count} presentes hoy",
+                'descripcion': 'Marcación de presentismo, ausencias justificadas y suspensiones.',
+                'tipo_archivo': 'Carga Operativa'
+            },
+            {
+                'id': 'fichaje_qr',
+                'titulo': 'Fichaje por QR Móvil en Cuadrillas',
+                'categoria': 'personal',
+                'categoria_nombre': 'Personal & Nómina',
+                'url': '/personal/fichaje-qr/',
+                'icono': 'qr_code',
+                'color': 'sky',
+                'badge': 'Escaneo QR Móvil',
+                'descripcion': 'Fichaje instantáneo de asistencia escaneando el código QR del legajo desde el celular.',
+                'tipo_archivo': 'Control de Asistencia'
+            },
+            {
                 'id': 'liquidacion_uatre',
-                'titulo': 'Liquidación Quincenal de Sueldos UATRE',
+                'titulo': 'Liquidación Quincenal UATRE',
                 'categoria': 'personal',
                 'categoria_nombre': 'Personal & Nómina',
                 'url': '/liquidacion/',
@@ -233,53 +286,55 @@ class DashboardView(TemplateView):
                 'descripcion': 'Devengamiento de haberes y descarga de recibos PDF profesionales.',
                 'tipo_archivo': 'Liquidación Salarial'
             },
+
+            # 📦 ALMAZARA, DEPÓSITOS & LOGÍSTICA
             {
-                'id': 'posicion_cajas',
-                'titulo': 'Posición Consolidada de Caja y Bancos',
-                'categoria': 'finanzas',
-                'categoria_nombre': 'Costos & Finanzas',
-                'url': '/finanzas/',
-                'icono': 'building_library',
-                'color': 'emerald',
-                'badge': f"${cajas_total:,.0f} ARS",
-                'descripcion': 'Arqueo de tesorería en efectivo y cuentas bancarias.',
-                'tipo_archivo': 'Tesorería'
+                'id': 'stock_insumos',
+                'titulo': 'Control de Stock e Insumos Agrícolas',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/',
+                'icono': 'cube',
+                'color': 'amber',
+                'badge': f"{insumos_criticos} bajo mínimo" if insumos_criticos > 0 else f"{insumos_count} artículos",
+                'descripcion': 'Fitosanitarios, fertilizantes y lubricantes con control de punto de reposición.',
+                'tipo_archivo': 'Control de Inventario'
             },
             {
-                'id': 'facturas_proveedores',
-                'titulo': 'Cuentas Corrientes y Facturas a Pagar',
-                'categoria': 'finanzas',
-                'categoria_nombre': 'Costos & Finanzas',
-                'url': '/finanzas/',
+                'id': 'remitos_firma',
+                'titulo': 'Remitos con Firma Digital Móvil',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/remitos/',
+                'icono': 'document_check',
+                'color': 'emerald',
+                'badge': 'Firma Táctil Móvil',
+                'descripcion': 'Comprobantes de recepción con firma táctil en pantalla desde el celular del receptor.',
+                'tipo_archivo': 'Logística de Entrada'
+            },
+            {
+                'id': 'ordenes_compra',
+                'titulo': 'Órdenes de Compra y Recepciones',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/ordenes-compra/',
                 'icono': 'document_arrow_down',
                 'color': 'amber',
-                'badge': f"{proveedores_count} proveedores",
-                'descripcion': 'Vencimientos de proveedores de insumos, servicios y fletes.',
-                'tipo_archivo': 'Cuentas por Pagar'
+                'badge': 'Flujo de Compras',
+                'descripcion': 'Solicitudes formales de insumos y control de mercadería recibida.',
+                'tipo_archivo': 'Gestión de Compras'
             },
             {
-                'id': 'clientes_cobranzas',
-                'titulo': 'Cuentas y Cobranzas de Clientes de Aceite',
-                'categoria': 'finanzas',
-                'categoria_nombre': 'Costos & Finanzas',
-                'url': '/finanzas/',
-                'icono': 'document_arrow_up',
-                'color': 'emerald',
-                'badge': f"{clientes_count} clientes",
-                'descripcion': 'Cobranzas de venta de aceite a granel y aceitunas de mesa.',
-                'tipo_archivo': 'Cuentas por Cobrar'
-            },
-            {
-                'id': 'cartera_cheques',
-                'titulo': 'Cartera y Vencimientos de Cheques',
-                'categoria': 'finanzas',
-                'categoria_nombre': 'Costos & Finanzas',
-                'url': '/finanzas/',
-                'icono': 'credit_card',
-                'color': 'amber',
-                'badge': f"{cheques_count} en cartera",
-                'descripcion': 'Control de cheques diferidos propios y recibidos de terceros.',
-                'tipo_archivo': 'Valores a Depositar'
+                'id': 'analisis_abc',
+                'titulo': 'Análisis y Matriz de Rotación ABC',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/analisis-stock/',
+                'icono': 'chart_bar',
+                'color': 'slate',
+                'badge': 'Pareto 80/20',
+                'descripcion': 'Clasificación de stock por valor monetario y criticidad para la cosecha.',
+                'tipo_archivo': 'Analítica de Inventario'
             },
         ]
 

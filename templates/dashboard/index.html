@@ -122,8 +122,19 @@
           class="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-xs rounded-xl border border-slate-200 focus:border-[#3D4A2A] focus:ring-1 focus:ring-[#3D4A2A] transition-all placeholder:text-slate-400"
           autocomplete="off"
         />
-        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-          <span class="text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">/</span>
+        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center">
+          <button 
+            type="button" 
+            x-show="searchQuery" 
+            @click="searchQuery = ''" 
+            class="text-slate-400 hover:text-slate-600 p-0.5 mr-1"
+            title="Limpiar búsqueda"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span x-show="!searchQuery" class="text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">/</span>
         </div>
       </div>
 
@@ -132,7 +143,7 @@
         <button 
           type="button" 
           @click="activeCategory = 'todas'"
-          :class="activeCategory === 'todas' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          :class="activeCategory === 'todas' ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
           class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
         >
           Todas
@@ -140,7 +151,7 @@
         <button 
           type="button" 
           @click="activeCategory = 'campo'"
-          :class="activeCategory === 'campo' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          :class="activeCategory === 'campo' ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
           class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
         >
           🌾 Campo & Olivos
@@ -148,7 +159,7 @@
         <button 
           type="button" 
           @click="activeCategory = 'almazara'"
-          :class="activeCategory === 'almazara' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          :class="activeCategory === 'almazara' ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
           class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
         >
           ⚙️ Almazara & Stock
@@ -156,7 +167,7 @@
         <button 
           type="button" 
           @click="activeCategory = 'personal'"
-          :class="activeCategory === 'personal' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          :class="activeCategory === 'personal' ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
           class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
         >
           👥 Cuadrillas & Nómina
@@ -164,7 +175,7 @@
         <button 
           type="button" 
           @click="activeCategory = 'finanzas'"
-          :class="activeCategory === 'finanzas' ? 'bg-[#3D4A2A] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
+          :class="activeCategory === 'finanzas' ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium'"
           class="px-2.5 py-1 text-[11px] rounded-lg transition-colors"
         >
           💰 Costos & Finanzas
@@ -200,9 +211,9 @@
     </div>
 
     <!-- EL LIENZO DE ESCRITORIO (CANVAS CON FONDO CORPORATIVO Y ACCESOS ESTILO CARPETAS) -->
-    <div class="relative min-h-[460px] sm:min-h-[560px] rounded-2xl sm:rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs bg-gradient-to-br from-[#FAFBF8] via-[#F3F7EE] to-[#EAEFE4] p-4 sm:p-8">
+    <div class="relative min-h-[460px] sm:min-h-[560px] rounded-2xl sm:rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs bg-gradient-to-br from-[#FAFBF8] via-[#F3F7EE] to-[#EAEFE4] p-4 sm:p-7">
       
-      <!-- Ondas de Fondo Abstractas Corporativas (Inspiradas en el diseño del ERP en la imagen) -->
+      <!-- Ondas de Fondo Abstractas Corporativas -->
       <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
         <svg class="absolute -right-20 -bottom-20 w-[600px] h-[600px] text-[#D5DFC9]/40" fill="currentColor" viewBox="0 0 200 200">
           <path d="M45.7,-77.4C58.9,-71.1,69.1,-58.5,77.3,-44.6C85.5,-30.7,91.7,-15.3,89.9,-0.9C88.2,13.5,78.5,27.1,69.5,40.1C60.5,53.2,52.2,65.8,40.4,73.4C28.6,81.1,14.3,83.8,-0.2,84.1C-14.7,84.5,-29.4,82.4,-41.8,75.1C-54.3,67.8,-64.5,55.3,-72.6,41.2C-80.7,27.1,-86.7,13.6,-86.3,0.2C-85.9,-13.1,-79,-26.2,-70.7,-38.4C-62.5,-50.6,-52.8,-61.9,-40.8,-68.8C-28.7,-75.7,-14.4,-78.3,0.7,-79.5C15.8,-80.7,32.5,-83.7,45.7,-77.4Z" transform="translate(100 100)" />
@@ -211,11 +222,11 @@
       </div>
 
       <!-- Watermark / Branding Corporativo y Selector de Campaña -->
-      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-2 border-b border-slate-200/60 relative z-10">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200/60 relative z-10">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Escritorio Agroindustrial</span>
-          <span class="text-[10px] text-slate-400 font-mono">• Gestión Operativa</span>
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Escritorio Agroindustrial</span>
+          <span class="text-[10px] text-slate-400 font-mono">• Hub Operativo</span>
         </div>
 
         <div class="flex items-center gap-3">
@@ -252,10 +263,117 @@
         </div>
       </div>
 
+      <!-- 4 HUBS OPERATIVOS TRONCALES (GRANDES CARPETAS DE GESTIÓN) -->
+      <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+        
+        <!-- HUB 1: CAMPO & PRODUCCIÓN -->
+        <div 
+          @click="activeCategory = (activeCategory === 'campo' ? 'todas' : 'campo')"
+          :class="activeCategory === 'campo' ? 'ring-2 ring-[#3D4A2A] bg-white shadow-md' : 'bg-white/85 hover:bg-white border border-slate-200/90 shadow-2xs hover:shadow-sm'"
+          class="cursor-pointer rounded-2xl p-3.5 transition-all duration-200 group flex items-start gap-3 select-none"
+        >
+          <div class="relative flex-shrink-0 w-11 h-11 flex items-center justify-center">
+            <img src="{% static 'img/folder_2577158.png' %}" alt="Campo" class="w-11 h-11 object-contain drop-shadow-sm group-hover:scale-105 transition-transform" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pilar Agrícola</span>
+              <span class="text-[10px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] px-1.5 py-0.5 rounded-md">4 accesos</span>
+            </div>
+            <h3 class="text-xs font-bold text-slate-900 group-hover:text-[#3D4A2A] transition-colors truncate mt-0.5">Campo & Olivos</h3>
+            <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              {{ kpis_resumen.cuadros_count }} cuadros ({{ kpis_resumen.ha_totales|floatformat:0 }} ha)
+            </p>
+          </div>
+        </div>
+
+        <!-- HUB 2: FINANZAS & CONTABILIDAD -->
+        <div 
+          @click="activeCategory = (activeCategory === 'finanzas' ? 'todas' : 'finanzas')"
+          :class="activeCategory === 'finanzas' ? 'ring-2 ring-emerald-600 bg-white shadow-md' : 'bg-white/85 hover:bg-white border border-slate-200/90 shadow-2xs hover:shadow-sm'"
+          class="cursor-pointer rounded-2xl p-3.5 transition-all duration-200 group flex items-start gap-3 select-none"
+        >
+          <div class="relative flex-shrink-0 w-11 h-11 flex items-center justify-center">
+            <img src="{% static 'img/folder_2577349.png' %}" alt="Finanzas" class="w-11 h-11 object-contain drop-shadow-sm group-hover:scale-105 transition-transform" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tesorería & Costos</span>
+              <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md">7 accesos</span>
+            </div>
+            <h3 class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate mt-0.5">Finanzas & Control</h3>
+            <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              ${{ kpis_resumen.cajas_total|floatformat:0 }} ARS en Caja
+            </p>
+          </div>
+        </div>
+
+        <!-- HUB 3: PERSONAL & NÓMINA -->
+        <div 
+          @click="activeCategory = (activeCategory === 'personal' ? 'todas' : 'personal')"
+          :class="activeCategory === 'personal' ? 'ring-2 ring-sky-600 bg-white shadow-md' : 'bg-white/85 hover:bg-white border border-slate-200/90 shadow-2xs hover:shadow-sm'"
+          class="cursor-pointer rounded-2xl p-3.5 transition-all duration-200 group flex items-start gap-3 select-none"
+        >
+          <div class="relative flex-shrink-0 w-11 h-11 flex items-center justify-center">
+            <img src="{% static 'img/folder_2577349.png' %}" alt="Personal" class="w-11 h-11 object-contain drop-shadow-sm group-hover:scale-105 transition-transform" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cuadrillas & RRHH</span>
+              <span class="text-[10px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded-md">4 accesos</span>
+            </div>
+            <h3 class="text-xs font-bold text-slate-900 group-hover:text-sky-700 transition-colors truncate mt-0.5">Personal & Nómina</h3>
+            <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              {{ kpis_resumen.asistencia_hoy_count }}/{{ kpis_resumen.empleados_count }} presentes hoy
+            </p>
+          </div>
+        </div>
+
+        <!-- HUB 4: ALMAZARA & DEPÓSITOS -->
+        <div 
+          @click="activeCategory = (activeCategory === 'almazara' ? 'todas' : 'almazara')"
+          :class="activeCategory === 'almazara' ? 'ring-2 ring-amber-600 bg-white shadow-md' : 'bg-white/85 hover:bg-white border border-slate-200/90 shadow-2xs hover:shadow-sm'"
+          class="cursor-pointer rounded-2xl p-3.5 transition-all duration-200 group flex items-start gap-3 select-none"
+        >
+          <div class="relative flex-shrink-0 w-11 h-11 flex items-center justify-center">
+            <img src="{% static 'img/folder_2577158.png' %}" alt="Almazara" class="w-11 h-11 object-contain drop-shadow-sm group-hover:scale-105 transition-transform" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logística & Stock</span>
+              <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md">4 accesos</span>
+            </div>
+            <h3 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors truncate mt-0.5">Almazara & Depósitos</h3>
+            <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              {% if kpis_resumen.insumos_criticos %}{{ kpis_resumen.insumos_criticos }} alertas de stock{% else %}{{ kpis_resumen.insumos_count }} insumos activos{% endif %}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Barra de Estado del Filtro Activo -->
+      <div x-show="activeCategory !== 'todas' || searchQuery" class="relative z-10 flex items-center justify-between bg-white/90 backdrop-blur-xs px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs mb-4 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500">Filtrando:</span>
+          <span class="font-bold text-[#3D4A2A]" x-show="activeCategory !== 'todas'" x-text="activeCategory === 'campo' ? '🌾 Campo & Olivos' : (activeCategory === 'finanzas' ? '💰 Finanzas & Control' : (activeCategory === 'personal' ? '👥 Personal & Nómina' : '⚙️ Almazara & Stock'))"></span>
+          <span x-show="searchQuery" class="text-slate-600">búsqueda &ldquo;<strong class='text-slate-900' x-text="searchQuery"></strong>&rdquo;</span>
+          <span class="text-slate-400">•</span>
+          <span class="text-slate-500 font-medium" x-text="accesos.filter(i => matches(i)).length + ' consulta(s)'"></span>
+        </div>
+        <button 
+          type="button" 
+          @click="activeCategory = 'todas'; searchQuery = ''" 
+          class="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+
       <!-- MODO 1: ESCRITORIO CON CARPETAS REALES (FOLDER PNGS) -->
       <div x-show="viewMode === 'desktop'" class="relative z-10">
         
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 sm:gap-x-6 gap-y-5 sm:gap-y-7 pt-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 sm:gap-x-6 gap-y-5 sm:gap-y-6 pt-1">
           
           <template x-for="item in accesos" :key="item.id">
             <div 
@@ -263,23 +381,35 @@
               x-transition:enter="transition ease-out duration-150"
               x-transition:enter-start="opacity-0 scale-90"
               x-transition:enter-end="opacity-100 scale-100"
-              class="flex flex-col items-center justify-start group cursor-pointer p-2 rounded-2xl hover:bg-white/60 transition-all duration-200"
+              class="flex flex-col items-center justify-start group cursor-pointer p-2.5 rounded-2xl hover:bg-white/80 transition-all duration-200"
               @click="window.location.href = item.url"
+              :title="item.descripcion"
             >
               <!-- Icono de Carpeta Real con Drop Shadow y Efecto Hover -->
               <div class="relative flex items-center justify-center p-1">
                 <img 
                   :src="item.icono_carpeta || (item.categoria === 'finanzas' || item.categoria === 'personal' ? '{% static 'img/folder_2577349.png' %}' : '{% static 'img/folder_2577158.png' %}')" 
                   alt="Carpeta" 
-                  class="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-sm group-hover:scale-105 group-hover:drop-shadow-md transition-all duration-200 select-none pointer-events-none"
+                  class="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-sm group-hover:scale-110 group-hover:drop-shadow-md transition-all duration-200 select-none pointer-events-none"
                 />
               </div>
 
-              <!-- Etiqueta de Nombre de la Carpeta -->
-              <div class="mt-2 text-center w-full max-w-[140px] flex flex-col items-center">
+              <!-- Etiqueta de Nombre de la Carpeta y Badge -->
+              <div class="mt-2 text-center w-full max-w-[145px] flex flex-col items-center gap-1">
                 <span 
-                  class="block text-slate-800 group-hover:text-[#222B17] font-semibold text-xs leading-snug px-2 py-0.5 rounded-lg group-hover:bg-white/95 group-hover:shadow-xs transition-all duration-150 break-words line-clamp-2" 
+                  class="block text-slate-800 group-hover:text-[#222B17] font-semibold text-xs leading-snug px-1.5 py-0.5 rounded-lg group-hover:bg-white group-hover:shadow-xs transition-all duration-150 break-words line-clamp-2" 
                   x-text="item.titulo"
+                ></span>
+                <span 
+                  x-show="item.badge"
+                  class="text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all text-center leading-tight line-clamp-1 max-w-[130px]"
+                  :class="{
+                    'bg-[#EAEFE3] text-[#3D4A2A] border-[#D5DFC9]': item.categoria === 'campo',
+                    'bg-emerald-50 text-emerald-700 border-emerald-200': item.categoria === 'finanzas',
+                    'bg-sky-50 text-sky-700 border-sky-200': item.categoria === 'personal',
+                    'bg-amber-50 text-amber-700 border-amber-200': item.categoria === 'almazara'
+                  }"
+                  x-text="item.badge"
                 ></span>
               </div>
 
