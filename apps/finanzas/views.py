@@ -38,7 +38,9 @@ def get_plan_cuentas_payload():
         if c.padre_id:
             children_map.setdefault(c.padre_id, []).append(c)
         curr = c.padre_id
-        while curr:
+        visited = set()
+        while curr and curr in qs_dict and curr not in visited:
+            visited.add(curr)
             descendants_count[curr] = descendants_count.get(curr, 0) + 1
             parent_obj = qs_dict.get(curr)
             curr = parent_obj.padre_id if parent_obj else None
@@ -60,18 +62,26 @@ def get_plan_cuentas_payload():
         c.hijos_count = len(children_map.get(c.id, []))
         c.total_descendientes = descendants_count.get(c.id, 0)
         ancestors = []
-        curr = c.padre
-        while curr:
-            ancestors.append(curr.codigo)
-            curr = curr.padre
+        curr_p_id = c.padre_id
+        visited_anc = set()
+        while curr_p_id and curr_p_id in qs_dict and curr_p_id not in visited_anc:
+            visited_anc.add(curr_p_id)
+            p = qs_dict[curr_p_id]
+            ancestors.append(p.codigo)
+            curr_p_id = p.padre_id
         c.ancestros_codigos_str = ' '.join(ancestors)
 
-        vinc = (
-            c.cuentas_financieras.count() + 
-            c.categorias_insumo_activo.count() + 
-            c.categorias_insumo_gasto.count() + 
-            c.centros_de_costo.count()
-        )
+        c_cajas = len(c.cuentas_financieras.all())
+        c_act = len(c.categorias_insumo_activo.all())
+        c_gas = len(c.categorias_insumo_gasto.all())
+        c_cc = len(c.centros_de_costo.all())
+        vinc = c_cajas + c_act + c_gas + c_cc
+        c.vinculos_count = vinc
+        c.c_cajas = c_cajas
+        c.c_act = c_act
+        c.c_gas = c_gas
+        c.c_cc = c_cc
+
         if vinc > 0:
             total_vinculadas += 1
 
@@ -626,7 +636,7 @@ class FinanzasDashboardView(TemplateView):
         ctx['cuentas_plan'] = cuentas_qs
         ctx['cuentas_contables_json'] = json.dumps(cuentas_list)
         ctx['cajas_bancos'] = Cuenta.objects.all().select_related('cuenta_contable')
-        ctx['categorias_insumo'] = CategoriaInsumo.objects.all().select_related('cuenta_contable_activo', 'cuenta_contable_gasto')
+        ctx['categorias_insumo'] = CategoriaInsumo.objects.all().select_related('cuenta_contable_activo', 'cuenta_contable_gasto').prefetch_related('insumos')
         ctx['centros_costo'] = CentroDeCosto.objects.all().select_related('cuenta_contable_defecto')
         ctx['cuentas_imputables'] = CuentaContable.objects.filter(es_imputable=True, activa=True).order_by('codigo')
 

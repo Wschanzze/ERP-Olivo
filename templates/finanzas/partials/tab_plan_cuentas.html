@@ -453,16 +453,14 @@
         <!-- Columna 5: Acciones y Vínculos -->
         <div class="col-span-3 md:col-span-1 text-right flex items-center justify-end space-x-1.5">
           <!-- Vínculos activos en el ERP -->
-          {% with c_cajas=acc.cuentas_financieras.count c_act=acc.categorias_insumo_activo.count c_gas=acc.categorias_insumo_gasto.count c_cc=acc.centros_de_costo.count %}
-            {% if c_cajas or c_act or c_gas or c_cc %}
-            <span 
-              class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-800"
-              title="Entidades del ERP enlazadas: {{ c_cajas }} cajas/bancos, {{ c_act }} insumos stock, {{ c_gas }} insumos consumo, {{ c_cc }} centros de costo"
-            >
-              🔗
-            </span>
-            {% endif %}
-          {% endwith %}
+          {% if acc.vinculos_count %}
+          <span 
+            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-800"
+            title="Entidades del ERP enlazadas: {{ acc.c_cajas }} cajas/bancos, {{ acc.c_act }} insumos stock, {{ acc.c_gas }} insumos consumo, {{ acc.c_cc }} centros de costo"
+          >
+            🔗
+          </span>
+          {% endif %}
 
           <!-- Botón de Detalle con HTMX al modal universal -->
           <button 
@@ -589,7 +587,7 @@
         <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
           <div class="flex items-center justify-between">
             <span class="font-bold text-xs text-slate-900">{{ cat.nombre }}</span>
-            <span class="text-[11px] text-slate-400 font-mono">{{ cat.insumos.count }} insumos</span>
+            <span class="text-[11px] text-slate-400 font-mono">{{ cat.insumos.all|length }} insumos</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
