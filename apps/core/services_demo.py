@@ -144,6 +144,16 @@ def poblar_datos_demo_q1_2026():
             'cuenta_contable_defecto': cta_jornal
         }
     )
+    cc_prod_sur, _ = CentroDeCosto.objects.get_or_create(
+        codigo="CC-PROD-FSUR",
+        defaults={
+            'empresa': empresa,
+            'nombre': "Producción Agrícola Finca Valle Vicioso",
+            'tipo': 'PRODUCTIVO_CAMPO',
+            'finca': finca_sur,
+            'cuenta_contable_defecto': cta_jornal
+        }
+    )
     cc_almazara, _ = CentroDeCosto.objects.get_or_create(
         codigo="CC-FABRICA-ALMAZARA",
         defaults={
@@ -1358,28 +1368,43 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
-    # 7.1 Imputación de Costos por Centro (Q1 2026)
+    # 7.1 Imputación de Costos por Centro (Q1 2026) - Calidad y Trazabilidad Completa
     costos_q1_data = [
-        # Enero
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("320000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales fertirriego y control de goteros en Cuadro 2"),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("247500.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Nitrato de potasio aplicado en fertirriego"),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("392000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil tractor laboreo y desmalezado Cuadro Arauco"),
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 1, 25), Decimal("520000.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica trifásica bombeo de pozo Enero"),
-        # Febrero
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("1015000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre cura sanitaria Cuadro Arauco"),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("48125.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista pulverización repilo"),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("648000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Herbicida glifosato y gasoil tractor control de malezas"),
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 10), Decimal("480000.00"), CostoPorCentro.TipoOrigen.MANTENIMIENTO, "[DEMO] Service preventivo y lubricantes Tractor John Deere"),
-        # Marzo
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 12), Decimal("1450000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales de cuadrilla cosecha manual aceituna Arauco"),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("517500.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil acarreo de bines cosecha Arauco"),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 20), Decimal("1890000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operadores cosecha mecánica vibradora Cuadro 2"),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("1035000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil cosechadora mecánica intensiva Cuadro Arbequina"),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("170000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Urea soluble fertirriego post-cosecha"),
-        (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda y centrífuga almazara"),
-        (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura y logística de exportación"),
+        # ── ENERO 2026 ────────────────────────────────────────────────────────
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("320000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales fertirriego nocturno Cuadro Arbequina", "ParteDiario", pd_riego_ene.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("247500.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Nitrato de potasio soluble aplicado en fertirriego", "ParteDiario", pd_riego_ene.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("35000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista pasada de rastra Cuadro Arauco", "ParteDiario", pd_laboreo.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("392000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor John Deere laboreo y desmalezado", "ParteDiario", pd_laboreo.id),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 1, 25), Decimal("520000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR bombeo Pozo 1 - Enero 2026", "FacturaServicio", 101),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 1, 20), Decimal("280000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales de riego y mantenimiento de goteros Finca Sur", "ParteDiario", None),
+        (cc_prod_sur, finca_sur, None, datetime.date(2026, 1, 26), Decimal("380000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica trifásica bombeo de pozo Finca Sur", "FacturaServicio", 102),
+
+        # ── FEBRERO 2026 ──────────────────────────────────────────────────────
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 10), Decimal("480000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANTENIMIENTO, "[DEMO] Service preventivo, lubricantes y filtros Tractor John Deere", "FacturaTaller", 201),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("48125.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista atomizadora cura repilo", "ParteDiario", pd_cura_feb.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("1015000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre 50% cura sanitaria repilo", "ParteDiario", pd_cura_feb.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("35000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista aplicación herbicida", "ParteDiario", pd_desm.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("368000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Glifosato 48% control de malezas en ruedo", "ParteDiario", pd_desm.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("280000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor pulverizador malezas", "ParteDiario", pd_desm.id),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 22), Decimal("1250000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR energía eléctrica bombeo Pozo 1 - Febrero 2026", "FacturaServicio", 202),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("310000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Tratamiento preventivo repilo en Cuadro Picual Pomán", "ParteDiario", None),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("725000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre aplicado en Finca Sur", "ParteDiario", None),
+
+        # ── MARZO 2026 ────────────────────────────────────────────────────────
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("114000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales cuadrilla cosecha manual aceituna Arauco", "ParteDiario", pd_cosecha.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("517500.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractores acarreo de bines de cosecha a playón", "ParteDiario", pd_cosecha.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 12), Decimal("1336000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Continuación cuadrilla cosecha manual aceituna verde mesa", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("48125.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operador cosechadora cabalgante vibradora", "ParteDiario", pd_cos_mec.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("1035000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil cosechadora vibradora y tractores acarreadores", "ParteDiario", pd_cos_mec.id),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 20), Decimal("1841875.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operadores y choferes cierre de cosecha mecánica", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("32000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Regador turno fertirriego post-cosecha", "ParteDiario", pd_riego_post.id),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("170000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Urea soluble fertirriego recuperador post-cosecha", "ParteDiario", pd_riego_post.id),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 3, 25), Decimal("1980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.SERVICIO_CONTRATISTA, "[DEMO] Servicio contratado de cosecha mecánica cabalgante y flete", "FacturaProveedor", 301),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 3, 24), Decimal("950000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla de cosecha manual variedad Picual Pomán", "ParteDiario", None),
+        (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda, batido y centrífuga almazara", "FacturaServicio", 302),
+        (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura, logística y aduana exportación", "LiquidacionGasto", 303),
     ]
-    for cc, fin, cua, fec, imp, torig, desc in costos_q1_data:
+    for cc, fin, cua, fec, imp, tc_mes, torig, desc, d_tipo, d_id in costos_q1_data:
         CostoPorCentro.objects.get_or_create(
             centro_de_costo=cc,
             finca=fin,
@@ -1388,9 +1413,10 @@ def poblar_datos_demo_q1_2026():
             tipo_origen=torig,
             defaults={
                 'importe_ars': imp,
-                'importe_usd': round(imp / Decimal("1050.00"), 2),
+                'importe_usd': round(imp / tc_mes, 2),
                 'descripcion': desc,
-                'documento_origen_tipo': "ParteDiario"
+                'documento_origen_tipo': d_tipo,
+                'documento_origen_id': d_id,
             }
         )
 

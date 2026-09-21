@@ -1,92 +1,730 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Costos por Centro y Lote | ERP Olivícola{% endblock %}
+{% block title %}Control de Gestión y Costos Agrícolas | ERP Olivícola{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ activeTab: '{{ tab_activa|default:'imputaciones' }}' }">
   
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <!-- Header Principal -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Control de Gestión y Costos Agrícolas</h1>
+        <span class="text-xs font-semibold text-slate-500">Gestión &amp; Finanzas</span>
+        <span class="text-slate-300">/</span>
         <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
-          Imputación ABC por Cuadro
+          Imputación ABC por Cuadro &amp; Plan de Cuentas
         </span>
       </div>
-      <p class="text-sm text-slate-500 mt-1">Imputación automática de mano de obra, insumos fitosanitarios, riego y amortización de maquinaria.</p>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">Control de Gestión y Costos Agrícolas</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Imputación directa de mano de obra, insumos fitosanitarios, riego, contratistas y combustible por cuadro productivo, articulado con el
+        <span class="font-semibold text-slate-700">Rubro 4.2.1 (Costo de la Producción Agrícola)</span>.
+      </p>
     </div>
 
-    <!-- KPI Card Costo Total -->
-    <div class="bg-white border border-slate-200/80 px-5 py-3 rounded-2xl shadow-xs">
-      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Costo Total Acumulado</span>
-      <p class="text-2xl font-extrabold text-[#3D4A2A] font-mono mt-0.5 tabular-nums">${{ total_costos_ars|floatformat:2 }}</p>
+    <!-- Acciones Rápidas -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <a 
+        href="{% url 'costos:exportar_csv' %}?finca={{ filtro_finca }}&cuadro={{ filtro_cuadro }}&centro={{ filtro_centro }}&tipo={{ filtro_tipo }}&mes={{ filtro_mes }}&q={{ filtro_q }}" 
+        class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:text-[#3D4A2A] hover:border-[#3D4A2A]/40 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+        title="Descargar datos en formato CSV para Excel"
+      >
+        <svg class="w-4 h-4 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Exportar CSV</span>
+      </a>
+
+      <a 
+        href="{% url 'parte_diario:partes_list' %}" 
+        class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white hover:bg-[#323d22] text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Partes Diarios</span>
+      </a>
+
+      <a 
+        href="{% url 'finanzas:plan_cuentas' %}" 
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <span>Plan de Cuentas</span>
+      </a>
     </div>
   </div>
 
-  <!-- Resumen de Costos por Categoría de Origen -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-    {% for cat in resumen_por_categoria %}
-    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-colors">
+  <!-- KPI Cards Ejecutivos Superiores -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Costo Total Acumulado -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
       <div class="flex items-center justify-between">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ cat.tipo_origen }}</span>
-        <span class="w-2 h-2 rounded-full bg-[#3D4A2A]"></span>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Costo Total Acumulado</span>
+        <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] px-2 py-0.5 rounded-full font-mono">Q1 2026</span>
       </div>
-      <p class="text-xl font-extrabold text-slate-900 font-mono mt-2 tabular-nums">${{ cat.total|floatformat:2 }}</p>
+      <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-2 tabular-nums">
+        ${{ total_costos_ars|floatformat:2 }}
+      </p>
+      <div class="mt-2 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-mono font-medium">≈ USD {{ total_costos_usd|floatformat:2 }}</span>
+        <span class="text-slate-400 font-medium">{{ total_registros }} imputaciones</span>
+      </div>
     </div>
-    {% empty %}
-    <div class="col-span-4 bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400 text-xs">
-      No hay costos acumulados aún. Al confirmar Partes Diarios con insumos o cuadrillas, los costos se imputan automáticamente aquí.
+
+    <!-- Costo Agrícola por Hectárea -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Costo Promedio Agrícola</span>
+        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono">$/ha</span>
+      </div>
+      <p class="text-2xl sm:text-3xl font-extrabold text-[#3D4A2A] font-mono mt-2 tabular-nums">
+        ${{ costo_promedio_ha|floatformat:2 }}<span class="text-sm font-sans font-medium text-slate-500">/ha</span>
+      </p>
+      <div class="mt-2 flex items-center justify-between text-xs">
+        <span class="text-slate-500">Sobre {{ total_ha_analizadas|floatformat:1 }} ha productivas</span>
+        <span class="font-bold text-emerald-700 font-mono">{{ pct_agricola }}% total</span>
+      </div>
     </div>
-    {% endfor %}
+
+    <!-- Distribución por Destino / Proceso -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Distribución por Proceso</span>
+        <span class="text-[10px] font-mono text-slate-400">ABC</span>
+      </div>
+      <div class="mt-3 space-y-2">
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+            <span>Agrícola (Campo)</span>
+            <span class="font-mono text-[#3D4A2A]">{{ pct_agricola }}% (${{ costo_agricola_ars|floatformat:0 }})</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-[#3D4A2A] h-1.5 rounded-full" style="width: {{ pct_agricola }}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+            <span>Almazara / Industrial</span>
+            <span class="font-mono text-amber-700">{{ pct_almazara }}% (${{ costo_almazara_ars|floatformat:0 }})</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-amber-500 h-1.5 rounded-full" style="width: {{ pct_almazara }}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+            <span>Estructura / Admin</span>
+            <span class="font-mono text-slate-600">{{ pct_admin }}% (${{ costo_admin_ars|floatformat:0 }})</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-slate-400 h-1.5 rounded-full" style="width: {{ pct_admin }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gastos Comunes de Campo (Riego/Energía Pozo) -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Común Campo (Riego/Pozo)</span>
+        <span class="text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full font-bold">Indirecto</span>
+      </div>
+      <p class="text-2xl sm:text-3xl font-extrabold text-cyan-900 font-mono mt-2 tabular-nums">
+        ${{ costos_generales_campo|floatformat:2 }}
+      </p>
+      <div class="mt-2 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-mono">≈ ${{ costo_general_ha|floatformat:2 }}/ha común</span>
+        <span class="text-cyan-700 font-medium">Bomba &amp; Riego Gral</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Tabla de Costos Recientes -->
-  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-    <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
-      <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Asignaciones de Costo por Centro</h3>
-      <span class="text-[11px] text-slate-400 font-mono">Últimas imputaciones directas</span>
+  <!-- Barra de Filtros Interactiva -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
+    <form method="get" class="space-y-4">
+      <input type="hidden" name="tab" :value="activeTab">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <!-- Finca -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Finca</label>
+          <select name="finca" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todas las Fincas</option>
+            {% for f in fincas %}
+            <option value="{{ f.id }}" {% if filtro_finca == f.id|stringformat:"s" %}selected{% endif %}>{{ f.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Cuadro -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cuadro</label>
+          <select name="cuadro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todos los Cuadros</option>
+            <option value="general" {% if filtro_cuadro == 'general' %}selected{% endif %}>[General] Sin Cuadro Específico</option>
+            {% for cua in cuadros %}
+            <option value="{{ cua.id }}" {% if filtro_cuadro == cua.id|stringformat:"s" %}selected{% endif %}>
+              {{ cua.finca.nombre|slice:":4" }} - {{ cua.codigo }} ({{ cua.get_variedad_olivo_display|default:cua.nombre }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Centro de Costo -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Centro de Costo</label>
+          <select name="centro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todos los Centros</option>
+            {% for cc in centros_costo %}
+            <option value="{{ cc.id }}" {% if filtro_centro == cc.id|stringformat:"s" %}selected{% endif %}>
+              {{ cc.nombre }} ({{ cc.codigo }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Tipo / Categoría -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipo de Gasto</label>
+          <select name="tipo" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todos los Tipos</option>
+            {% for code, label in tipos_origen %}
+            <option value="{{ code }}" {% if filtro_tipo == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Mes -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Período (Mes)</label>
+          <select name="mes" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todo Q1 2026</option>
+            <option value="1" {% if filtro_mes == '1' %}selected{% endif %}>Enero 2026</option>
+            <option value="2" {% if filtro_mes == '2' %}selected{% endif %}>Febrero 2026</option>
+            <option value="3" {% if filtro_mes == '3' %}selected{% endif %}>Marzo 2026</option>
+          </select>
+        </div>
+
+        <!-- Búsqueda Libre -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Buscar Concepto</label>
+          <div class="relative">
+            <input 
+              type="text" 
+              name="q" 
+              value="{{ filtro_q }}" 
+              placeholder="Ej: Glifosato, poda, EDELAR..." 
+              class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 pl-8 pr-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors"
+            >
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div class="text-xs text-slate-400">
+          Mostrando <strong class="text-slate-700 font-mono">{{ total_registros }}</strong> imputaciones registradas.
+        </div>
+        <div class="flex items-center gap-2">
+          {% if filtro_finca or filtro_cuadro or filtro_centro or filtro_tipo or filtro_mes or filtro_q %}
+          <a href="{% url 'costos:dashboard' %}" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline px-3 py-1.5">
+            Limpiar Filtros
+          </a>
+          {% endif %}
+          <button type="submit" class="inline-flex items-center gap-1.5 bg-[#3D4A2A] hover:bg-[#323d22] text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Aplicar Filtros</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Navegación de Pestañas Analíticas -->
+  <div class="border-b border-slate-200">
+    <nav class="flex space-x-6">
+      <button 
+        @click="activeTab = 'imputaciones'" 
+        :class="activeTab === 'imputaciones' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Imputaciones Detalladas</span>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">{{ total_registros }}</span>
+      </button>
+
+      <button 
+        @click="activeTab = 'cuadros'" 
+        :class="activeTab === 'cuadros' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>Costos por Cuadro &amp; $/ha</span>
+      </button>
+
+      <button 
+        @click="activeTab = 'categorias'" 
+        :class="activeTab === 'categorias' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+        </svg>
+        <span>Estructura de Costos (Pareto)</span>
+      </button>
+
+      <button 
+        @click="activeTab = 'contabilidad'" 
+        :class="activeTab === 'contabilidad' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <span>Articulación Plan de Cuentas</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: IMPUTACIONES DETALLADAS (TABLA ENRIQUECIDA)                     -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'imputaciones'" class="space-y-4">
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Libro Auxiliar de Costos por Centro &amp; Cuadro</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Asignaciones directas derivadas de partes diarios de labor, facturas de compras y servicios contratados.</p>
+        </div>
+        <span class="text-xs text-slate-500 font-mono">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm min-w-[850px]">
+          <thead>
+            <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+              <th class="py-3 px-4">Fecha</th>
+              <th class="py-3 px-4">Centro de Costo</th>
+              <th class="py-3 px-4">Finca / Cuadro</th>
+              <th class="py-3 px-4">Tipo / Concepto</th>
+              <th class="py-3 px-4">Descripción &amp; Origen</th>
+              <th class="py-3 px-4 text-right">Costo / ha</th>
+              <th class="py-3 px-4 text-right">Importe ARS</th>
+              <th class="py-3 px-4 text-right">Importe USD</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for c in costos %}
+            <tr class="hover:bg-slate-50/70 transition-colors">
+              <!-- Fecha -->
+              <td class="py-3 px-4 font-mono text-xs text-slate-600 whitespace-nowrap tabular-nums">
+                {{ c.fecha|date:"d/m/Y" }}
+              </td>
+
+              <!-- Centro de Costo -->
+              <td class="py-3 px-4 whitespace-nowrap">
+                <div class="font-semibold text-slate-900 text-xs">{{ c.centro_de_costo.nombre }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ c.centro_de_costo.get_tipo_display }}</div>
+              </td>
+
+              <!-- Finca / Cuadro -->
+              <td class="py-3 px-4 text-xs whitespace-nowrap">
+                <div class="text-slate-800 font-medium">{{ c.finca.nombre }}</div>
+                {% if c.cuadro %}
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="font-mono font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-1.5 py-0.2 rounded text-[10px]">
+                    {{ c.cuadro.codigo }}
+                  </span>
+                  <span class="text-[10px] text-slate-500">({{ c.cuadro.get_variedad_olivo_display|default:c.cuadro.nombre }} &bull; {{ c.cuadro.hectareas_netas }} ha)</span>
+                </div>
+                {% else %}
+                <span class="text-[10px] text-cyan-700 bg-cyan-50 px-1.5 py-0.2 rounded font-medium">General / Pozo</span>
+                {% endif %}
+              </td>
+
+              <!-- Tipo de Origen con Badges e Iconos -->
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border {{ c.meta.badge_bg }}">
+                  <span class="w-1.5 h-1.5 rounded-full {{ c.meta.dot_bg }}"></span>
+                  <span>{{ c.meta.label }}</span>
+                </span>
+              </td>
+
+              <!-- Detalle y Link a Documento Origen -->
+              <td class="py-3 px-4 text-xs text-slate-600 max-w-xs">
+                <p class="truncate font-medium text-slate-800" title="{{ c.descripcion }}">{{ c.descripcion }}</p>
+                {% if c.documento_origen_tipo %}
+                <div class="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+                  {% if c.documento_origen_tipo == 'ParteDiario' and c.documento_origen_id %}
+                  <a href="{% url 'parte_diario:parte_detail' c.documento_origen_id %}" class="text-[#3D4A2A] hover:underline font-bold flex items-center gap-0.5">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    Parte #{{ c.documento_origen_id }}
+                  </a>
+                  {% else %}
+                  <span>{{ c.documento_origen_tipo }}{% if c.documento_origen_id %} #{{ c.documento_origen_id }}{% endif %}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+
+              <!-- $/ha -->
+              <td class="py-3 px-4 text-right font-mono text-xs whitespace-nowrap tabular-nums">
+                {% if c.costo_por_ha %}
+                <span class="text-slate-700 font-semibold">${{ c.costo_por_ha|floatformat:2 }}</span>
+                <span class="text-[10px] text-slate-400">/ha</span>
+                {% else %}
+                <span class="text-slate-300">-</span>
+                {% endif %}
+              </td>
+
+              <!-- Importe ARS -->
+              <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">
+                ${{ c.importe_ars|floatformat:2 }}
+              </td>
+
+              <!-- Importe USD -->
+              <td class="py-3 px-4 text-right font-mono text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                ${{ c.importe_usd|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-400 text-sm">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p class="font-medium text-slate-600 text-sm">No se encontraron registros de costos con los filtros seleccionados.</p>
+                  <p class="text-xs text-slate-400">Probá modificando o limpiando los criterios de búsqueda.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+          <!-- Totales en Footer -->
+          {% if costos %}
+          <tfoot>
+            <tr class="bg-slate-50 border-t-2 border-slate-200 text-xs font-bold text-slate-700">
+              <td colspan="6" class="py-3.5 px-4 text-right uppercase tracking-wider">
+                Total Acumulado Filtrado:
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-extrabold text-slate-900 text-sm tabular-nums">
+                ${{ total_costos_ars|floatformat:2 }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-extrabold text-slate-600 text-xs tabular-nums">
+                USD ${{ total_costos_usd|floatformat:2 }}
+              </td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      {% if is_paginated %}
+      <div class="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+        <div class="text-xs text-slate-500">
+          Mostrando página {{ page_obj.number }} de {{ paginator.num_pages }} ({{ total_registros }} registros en total)
+        </div>
+        <div class="flex items-center gap-1">
+          {% if page_obj.has_previous %}
+          <a 
+            href="?page={{ page_obj.previous_page_number }}&finca={{ filtro_finca }}&cuadro={{ filtro_cuadro }}&centro={{ filtro_centro }}&tipo={{ filtro_tipo }}&mes={{ filtro_mes }}&q={{ filtro_q }}&tab=imputaciones" 
+            class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            ← Anterior
+          </a>
+          {% endif %}
+
+          <span class="px-3 py-1.5 text-xs font-mono font-bold text-slate-700 bg-slate-100 rounded-lg">
+            {{ page_obj.number }} / {{ paginator.num_pages }}
+          </span>
+
+          {% if page_obj.has_next %}
+          <a 
+            href="?page={{ page_obj.next_page_number }}&finca={{ filtro_finca }}&cuadro={{ filtro_cuadro }}&centro={{ filtro_centro }}&tipo={{ filtro_tipo }}&mes={{ filtro_mes }}&q={{ filtro_q }}&tab=imputaciones" 
+            class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            Siguiente →
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm min-w-[650px]">
-        <thead>
-          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-            <th class="py-3 px-4">Fecha</th>
-            <th class="py-3 px-4">Centro de Costo</th>
-            <th class="py-3 px-4">Finca / Cuadro</th>
-            <th class="py-3 px-4">Tipo Origen</th>
-            <th class="py-3 px-4">Descripción / Referencia</th>
-            <th class="py-3 px-4 text-right">Importe</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for c in costos %}
-          <tr class="hover:bg-slate-50/70 transition-colors">
-            <td class="py-3 px-4 font-mono text-xs text-slate-600 whitespace-nowrap tabular-nums">{{ c.fecha|date:"d/m/Y" }}</td>
-            <td class="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">{{ c.centro_de_costo.nombre }}</td>
-            <td class="py-3 px-4 text-xs text-slate-600 whitespace-nowrap">
-              {{ c.finca.nombre }}{% if c.cuadro %} &bull; <span class="font-mono font-bold text-[#3D4A2A]">{{ c.cuadro.codigo }}</span>{% endif %}
-            </td>
-            <td class="py-3 px-4 text-xs whitespace-nowrap">
-              <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
-                {{ c.get_tipo_origen_display }}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-xs text-slate-500">{{ c.descripcion }}</td>
-            <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap tabular-nums">${{ c.importe_ars|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="py-12 text-center text-slate-400 text-sm">
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin costos" class="w-10 h-10 opacity-30 grayscale" />
-                <p class="font-medium text-slate-500 text-xs">Sin registros de costos imputados.</p>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: COSTOS POR CUADRO Y RENDIMIENTO ($/ha y $/kg)                  -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'cuadros'" class="space-y-6">
+    <!-- Grid de Tarjetas por Cuadro -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for cua in resumen_por_cuadro %}
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+        <div>
+          <!-- Cabecera de Cuadro -->
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-black font-mono text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2 py-0.5 rounded-lg">
+                  {{ cua.cuadro.codigo }}
+                </span>
+                <h4 class="font-extrabold text-slate-900 text-sm">{{ cua.cuadro.nombre }}</h4>
               </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <div class="text-xs text-slate-500 mt-1">
+                {{ cua.finca.nombre }} &bull; <span class="font-medium text-slate-700">{{ cua.cuadro.get_variedad_olivo_display|default:cua.cuadro.nombre }}</span>
+              </div>
+            </div>
+            <span class="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+              {{ cua.hectareas }} ha
+            </span>
+          </div>
+
+          <!-- Métricas $/ha y $/kg -->
+          <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100">
+            <div class="bg-slate-50 p-3 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Costo Directo / ha</span>
+              <span class="text-lg font-black font-mono text-[#3D4A2A] tabular-nums mt-0.5 block">
+                ${{ cua.costo_por_ha|floatformat:2 }}
+              </span>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Costo / kg Cosecha</span>
+              {% if cua.costo_por_kg %}
+              <span class="text-lg font-black font-mono text-amber-700 tabular-nums mt-0.5 block">
+                ${{ cua.costo_por_kg|floatformat:2 }}
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono">{{ cua.kg_cosechados|floatformat:0 }} kg</span>
+              {% else %}
+              <span class="text-xs font-semibold text-slate-400 mt-1.5 block italic">Sin cosecha reg.</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Barra Relativa de Costo por Hectárea -->
+          <div class="mt-4">
+            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
+              <span>Intensidad de Costo Relativo</span>
+              <span class="font-mono text-slate-800">{{ cua.bar_pct }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-[#3D4A2A] h-2 rounded-full transition-all duration-500" style="width: {{ cua.bar_pct }}%"></div>
+            </div>
+          </div>
+
+          <!-- Desglose de Labores del Cuadro -->
+          <div class="mt-4 pt-3 border-t border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Composición de Labores</span>
+            <div class="space-y-1.5">
+              {% for d in cua.desglose %}
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-600 font-medium">{{ d.tipo_origen|title }}</span>
+                <span class="font-mono font-bold text-slate-800 tabular-nums">${{ d.sub|floatformat:2 }}</span>
+              </div>
+              {% empty %}
+              <span class="text-xs text-slate-400 italic">Sin labores específicas registradas en este período.</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Directo del Cuadro -->
+        <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-xs text-slate-500 font-semibold">Total Directo Cuadro:</span>
+          <div class="text-right">
+            <div class="font-mono font-extrabold text-slate-900 text-sm tabular-nums">${{ cua.costo_total_ars|floatformat:2 }}</div>
+            <div class="text-[10px] font-mono text-slate-400 tabular-nums">≈ USD {{ cua.costo_total_usd|floatformat:2 }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Tabla Comparativa de Resumen de Cuadros -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tabla Comparativa de Benchmarking Agronómico</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+          <thead>
+            <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+              <th class="py-3 px-4">Código / Cuadro</th>
+              <th class="py-3 px-4">Finca</th>
+              <th class="py-3 px-4">Variedad</th>
+              <th class="py-3 px-4 text-right">Superficie (ha)</th>
+              <th class="py-3 px-4 text-right">Costo Total ARS</th>
+              <th class="py-3 px-4 text-right">Costo / ha</th>
+              <th class="py-3 px-4 text-right">Kilos Cosechados</th>
+              <th class="py-3 px-4 text-right">Costo / kg</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for cua in resumen_por_cuadro %}
+            <tr class="hover:bg-slate-50/70 transition-colors">
+              <td class="py-3 px-4 font-mono font-bold text-[#3D4A2A]">{{ cua.cuadro.codigo }}</td>
+              <td class="py-3 px-4 font-medium text-slate-800">{{ cua.finca.nombre }}</td>
+              <td class="py-3 px-4 text-slate-600">{{ cua.cuadro.get_variedad_olivo_display|default:cua.cuadro.nombre }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums">{{ cua.hectareas }} ha</td>
+              <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">${{ cua.costo_total_ars|floatformat:2 }}</td>
+              <td class="py-3 px-4 text-right font-mono font-bold text-[#3D4A2A] tabular-nums">${{ cua.costo_por_ha|floatformat:2 }}/ha</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums">
+                {% if cua.kg_cosechados %}{{ cua.kg_cosechados|floatformat:0 }} kg{% else %}-{% endif %}
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-bold tabular-nums">
+                {% if cua.costo_por_kg %}
+                <span class="text-amber-700">${{ cua.costo_por_kg|floatformat:2 }}/kg</span>
+                {% else %}
+                <span class="text-slate-300">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: ESTRUCTURA DE COSTOS (PARETO)                                   -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'categorias'" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for cat in resumen_por_categoria %}
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:border-slate-300 transition-colors">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border {{ cat.badge_bg }}">
+            <span class="w-1.5 h-1.5 rounded-full {{ cat.dot_bg }}"></span>
+            <span>{{ cat.label }}</span>
+          </span>
+          <span class="text-sm font-mono font-black text-slate-900">{{ cat.porcentaje }}%</span>
+        </div>
+
+        <div class="mt-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gasto Total Acumulado</span>
+          <p class="text-2xl font-black text-slate-900 font-mono mt-1 tabular-nums">
+            ${{ cat.total_ars|floatformat:2 }}
+          </p>
+          <span class="text-xs font-mono text-slate-500">≈ USD {{ cat.total_usd|floatformat:2 }}</span>
+        </div>
+
+        <!-- Barra de Progreso -->
+        <div class="mt-4">
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div class="bg-[#3D4A2A] h-2 rounded-full transition-all duration-500" style="width: {{ cat.porcentaje }}%"></div>
+          </div>
+        </div>
+
+        <!-- Vinculación Contable Plan de Cuentas -->
+        <div class="mt-4 pt-3 border-t border-slate-100">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cuenta Contable Asignada</span>
+          <div class="flex items-center justify-between mt-1 text-xs">
+            <span class="font-mono font-bold text-slate-700">{{ cat.cuenta_codigo }}</span>
+            <a href="{% url 'finanzas:plan_cuentas' %}" class="text-[11px] text-[#3D4A2A] hover:underline font-semibold">Ver Libro →</a>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-0.5 truncate">{{ cat.cuenta_nombre }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: ARTICULACIÓN PLAN DE CUENTAS (RUBRO 4.2.1)                     -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'contabilidad'" class="space-y-6">
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-100">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-bold text-xs bg-[#EAEFE3] text-[#3D4A2A] border border-[#D5DFC9] px-2.5 py-1 rounded-lg">
+              Rubro 4.2.1
+            </span>
+            <h3 class="text-base font-extrabold text-slate-900">Articulación con el Plan de Cuentas y Cuadro de Resultados</h3>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+            Cada costo imputado a nivel de labor u orden de compra se debita en las cuentas de resultados operacionales de campo y se refleja en el Libro Diario y Estado de Resultados (P&amp;L).
+          </p>
+        </div>
+
+        <a 
+          href="{% url 'finanzas:plan_cuentas' %}" 
+          class="inline-flex items-center gap-2 bg-[#3D4A2A] text-white hover:bg-[#323d22] text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-colors self-start"
+        >
+          <span>Ir al Plan de Cuentas Completo →</span>
+        </a>
+      </div>
+
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/50">
+              <th class="py-3 px-4">Código Cuenta</th>
+              <th class="py-3 px-4">Denominación Contable</th>
+              <th class="py-3 px-4">Tipo Origen en Costos</th>
+              <th class="py-3 px-4 text-right">Saldo Período (ARS)</th>
+              <th class="py-3 px-4 text-right">Equivalente USD</th>
+              <th class="py-3 px-4 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for cat in resumen_por_categoria %}
+            <tr class="hover:bg-slate-50/70 transition-colors">
+              <td class="py-3.5 px-4 font-mono font-bold text-slate-900 text-xs">{{ cat.cuenta_codigo }}</td>
+              <td class="py-3.5 px-4 font-medium text-slate-800 text-xs">{{ cat.cuenta_nombre }}</td>
+              <td class="py-3.5 px-4 text-xs">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ cat.badge_bg }}">
+                  <span class="w-1.5 h-1.5 rounded-full {{ cat.dot_bg }}"></span>
+                  <span>{{ cat.label }}</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-xs tabular-nums">
+                ${{ cat.total_ars|floatformat:2 }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono text-slate-500 text-xs tabular-nums">
+                USD ${{ cat.total_usd|floatformat:2 }}
+              </td>
+              <td class="py-3.5 px-4 text-center">
+                <a href="{% url 'finanzas:plan_cuentas' %}" class="text-xs font-semibold text-[#3D4A2A] hover:underline">
+                  Ver Mayor →
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="bg-slate-50 border-t-2 border-slate-200 text-xs font-bold text-slate-800">
+              <td colspan="3" class="py-3.5 px-4 text-right uppercase tracking-wider">
+                Total Imputado a Costos de Producción:
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-extrabold text-[#3D4A2A] text-sm tabular-nums">
+                ${{ total_costos_ars|floatformat:2 }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-extrabold text-slate-600 text-xs tabular-nums">
+                USD ${{ total_costos_usd|floatformat:2 }}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   </div>
 
