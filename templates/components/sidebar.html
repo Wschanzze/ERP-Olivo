@@ -307,7 +307,7 @@
           <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
         </div>
         <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">8</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">9</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
             :class="openGroups.finanzas ? 'rotate-90' : 'rotate-0'"
@@ -400,6 +400,15 @@
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Conciliaciones Bancarias</span>
           </a>
+
+          <!-- Libro de IVA & Facturación -->
+          <a 
+            href="{% url 'finanzas:dashboard' %}?tab=libro_iva" 
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'libro_iva' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'libro_iva' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Libro de IVA &amp; Facturas</span>
+          </a>
         </div>
       </div>
     </div>
@@ -461,7 +470,7 @@
           <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
         </div>
         <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">4</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">5</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
             :class="openGroups.inventario ? 'rotate-90' : 'rotate-0'"
@@ -504,6 +513,13 @@
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'ordenes-compra' in request.path or 'recepciones' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Órdenes de Compra</span>
+          </a>
+          <a 
+            href="{% url 'inventario:remitos_list' %}" 
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if 'remito' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+          >
+            <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'remito' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
+            <span class="truncate">Remitos &amp; Firma Móvil</span>
           </a>
         </div>
       </div>

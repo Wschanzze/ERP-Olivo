@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Remitos de Carga &amp; Firma Móvil | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ modalRemito: false }">
+
+  <!-- Header Principal -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Remitos de Carga &amp; Recepción</h1>
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+          Firma Digital Táctil
+        </span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">Control de despacho y recepción de insumos, cosecha y traslados con firma al pie del camión desde el celular.</p>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex flex-wrap items-center gap-2">
+      <a 
+        href="{% url 'inventario:insumos_list' %}"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+      >
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        <span>Stock Insumos</span>
+      </a>
+
+      <button 
+        type="button"
+        @click="modalRemito = true"
+        class="inline-flex items-center gap-1.5 bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all cursor-pointer"
+      >
+        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <span>Nuevo Remito</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards Resumen -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Remitos</span>
+        <h3 class="text-2xl font-black text-slate-900 mt-1 font-mono">{{ total_remitos }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-emerald-200/80 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-emerald-50/40">
+      <div>
+        <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Firmados en Móvil</span>
+        <h3 class="text-2xl font-black text-emerald-900 mt-1 font-mono">{{ total_firmados }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-amber-50/40">
+      <div>
+        <span class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pendientes de Firma</span>
+        <h3 class="text-2xl font-black text-amber-900 mt-1 font-mono">{{ total_pendientes }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-blue-200/80 shadow-xs flex items-center justify-between bg-gradient-to-br from-white to-blue-50/40">
+      <div>
+        <span class="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Entradas / Proveedor</span>
+        <h3 class="text-2xl font-black text-blue-900 mt-1 font-mono">{{ total_entradas }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros y Búsqueda -->
+  <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="lg:col-span-2">
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ request.GET.q }}" 
+          placeholder="Buscar por N° remito, proveedor, chofer, patente..."
+          class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+        />
+      </div>
+
+      <div>
+        <select 
+          name="tipo" 
+          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+        >
+          <option value="">Todos los Tipos</option>
+          <option value="ENTRADA_PROVEEDOR" {% if request.GET.tipo == 'ENTRADA_PROVEEDOR' %}selected{% endif %}>Entrada desde Proveedor</option>
+          <option value="SALIDA_CLIENTE" {% if request.GET.tipo == 'SALIDA_CLIENTE' %}selected{% endif %}>Salida a Cliente</option>
+          <option value="INTERNO" {% if request.GET.tipo == 'INTERNO' %}selected{% endif %}>Traslado Interno</option>
+        </select>
+      </div>
+
+      <div>
+        <select 
+          name="firma" 
+          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+        >
+          <option value="">Estado de Firma</option>
+          <option value="firmados" {% if request.GET.firma == 'firmados' %}selected{% endif %}>Solo Firmados</option>
+          <option value="pendientes" {% if request.GET.firma == 'pendientes' %}selected{% endif %}>Pendientes de Firma</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="submit" 
+          class="w-full px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-2xs transition-colors"
+        >
+          Filtrar
+        </button>
+        {% if request.GET.q or request.GET.tipo or request.GET.firma %}
+          <a 
+            href="{% url 'inventario:remitos_list' %}"
+            class="px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla de Remitos -->
+  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+          <tr>
+            <th class="px-4 py-3.5">N° Remito</th>
+            <th class="px-4 py-3.5">Fecha</th>
+            <th class="px-4 py-3.5">Tipo</th>
+            <th class="px-4 py-3.5">Origen &rarr; Destino</th>
+            <th class="px-4 py-3.5">Chofer / Patente</th>
+            <th class="px-4 py-3.5 text-center">Firma Digital Móvil</th>
+            <th class="px-4 py-3.5 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in remitos %}
+            <tr class="hover:bg-slate-50/60 transition-colors group">
+              
+              <!-- N° Remito -->
+              <td class="px-4 py-3 font-mono font-extrabold text-slate-900">
+                <a href="{% url 'inventario:remito_detalle' r.id %}" class="hover:text-oliva-700 hover:underline">
+                  {{ r.numero }}
+                </a>
+              </td>
+
+              <!-- Fecha -->
+              <td class="px-4 py-3 text-slate-600 font-medium whitespace-nowrap">
+                {{ r.fecha|date:"d/m/Y" }}
+              </td>
+
+              <!-- Tipo -->
+              <td class="px-4 py-3 whitespace-nowrap">
+                {% if r.tipo == 'ENTRADA_PROVEEDOR' %}
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200">
+                    Entrada Proveedor
+                  </span>
+                {% elif r.tipo == 'SALIDA_CLIENTE' %}
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-50 text-purple-800 border border-purple-200">
+                    Salida Cliente
+                  </span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-slate-100 text-slate-800 border border-slate-200">
+                    Traslado Interno
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Origen -> Destino -->
+              <td class="px-4 py-3 text-slate-700">
+                <div class="font-semibold text-slate-900 truncate max-w-[200px]">
+                  {% if r.finca_origen %}{{ r.finca_origen.nombre }}{% elif r.entidad_nombre %}{{ r.entidad_nombre }}{% else %}Finca Central{% endif %}
+                </div>
+                <div class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <span>&darr;</span>
+                  <span>{% if r.finca_destino %}{{ r.finca_destino.nombre }}{% elif r.entidad_nombre %}{{ r.entidad_nombre }}{% else %}Cliente Destino{% endif %}</span>
+                </div>
+              </td>
+
+              <!-- Chofer / Patente -->
+              <td class="px-4 py-3 text-slate-600">
+                <div class="font-medium text-slate-800 truncate max-w-[150px]">
+                  {{ r.transportista_nombre|default:"-" }}
+                </div>
+                {% if r.patente_vehiculo %}
+                  <span class="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                    {{ r.patente_vehiculo }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Estado de Firma Digital -->
+              <td class="px-4 py-3 text-center whitespace-nowrap">
+                {% if r.esta_firmado %}
+                  <div class="inline-flex flex-col items-center">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                      FIRMADO
+                    </span>
+                    <span class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[130px]">
+                      {{ r.firma_nombre_receptor }}
+                    </span>
+                  </div>
+                {% else %}
+                  <a 
+                    href="{% url 'inventario:remito_firmar' r.id %}"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs"
+                    title="Abrir en celular para firmar"
+                  >
+                    <svg class="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Firmar en Móvil
+                  </a>
+                {% endif %}
+              </td>
+
+              <!-- Acciones -->
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-1.5">
+                  <!-- Botón Copiar Link para WhatsApp -->
+                  <button 
+                    type="button" 
+                    onclick="copiarLinkFirma('{{ request.scheme }}://{{ request.get_host }}{% url 'inventario:remito_firmar' r.id %}')"
+                    class="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                    title="Copiar link para enviar por WhatsApp al chofer"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                  </button>
+
+                  <!-- Ver Comprobante -->
+                  <a 
+                    href="{% url 'inventario:remito_detalle' r.id %}"
+                    class="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                    title="Ver remito e imprimir"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-slate-400 space-y-2">
+                <svg class="w-8 h-8 text-slate-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <p class="font-medium text-xs">No hay remitos registrados en este período.</p>
+                <button @click="modalRemito = true" class="text-xs text-oliva-700 font-bold hover:underline">
+                  Crear primer remito de carga &rarr;
+                </button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Nuevo Remito -->
+  {% include 'inventario/partials/remito_form_modal.html' %}
+
+</div>
+
+<!-- Script para copiar link de firma -->
+<script>
+  function copiarLinkFirma(url) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('¡Enlace de firma copiado!\nPuedes pegarlo en WhatsApp para enviarlo al chofer o receptor:\n' + url);
+      });
+    } else {
+      prompt('Copia este enlace para enviarlo por WhatsApp:', url);
+    }
+  }
+</script>
+{% endblock %}

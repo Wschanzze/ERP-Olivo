@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, DetailView
 from django.views import View
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -11,7 +11,7 @@ from django.http import HttpResponse
 
 from .models import (
     Insumo, CategoriaInsumo, Deposito, StockPorDeposito, MovimientoStock,
-    Maquina, Remito, OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion
+    Maquina, Remito, ItemRemito, OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion
 )
 from .forms import TransferenciaStockForm, AjusteStockForm, InsumoForm, GenerarOCSugeridaForm
 from .services import (
@@ -393,12 +393,133 @@ class RemitosListView(ListView):
     template_name = 'inventario/remitos_list.html'
     context_object_name = 'remitos'
 
+    def get_queryset(self):
+        qs = Remito.objects.select_related('finca_origen', 'finca_destino').prefetch_related('items__insumo').order_by('-fecha', '-id')
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(numero__icontains=q) |
+                Q(entidad_nombre__icontains=q) |
+                Q(transportista_nombre__icontains=q) |
+                Q(patente_vehiculo__icontains=q) |
+                Q(firma_nombre_receptor__icontains=q)
+            )
+        tipo = self.request.GET.get('tipo')
+        if tipo:
+            qs = qs.filter(tipo=tipo)
+        firma = self.request.GET.get('firma')
+        if firma == 'firmados':
+            qs = qs.exclude(firma_digital='')
+        elif firma == 'pendientes':
+            qs = qs.filter(firma_digital='')
+        return qs
 
-class RemitoCreateView(CreateView):
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        all_remitos = Remito.objects.all()
+        ctx['total_remitos'] = all_remitos.count()
+        ctx['total_firmados'] = all_remitos.exclude(firma_digital='').count()
+        ctx['total_pendientes'] = all_remitos.filter(firma_digital='').count()
+        ctx['total_entradas'] = all_remitos.filter(tipo='ENTRADA_PROVEEDOR').count()
+        from apps.core.models import Finca
+        ctx['fincas'] = Finca.objects.filter(activa=True)
+        ctx['insumos'] = Insumo.objects.filter(activo=True)
+        from django.utils import timezone
+        ctx['fecha_hoy'] = timezone.now().date()
+        ctx['anio_actual'] = timezone.now().year
+        ctx['proximo_nro'] = f"{all_remitos.count() + 1:04d}"
+        return ctx
+
+
+class RemitoCreateView(View):
+    def post(self, request):
+        try:
+            numero = request.POST.get('numero', '').strip()
+            tipo = request.POST.get('tipo', 'ENTRADA_PROVEEDOR')
+            from django.utils import timezone
+            fecha = request.POST.get('fecha') or timezone.now().date()
+            entidad_nombre = request.POST.get('entidad_nombre', '').strip()
+            finca_origen_id = request.POST.get('finca_origen') or None
+            finca_destino_id = request.POST.get('finca_destino') or None
+            transportista_nombre = request.POST.get('transportista_nombre', '').strip()
+            patente_vehiculo = request.POST.get('patente_vehiculo', '').strip()
+            observaciones = request.POST.get('observaciones', '').strip()
+
+            if not numero:
+                count = Remito.objects.count() + 1
+                numero = f"REM-2026-{count:04d}"
+
+            remito = Remito.objects.create(
+                numero=numero,
+                tipo=tipo,
+                fecha=fecha,
+                entidad_nombre=entidad_nombre,
+                finca_origen_id=finca_origen_id,
+                finca_destino_id=finca_destino_id,
+                transportista_nombre=transportista_nombre,
+                patente_vehiculo=patente_vehiculo,
+                observaciones=observaciones,
+                estado=Remito.EstadoRemito.BORRADOR
+            )
+
+            # Ítem inicial opcional
+            item_insumo_id = request.POST.get('item_insumo_id')
+            item_cantidad = request.POST.get('item_cantidad')
+            if item_insumo_id and item_cantidad:
+                try:
+                    cant = Decimal(item_cantidad)
+                    if cant > 0:
+                        ItemRemito.objects.create(
+                            remito=remito,
+                            insumo_id=item_insumo_id,
+                            cantidad_declarada=cant,
+                            cantidad_recibida=cant
+                        )
+                except Exception:
+                    pass
+
+            messages.success(request, f"Remito {remito.numero} generado correctamente. Listo para firmar en móvil.")
+            return redirect('inventario:remito_detalle', pk=remito.id)
+        except Exception as e:
+            messages.error(request, f"Error al crear el remito: {str(e)}")
+            return redirect('inventario:remitos_list')
+
+
+class RemitoDetailView(DetailView):
     model = Remito
-    fields = ['numero', 'tipo', 'fecha', 'entidad_nombre', 'finca_origen', 'finca_destino', 'estado', 'observaciones']
-    template_name = 'inventario/partials/remito_form_modal.html'
-    success_url = reverse_lazy('inventario:remitos_list')
+    template_name = 'inventario/remito_detalle.html'
+    context_object_name = 'remito'
+
+
+class RemitoFirmarMobileView(View):
+    def get(self, request, pk):
+        remito = get_object_or_404(Remito.objects.prefetch_related('items__insumo'), pk=pk)
+        return render(request, 'inventario/remito_firmar_mobile.html', {'remito': remito})
+
+    def post(self, request, pk):
+        remito = get_object_or_404(Remito, pk=pk)
+        firma_base64 = request.POST.get('firma_digital', '').strip()
+        nombre_receptor = request.POST.get('firma_nombre_receptor', '').strip()
+        dni_receptor = request.POST.get('firma_dni_receptor', '').strip()
+        aclaracion = request.POST.get('firma_aclaracion', '').strip()
+        geoloc = request.POST.get('firma_geolocalizacion', '').strip()
+
+        if not firma_base64 or not nombre_receptor or not dni_receptor:
+            messages.error(request, "Es obligatorio completar Nombre, DNI y estampar la firma.")
+            return render(request, 'inventario/remito_firmar_mobile.html', {'remito': remito})
+
+        from django.utils import timezone
+        remito.firma_digital = firma_base64
+        remito.firma_nombre_receptor = nombre_receptor
+        remito.firma_dni_receptor = dni_receptor
+        remito.firma_aclaracion = aclaracion
+        remito.firma_geolocalizacion = geoloc
+        remito.firma_fecha_hora = timezone.now()
+        remito.estado = Remito.EstadoRemito.CONFIRMADO
+        remito.save()
+
+        messages.success(request, "¡Recepción confirmada con éxito! La firma digital quedó registrada en el remito.")
+        return redirect('inventario:remito_firmar', pk=remito.id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -616,3 +616,245 @@ class LineaCuadroResultado(TimeStampedModel):
     def __str__(self):
         return f"{self.cuenta_contable.codigo} {self.cuenta_contable.nombre}: ${self.monto_real:,.2f}"
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MÓDULO DE FACTURACIÓN Y LIBRO DE IVA (COMPRAS Y VENTAS)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class ComprobanteFiscal(TimeStampedModel):
+    """Comprobantes fiscales de compras y ventas para Cuentas por Pagar/Cobrar y Libro de IVA."""
+    class TipoOperacion(models.TextChoices):
+        COMPRA = 'COMPRA', _('Compra (Crédito Fiscal / Cta. a Pagar)')
+        VENTA = 'VENTA', _('Venta (Débito Fiscal / Cta. a Cobrar)')
+
+    class TipoComprobante(models.TextChoices):
+        FACTURA_A = 'F_A', _('Factura A')
+        FACTURA_B = 'F_B', _('Factura B')
+        FACTURA_C = 'F_C', _('Factura C')
+        FACTURA_M = 'F_M', _('Factura M')
+        NOTA_DEBITO_A = 'ND_A', _('Nota de Débito A')
+        NOTA_DEBITO_B = 'ND_B', _('Nota de Débito B')
+        NOTA_DEBITO_C = 'ND_C', _('Nota de Débito C')
+        NOTA_CREDITO_A = 'NC_A', _('Nota de Crédito A')
+        NOTA_CREDITO_B = 'NC_B', _('Nota de Crédito B')
+        NOTA_CREDITO_C = 'NC_C', _('Nota de Crédito C')
+        RECIBO_OFICIAL = 'REC_OF', _('Recibo Oficial / Comprobante X')
+
+    class CondicionIVA(models.TextChoices):
+        RESPONSABLE_INSCRIPTO = 'RI', _('IVA Responsable Inscripto')
+        MONOTRIBUTO = 'MONO', _('Responsable Monotributo')
+        EXENTO = 'EXENTO', _('IVA Exento')
+        CONSUMIDOR_FINAL = 'CF', _('Consumidor Final')
+
+    class EstadoPago(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', _('Pendiente de Pago / Cobro')
+        PAGO_PARCIAL = 'PARCIAL', _('Pago Parcial')
+        PAGADA = 'PAGADA', _('Cancelada / Pagada Total')
+        ANULADA = 'ANULADA', _('Anulada')
+
+    tipo_operacion = models.CharField(max_length=10, choices=TipoOperacion.choices, default=TipoOperacion.COMPRA, verbose_name=_("Tipo de Operación"))
+    tipo_comprobante = models.CharField(max_length=10, choices=TipoComprobante.choices, default=TipoComprobante.FACTURA_A, verbose_name=_("Tipo de Comprobante"))
+    punto_de_venta = models.CharField(max_length=5, default="00001", verbose_name=_("Punto de Venta (PV)"))
+    numero_comprobante = models.CharField(max_length=8, verbose_name=_("Número de Comprobante"))
+    
+    fecha_emision = models.DateField(verbose_name=_("Fecha de Emisión"))
+    fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name=_("Fecha de Vencimiento"))
+
+    cuenta_corriente = models.ForeignKey(
+        CuentaCorriente,
+        on_delete=models.PROTECT,
+        related_name='comprobantes_fiscales',
+        verbose_name=_("Proveedor / Cliente"),
+        help_text=_("Entidad de la cuenta corriente vinculada.")
+    )
+    razon_social = models.CharField(max_length=200, verbose_name=_("Razón Social / Nombre"))
+    cuit = models.CharField(max_length=20, verbose_name=_("CUIT / Identificación Tributaria"))
+    condicion_iva = models.CharField(max_length=10, choices=CondicionIVA.choices, default=CondicionIVA.RESPONSABLE_INSCRIPTO, verbose_name=_("Condición Frente al IVA"))
+
+    concepto = models.CharField(max_length=255, verbose_name=_("Concepto / Descripción"))
+
+    # Desglose impositivo argentino para Libro de IVA
+    neto_gravado_21 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Neto Gravado 21%"))
+    neto_gravado_10_5 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Neto Gravado 10.5%"))
+    neto_gravado_27 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Neto Gravado 27%"))
+    
+    iva_21 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("IVA Liquidado 21%"))
+    iva_10_5 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("IVA Liquidado 10.5%"))
+    iva_27 = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("IVA Liquidado 27%"))
+
+    no_gravado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Conceptos No Gravados"))
+    exento = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Operaciones Exentas"))
+    
+    percepcion_iva = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Percepción de IVA"))
+    percepcion_iibb = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Percepción IIBB (Catamarca / CM)"))
+    impuestos_internos = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Impuestos Internos / Otros"))
+
+    total = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Importe Total Facturado"))
+
+    # Estado de Cuentas por Pagar / Cobrar
+    estado_pago = models.CharField(max_length=15, choices=EstadoPago.choices, default=EstadoPago.PENDIENTE, verbose_name=_("Estado de Pago"))
+    saldo_pendiente = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Saldo Pendiente"))
+
+    # AFIP / ARCA
+    cae = models.CharField(max_length=25, blank=True, verbose_name=_("CAE / CAI"))
+    vto_cae = models.DateField(null=True, blank=True, verbose_name=_("Vencimiento CAE"))
+
+    # Vinculación contable opcional
+    cuenta_contable = models.ForeignKey(
+        CuentaContable,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='comprobantes_fiscales',
+        verbose_name=_("Cuenta Contable Imputable")
+    )
+    centro_de_costo = models.ForeignKey(
+        CentroDeCosto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='comprobantes_fiscales',
+        verbose_name=_("Centro de Costo")
+    )
+
+    class Meta:
+        verbose_name = _("Comprobante Fiscal")
+        verbose_name_plural = _("Comprobantes Fiscales (Libro IVA)")
+        ordering = ['-fecha_emision', '-id']
+        unique_together = [['tipo_operacion', 'tipo_comprobante', 'punto_de_venta', 'numero_comprobante', 'cuit']]
+
+    def __str__(self):
+        return f"{self.get_tipo_comprobante_display()} {self.punto_de_venta}-{self.numero_comprobante} ({self.razon_social}) - ${self.total:,.2f}"
+
+    @property
+    def total_iva(self):
+        return (self.iva_21 or Decimal('0')) + (self.iva_10_5 or Decimal('0')) + (self.iva_27 or Decimal('0'))
+
+    @property
+    def numero_completo(self):
+        return f"{str(self.punto_de_venta).zfill(5)}-{str(self.numero_comprobante).zfill(8)}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MÓDULO DE ARQUEO DE CAJA DIARIO
+# ──────────────────────────────────────────────────────────────────────────────
+
+class ArqueoCaja(TimeStampedModel):
+    """Arqueo y cierre diario de caja chica / efectivo en finca o administración."""
+    class Estado(models.TextChoices):
+        BORRADOR = 'BORRADOR', _('Borrador (En Conteo)')
+        CERRADO = 'CERRADO', _('Arqueo Cerrado y Validado')
+
+    cuenta = models.ForeignKey(
+        Cuenta,
+        on_delete=models.PROTECT,
+        limit_choices_to={'tipo': 'CAJA_EFECTIVO'},
+        related_name='arqueos',
+        verbose_name=_("Caja Física")
+    )
+    fecha = models.DateField(verbose_name=_("Fecha de Corte / Cierre"))
+    hora = models.TimeField(verbose_name=_("Hora de Arqueo"))
+    saldo_sistema = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Saldo según Sistema (ARS)"))
+    saldo_real_contado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Efectivo Contado Físicamente (ARS)"))
+    diferencia = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'), verbose_name=_("Diferencia (+ Sobrante / - Faltante)"))
+    estado = models.CharField(max_length=15, choices=Estado.choices, default=Estado.CERRADO, verbose_name=_("Estado"))
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones / Justificación"))
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Responsable del Cierre")
+    )
+
+    class Meta:
+        verbose_name = _("Arqueo de Caja")
+        verbose_name_plural = _("Arqueos de Caja")
+        ordering = ['-fecha', '-hora']
+
+    def __str__(self):
+        return f"Arqueo {self.cuenta.nombre} al {self.fecha} {self.hora} (Dif: ${self.diferencia:,.2f})"
+
+    def save(self, *args, **kwargs):
+        self.diferencia = self.saldo_real_contado - self.saldo_sistema
+        super().save(*args, **kwargs)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MÓDULO DE ÓRDENES DE PAGO Y RECIBOS DE COBRANZA
+# ──────────────────────────────────────────────────────────────────────────────
+
+class OrdenPagoRecibo(TimeStampedModel):
+    """Órdenes de pago formales a proveedores y recibos de cobranza de clientes."""
+    class TipoDocumento(models.TextChoices):
+        ORDEN_PAGO = 'OP', _('Orden de Pago (a Proveedor)')
+        RECIBO_COBRANZA = 'RC', _('Recibo de Cobranza (de Cliente)')
+
+    class MedioPago(models.TextChoices):
+        EFECTIVO = 'EFECTIVO', _('Efectivo (Caja Chica)')
+        TRANSFERENCIA = 'TRANSFERENCIA', _('Transferencia Bancaria')
+        CHEQUE_PROPIO = 'CHEQUE_PROPIO', _('Cheque Propio Emitido')
+        CHEQUE_TERCERO = 'CHEQUE_TERCERO', _('Cheque de Tercero (Cartera)')
+
+    tipo = models.CharField(max_length=5, choices=TipoDocumento.choices, default=TipoDocumento.ORDEN_PAGO, verbose_name=_("Tipo de Comprobante"))
+    numero = models.CharField(max_length=30, unique=True, verbose_name=_("N° de Orden / Recibo"))
+    fecha = models.DateField(verbose_name=_("Fecha de Emisión"))
+    
+    cuenta_corriente = models.ForeignKey(
+        CuentaCorriente,
+        on_delete=models.PROTECT,
+        related_name='ordenes_y_recibos',
+        verbose_name=_("Proveedor / Cliente")
+    )
+    cuenta_financiera = models.ForeignKey(
+        Cuenta,
+        on_delete=models.PROTECT,
+        related_name='ordenes_y_recibos',
+        verbose_name=_("Caja o Cuenta Bancaria")
+    )
+    importe_total = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Importe Total Abonado/Cobrado"))
+    medio_pago = models.CharField(max_length=20, choices=MedioPago.choices, default=MedioPago.TRANSFERENCIA, verbose_name=_("Medio de Pago"))
+    cheque = models.ForeignKey(
+        Cheque,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ordenes_pago',
+        verbose_name=_("Cheque Utilizado (si aplica)")
+    )
+    comprobante_fiscal = models.ForeignKey(
+        ComprobanteFiscal,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pagos_recibos',
+        verbose_name=_("Factura Imputada (opcional)")
+    )
+    movimiento_financiero = models.ForeignKey(
+        MovimientoFinanciero,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orden_recibo_origen',
+        verbose_name=_("Movimiento de Tesorería Generado")
+    )
+    concepto = models.CharField(max_length=255, verbose_name=_("Concepto / Motivo"))
+    beneficiario_firmante = models.CharField(max_length=150, blank=True, verbose_name=_("Beneficiario / Quien Recibe"))
+    dni_firmante = models.CharField(max_length=30, blank=True, verbose_name=_("DNI / CUIT de Quien Recibe"))
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Emitido por")
+    )
+
+    class Meta:
+        verbose_name = _("Orden de Pago / Recibo")
+        verbose_name_plural = _("Órdenes de Pago y Recibos")
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} {self.numero} - {self.cuenta_corriente.razon_social} (${self.importe_total:,.2f})"
+

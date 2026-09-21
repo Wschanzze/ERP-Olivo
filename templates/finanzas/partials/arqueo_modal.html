@@ -1,0 +1,174 @@
+<!-- Modal de Arqueo y Cierre Diario de Caja -->
+<div 
+  x-show="modalArqueo" 
+  x-cloak
+  class="fixed inset-0 z-50 overflow-y-auto"
+  role="dialog" 
+  aria-modal="true"
+  x-data="{
+    saldoSistema: 0,
+    saldoFisico: 0,
+    diferencia() {
+      return (parseFloat(this.saldoFisico || 0) - parseFloat(this.saldoSistema || 0)).toFixed(2);
+    },
+    actualizarSaldo(event) {
+      const selected = event.target.options[event.target.selectedIndex];
+      this.saldoSistema = parseFloat(selected.dataset.saldo || 0);
+    }
+  }"
+>
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <div 
+      x-show="modalArqueo"
+      @click="modalArqueo = false"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+    ></div>
+
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+    <div 
+      x-show="modalArqueo"
+      class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100"
+    >
+      <form method="post" action="{% url 'finanzas:arqueo_create' %}">
+        {% csrf_token %}
+        <div class="px-6 py-5 bg-gradient-to-r from-amber-800 to-amber-700 text-white flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 text-lg">
+              ⚖️
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Arqueo y Cierre Diario de Caja</h3>
+              <p class="text-xs text-amber-100">Control de efectivo físico vs. movimientos del sistema</p>
+            </div>
+          </div>
+          <button type="button" @click="modalArqueo = false" class="text-white/70 hover:text-white p-1 rounded-xl">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4 text-xs">
+          <!-- Caja Chica a Arquearel -->
+          <div>
+            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Caja Chica / Efectivo a Auditar *</label>
+            <select 
+              name="cuenta_id" 
+              required
+              @change="actualizarSaldo($event)"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all"
+            >
+              <option value="">(Seleccionar caja física)</option>
+              {% for c in cuentas %}
+                {% if c.tipo == 'CAJA_EFECTIVO' %}
+                  <option value="{{ c.id }}" data-saldo="{{ c.saldo_actual }}">{{ c.nombre }} (Saldo actual: ${{ c.saldo_actual|floatformat:2 }})</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Fecha de Corte *</label>
+              <input 
+                type="date" 
+                name="fecha" 
+                required 
+                value="{{ fecha_hoy|date:'Y-m-d'|default:'2026-03-21' }}"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800"
+              />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Hora de Cierre *</label>
+              <input 
+                type="time" 
+                name="hora" 
+                required 
+                value="18:00"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800"
+              />
+            </div>
+          </div>
+
+          <!-- Comparación Dinámica -->
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-600">Saldo según Sistema:</span>
+              <strong class="font-mono text-sm text-slate-900">$<span x-text="parseFloat(saldoSistema).toFixed(2)">0.00</span></strong>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Efectivo Contado Físicamente (Billetes) *</label>
+              <input 
+                type="number" 
+                name="saldo_real_contado" 
+                step="0.01" 
+                required 
+                x-model="saldoFisico"
+                placeholder="0.00"
+                class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl font-mono font-bold text-base text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all"
+              />
+            </div>
+
+            <!-- Indicador de Diferencia -->
+            <div 
+              class="p-3 rounded-xl border flex items-center justify-between"
+              :class="{
+                'bg-emerald-50 border-emerald-200 text-emerald-900': diferencia() == 0,
+                'bg-blue-50 border-blue-200 text-blue-900': diferencia() > 0,
+                'bg-rose-50 border-rose-200 text-rose-900': diferencia() < 0
+              }"
+            >
+              <span class="font-bold uppercase tracking-wider text-[11px]">
+                <span x-show="diferencia() == 0">Caja Cuadrada Exacta</span>
+                <span x-show="diferencia() > 0">Sobrante de Caja (+)</span>
+                <span x-show="diferencia() < 0">Faltante de Caja (-)</span>
+              </span>
+              <strong class="font-mono text-sm">$<span x-text="diferencia()"></span></strong>
+            </div>
+          </div>
+
+          <!-- Ajuste Automático Opcional -->
+          <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-amber-900 flex items-start gap-2.5">
+            <input 
+              type="checkbox" 
+              name="ajustar_saldo" 
+              id="chk-ajustar" 
+              value="1" 
+              class="mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+            />
+            <label for="chk-ajustar" class="text-[11px] leading-tight cursor-pointer">
+              <strong>Generar ajuste contable automático:</strong> Si existe diferencia, crear un movimiento de ajuste en la caja para igualar el saldo al efectivo contado.
+            </label>
+          </div>
+
+          <!-- Observaciones -->
+          <div>
+            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Observaciones / Justificación</label>
+            <textarea 
+              name="observaciones" 
+              rows="2" 
+              placeholder="Detalle de monedas, vales de nafta provisorios o justificación de diferencias..."
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button 
+            type="button" 
+            @click="modalArqueo = false"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="px-5 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-2"
+          >
+            Validar y Cerrar Arqueo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

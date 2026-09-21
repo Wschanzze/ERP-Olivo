@@ -16,7 +16,8 @@ from collections import OrderedDict
 
 from .models import (
     CuentaContable, Cuenta, CuentaCorriente, MovimientoFinanciero, Cheque, ConciliacionBancaria,
-    CuadroResultado, LineaCuadroResultado, TipoCambioMensual
+    CuadroResultado, LineaCuadroResultado, TipoCambioMensual,
+    ComprobanteFiscal, ArqueoCaja, OrdenPagoRecibo
 )
 from apps.inventario.models import CategoriaInsumo
 from apps.core.models import CentroDeCosto, Empresa
@@ -646,10 +647,41 @@ class FinanzasDashboardView(TemplateView):
         total_consolidado_ars = total_ars + (total_usd * tc_vigente)
         total_consolidado_usd = round(total_consolidado_ars / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
         
-        ctx['total_ars'] = total_ars
-        ctx['total_usd'] = total_usd
         ctx['total_consolidado_ars'] = total_consolidado_ars
         ctx['total_consolidado_usd'] = total_consolidado_usd
+
+        # Datos para Módulo de Libro de IVA & Facturación
+        try:
+            mes_iva = int(self.request.GET.get('periodo_mes', 3))
+        except (ValueError, TypeError):
+            mes_iva = 3
+        try:
+            ano_iva = int(self.request.GET.get('periodo_ano', 2026))
+        except (ValueError, TypeError):
+            ano_iva = 2026
+
+        ctx['periodo_mes'] = mes_iva
+        ctx['periodo_ano'] = ano_iva
+
+        facturas_mes = ComprobanteFiscal.objects.filter(fecha_emision__year=ano_iva, fecha_emision__month=mes_iva)
+        facturas_compras = facturas_mes.filter(tipo_operacion='COMPRA').order_by('-fecha_emision', '-id')
+        facturas_ventas = facturas_mes.filter(tipo_operacion='VENTA').order_by('-fecha_emision', '-id')
+
+        ctx['facturas_compras'] = facturas_compras
+        ctx['facturas_ventas'] = facturas_ventas
+
+        tot_credito = sum((f.total_iva for f in facturas_compras), Decimal('0.00'))
+        tot_debito = sum((f.total_iva for f in facturas_ventas), Decimal('0.00'))
+        tot_neto_compras = sum((f.neto_gravado_21 + f.neto_gravado_10_5 for f in facturas_compras), Decimal('0.00'))
+        tot_neto_ventas = sum((f.neto_gravado_21 + f.neto_gravado_10_5 for f in facturas_ventas), Decimal('0.00'))
+        tot_percep = sum((f.percepcion_iibb + f.percepcion_iva for f in facturas_compras), Decimal('0.00'))
+
+        ctx['total_credito_fiscal'] = tot_credito
+        ctx['total_debito_fiscal'] = tot_debito
+        ctx['total_neto_compras'] = tot_neto_compras
+        ctx['total_neto_ventas'] = tot_neto_ventas
+        ctx['total_percepciones'] = tot_percep
+        ctx['posicion_iva_neta'] = tot_debito - tot_credito
 
         # Selector de Período para Flujo de Caja
         periodo_flujo = self.request.GET.get('periodo_flujo')
@@ -1701,4 +1733,249 @@ class CuentaCorrienteCreateView(CreateView):
         return redirect(reverse_lazy('finanzas:dashboard') + f'?tab={tab}')
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# VISTAS DE FACTURACIÓN, PAGOS/COBROS, LIBRO DE IVA Y ARQUEO DE CAJA
+# ──────────────────────────────────────────────────────────────────────────────
 
+class ComprobanteFiscalCreateView(View):
+    """Alta de Comprobante Fiscal (Factura A, B, C) con impacto en cta cte y Libro de IVA."""
+    def post(self, request):
+        try:
+            tipo_operacion = request.POST.get('tipo_operacion', 'COMPRA')
+            tipo_comprobante = request.POST.get('tipo_comprobante', 'F_A')
+            punto_de_venta = request.POST.get('punto_de_venta', '00001').zfill(5)
+            numero_comprobante = request.POST.get('numero_comprobante', '00000001').zfill(8)
+            fecha_emision = request.POST.get('fecha_emision') or timezone.now().date()
+            fecha_vencimiento = request.POST.get('fecha_vencimiento') or None
+            cuenta_corriente_id = request.POST.get('cuenta_corriente_id')
+            concepto = request.POST.get('concepto', '').strip()
+
+            neto_21 = Decimal(request.POST.get('neto_gravado_21') or '0.00')
+            neto_105 = Decimal(request.POST.get('neto_gravado_10_5') or '0.00')
+            exento = Decimal(request.POST.get('exento') or '0.00')
+            percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
+
+            iva_21 = round(neto_21 * Decimal('0.21'), 2)
+            iva_105 = round(neto_105 * Decimal('0.105'), 2)
+            total = neto_21 + neto_105 + iva_21 + iva_105 + exento + percep_iibb
+
+            cuenta_corriente = get_object_or_404(CuentaCorriente, pk=cuenta_corriente_id)
+            cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
+
+            comprobante = ComprobanteFiscal.objects.create(
+                tipo_operacion=tipo_operacion,
+                tipo_comprobante=tipo_comprobante,
+                punto_de_venta=punto_de_venta,
+                numero_comprobante=numero_comprobante,
+                fecha_emision=fecha_emision,
+                fecha_vencimiento=fecha_vencimiento,
+                cuenta_corriente=cuenta_corriente,
+                razon_social=cuenta_corriente.razon_social,
+                cuit=cuenta_corriente.cuit,
+                condicion_iva=ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+                concepto=concepto,
+                neto_gravado_21=neto_21,
+                neto_gravado_10_5=neto_105,
+                iva_21=iva_21,
+                iva_10_5=iva_105,
+                exento=exento,
+                percepcion_iibb=percep_iibb,
+                total=total,
+                saldo_pendiente=total,
+                cuenta_contable_id=cuenta_contable_id
+            )
+
+            # Impacto en la cuenta corriente
+            if tipo_operacion == 'COMPRA':
+                cuenta_corriente.saldo_actual -= total  # Aumenta deuda con proveedor
+            else:
+                cuenta_corriente.saldo_actual += total  # Aumenta crédito por cobrar a cliente
+            cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
+
+            messages.success(request, f"Comprobante {comprobante.numero_completo} ({cuenta_corriente.razon_social}) registrado en Libro de IVA por ${total:,.2f}.")
+        except Exception as e:
+            messages.error(request, f"Error al registrar comprobante fiscal: {str(e)}")
+
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+
+class ComprobantePagoCobroView(View):
+    """Registra pago de compra o cobro de venta, emite Orden de Pago / Recibo y descuenta cta cte y caja/banco."""
+    def post(self, request):
+        try:
+            comprobante_id = request.POST.get('comprobante_id')
+            importe = Decimal(request.POST.get('importe') or '0.00')
+            cuenta_financiera_id = request.POST.get('cuenta_financiera_id')
+            medio_pago = request.POST.get('medio_pago', 'TRANSFERENCIA')
+            fecha = request.POST.get('fecha') or timezone.now().date()
+            beneficiario = request.POST.get('beneficiario_firmante', '').strip()
+            es_cobro = request.POST.get('es_cobro') == '1'
+
+            comprobante = get_object_or_404(ComprobanteFiscal, pk=comprobante_id)
+            cuenta_financiera = get_object_or_404(Cuenta, pk=cuenta_financiera_id)
+            cuenta_corriente = comprobante.cuenta_corriente
+
+            tipo_doc = 'RC' if es_cobro else 'OP'
+            count = OrdenPagoRecibo.objects.filter(tipo=tipo_doc).count() + 1
+            numero = f"{tipo_doc}-2026-{count:04d}"
+
+            concepto = f"{'Cobro' if es_cobro else 'Pago'} Factura {comprobante.numero_completo} ({comprobante.razon_social})"
+
+            # Generar Movimiento Financiero
+            tipo_mov = MovimientoFinanciero.TipoMovimiento.INGRESO if es_cobro else MovimientoFinanciero.TipoMovimiento.EGRESO
+            mov_fin = MovimientoFinanciero.objects.create(
+                cuenta=cuenta_financiera,
+                tipo=tipo_mov,
+                fecha=fecha,
+                importe=importe,
+                moneda=cuenta_financiera.moneda,
+                concepto=concepto,
+                comprobante_tipo=comprobante.get_tipo_comprobante_display(),
+                comprobante_nro=comprobante.numero_completo,
+                cuenta_corriente=cuenta_corriente,
+                usuario=request.user if request.user.is_authenticated else None
+            )
+
+            # Actualizar saldos de caja/banco y cta cte
+            if es_cobro:
+                cuenta_financiera.saldo_actual += importe
+                cuenta_corriente.saldo_actual -= importe
+            else:
+                cuenta_financiera.saldo_actual -= importe
+                cuenta_corriente.saldo_actual += importe
+            cuenta_financiera.save(update_fields=['saldo_actual', 'updated_at'])
+            cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
+
+            # Actualizar comprobante fiscal
+            comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe)
+            if comprobante.saldo_pendiente == 0:
+                comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGADA
+            else:
+                comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGO_PARCIAL
+            comprobante.save(update_fields=['saldo_pendiente', 'estado_pago', 'updated_at'])
+
+            # Crear Orden de Pago / Recibo
+            orden = OrdenPagoRecibo.objects.create(
+                tipo=tipo_doc,
+                numero=numero,
+                fecha=fecha,
+                cuenta_corriente=cuenta_corriente,
+                cuenta_financiera=cuenta_financiera,
+                importe_total=importe,
+                medio_pago=medio_pago,
+                comprobante_fiscal=comprobante,
+                movimiento_financiero=mov_fin,
+                concepto=concepto,
+                beneficiario_firmante=beneficiario,
+                usuario=request.user if request.user.is_authenticated else None
+            )
+
+            messages.success(request, f"{orden.get_tipo_display()} {orden.numero} por ${importe:,.2f} registrada exitosamente.")
+            return redirect('finanzas:orden_pago_print', pk=orden.id)
+        except Exception as e:
+            messages.error(request, f"Error al procesar pago/cobro: {str(e)}")
+            return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+
+class ArqueoCajaCreateView(View):
+    """Cierre y arqueo físico de caja chica diaria."""
+    def post(self, request):
+        try:
+            cuenta_id = request.POST.get('cuenta_id')
+            fecha = request.POST.get('fecha') or timezone.now().date()
+            hora = request.POST.get('hora') or '18:00'
+            saldo_real_contado = Decimal(request.POST.get('saldo_real_contado') or '0.00')
+            ajustar_saldo = request.POST.get('ajustar_saldo') == '1'
+            observaciones = request.POST.get('observaciones', '').strip()
+
+            cuenta = get_object_or_404(Cuenta, pk=cuenta_id)
+            saldo_sistema = cuenta.saldo_actual
+            diferencia = saldo_real_contado - saldo_sistema
+
+            arqueo = ArqueoCaja.objects.create(
+                cuenta=cuenta,
+                fecha=fecha,
+                hora=hora,
+                saldo_sistema=saldo_sistema,
+                saldo_real_contado=saldo_real_contado,
+                diferencia=diferencia,
+                estado=ArqueoCaja.Estado.CERRADO,
+                observaciones=observaciones,
+                usuario=request.user if request.user.is_authenticated else None
+            )
+
+            if ajustar_saldo and diferencia != 0:
+                tipo_mov = MovimientoFinanciero.TipoMovimiento.INGRESO if diferencia > 0 else MovimientoFinanciero.TipoMovimiento.EGRESO
+                MovimientoFinanciero.objects.create(
+                    cuenta=cuenta,
+                    tipo=tipo_mov,
+                    fecha=fecha,
+                    importe=abs(diferencia),
+                    moneda=cuenta.moneda,
+                    concepto=f"Ajuste por Arqueo Diario #{arqueo.id} ({'Sobrante' if diferencia > 0 else 'Faltante'})",
+                    comprobante_tipo="ARQUEO",
+                    comprobante_nro=f"ARQ-{arqueo.id}",
+                    usuario=request.user if request.user.is_authenticated else None
+                )
+                cuenta.saldo_actual = saldo_real_contado
+                cuenta.save(update_fields=['saldo_actual', 'updated_at'])
+
+            dif_txt = f"+${diferencia:,.2f} (sobrante)" if diferencia > 0 else (f"-${abs(diferencia):,.2f} (faltante)" if diferencia < 0 else "cuadrada exacta")
+            messages.success(request, f"Arqueo de {cuenta.nombre} cerrado con éxito al {fecha}. Diferencia: {dif_txt}.")
+        except Exception as e:
+            messages.error(request, f"Error al procesar el arqueo: {str(e)}")
+
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=caja')
+
+
+class OrdenPagoReciboPrintView(DetailView):
+    model = OrdenPagoRecibo
+    template_name = 'finanzas/orden_pago_recibo_print.html'
+    context_object_name = 'orden'
+
+
+class ExportarLibroIVAView(View):
+    """Exporta el Libro de IVA en formato CSV compatible con AFIP / ARCA."""
+    def get(self, request):
+        import csv
+        from django.http import HttpResponse
+
+        try:
+            mes = int(request.GET.get('mes', 3))
+        except (ValueError, TypeError):
+            mes = 3
+        try:
+            ano = int(request.GET.get('ano', 2026))
+        except (ValueError, TypeError):
+            ano = 2026
+        tipo = request.GET.get('tipo', 'COMPRA')
+
+        qs = ComprobanteFiscal.objects.filter(tipo_operacion=tipo, fecha_emision__year=ano, fecha_emision__month=mes).order_by('fecha_emision', 'numero_comprobante')
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        filename = f"Libro_IVA_{tipo}_{ano}_{mes:02d}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Tipo Comprobante', 'Punto de Venta', 'Numero', 'CUIT', 'Razon Social', 'Condicion IVA', 'Neto Gravado 21%', 'IVA 21%', 'Neto Gravado 10.5%', 'IVA 10.5%', 'Exento/No Gravado', 'Percepciones IIBB', 'Total Facturado', 'Estado'])
+
+        for c in qs:
+            writer.writerow([
+                c.fecha_emision.strftime('%d/%m/%Y'),
+                c.get_tipo_comprobante_display(),
+                c.punto_de_venta,
+                c.numero_comprobante,
+                c.cuit,
+                c.razon_social,
+                c.get_condicion_iva_display(),
+                f"{c.neto_gravado_21:.2f}",
+                f"{c.iva_21:.2f}",
+                f"{c.neto_gravado_10_5:.2f}",
+                f"{c.iva_10_5:.2f}",
+                f"{c.exento:.2f}",
+                f"{c.percepcion_iibb:.2f}",
+                f"{c.total:.2f}",
+                c.get_estado_pago_display()
+            ])
+
+        return response

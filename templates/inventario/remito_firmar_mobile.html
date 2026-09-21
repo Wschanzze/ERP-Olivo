@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Firma de Remito {{ remito.numero }} | ERP Olivícola</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oliva: {
+              50: '#F7F8F5',
+              100: '#EAEFE3',
+              200: '#D5DFC9',
+              300: '#B2C69E',
+              400: '#8FA872',
+              500: '#6E8A4E',
+              600: '#546E3A',
+              700: '#3D4A2A',
+              800: '#2A331D',
+              900: '#1A2112',
+              950: '#0E120A',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Evitar scroll mientras se firma en el canvas */
+    #signature-canvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col justify-between text-slate-800 antialiased selection:bg-oliva-500 selection:text-white">
+
+  <!-- Header Superior Móvil -->
+  <header class="bg-gradient-to-r from-oliva-950 via-oliva-900 to-oliva-800 text-white px-4 py-3.5 shadow-md sticky top-0 z-20">
+    <div class="max-w-lg mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-tight">Recepción Digital de Remito</h1>
+          <p class="text-[10px] text-oliva-200">ERP Agroindustrial Olivícola</p>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold bg-white/10 px-2.5 py-1 rounded-lg border border-white/15">
+        {{ remito.numero }}
+      </span>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="max-w-lg mx-auto w-full p-4 space-y-4 flex-grow">
+
+    <!-- Mensajes de Alerta -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="p-3 rounded-2xl text-xs font-semibold {% if message.tags == 'error' %}bg-rose-50 border border-rose-200 text-rose-700{% else %}bg-emerald-50 border border-emerald-200 text-emerald-800{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Tarjeta de Información del Remito -->
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/80 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Comprobante</span>
+          <h2 class="text-base font-extrabold text-slate-900">{{ remito.numero }}</h2>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fecha</span>
+          <p class="text-xs font-bold text-slate-700">{{ remito.fecha|date:"d/m/Y" }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 block uppercase font-semibold">Tipo:</span>
+          <strong class="text-slate-800">{{ remito.get_tipo_display }}</strong>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 block uppercase font-semibold">Destino / Finca:</span>
+          <strong class="text-slate-800">
+            {% if remito.finca_destino %}{{ remito.finca_destino.nombre }}{% elif remito.entidad_nombre %}{{ remito.entidad_nombre }}{% else %}General{% endif %}
+          </strong>
+        </div>
+      </div>
+
+      {% if remito.transportista_nombre or remito.patente_vehiculo %}
+      <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs flex items-center justify-between">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-semibold block">Transportista:</span>
+          <strong class="text-slate-700">{{ remito.transportista_nombre|default:"No especificado" }}</strong>
+        </div>
+        {% if remito.patente_vehiculo %}
+        <span class="px-2 py-0.5 bg-slate-200 text-slate-800 rounded font-mono font-bold text-[11px]">
+          {{ remito.patente_vehiculo }}
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Detalle de Ítems / Carga -->
+      <div class="space-y-1.5 pt-1">
+        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Mercadería / Insumos a Recibir:</span>
+        <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+          {% for item in remito.items.all %}
+            <div class="p-2.5 bg-white flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-800">{{ item.insumo.nombre }}</span>
+              <span class="font-mono font-bold text-oliva-700 bg-oliva-50 px-2 py-0.5 rounded-md">
+                {{ item.cantidad_declarada }} {{ item.insumo.get_unidad_medida_display }}
+              </span>
+            </div>
+          {% empty %}
+            <div class="p-3 bg-white text-xs text-slate-400 text-center">
+              Carga general según detalle adjunto o remito papel.
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Si YA está firmado -->
+    {% if remito.esta_firmado %}
+    <div class="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-5 text-center space-y-3 shadow-xs">
+      <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-emerald-950">Remito Firmado y Confirmado</h3>
+        <p class="text-xs text-emerald-700 mt-0.5">La recepción fue validada legalmente al pie del camión.</p>
+      </div>
+
+      <!-- Imagen de la firma -->
+      <div class="bg-white p-3 rounded-2xl border border-emerald-200 inline-block shadow-2xs max-w-[260px]">
+        <img src="{{ remito.firma_digital }}" alt="Firma Digital" class="max-h-24 mx-auto" />
+      </div>
+
+      <div class="text-xs text-emerald-900 space-y-1 bg-white/70 p-3 rounded-xl border border-emerald-200">
+        <p><strong>Receptor:</strong> {{ remito.firma_nombre_receptor }} (DNI: {{ remito.firma_dni_receptor }})</p>
+        {% if remito.firma_aclaracion %}<p><strong>Cargo:</strong> {{ remito.firma_aclaracion }}</p>{% endif %}
+        <p class="text-[11px] text-emerald-700"><strong>Fecha/Hora:</strong> {{ remito.firma_fecha_hora|date:"d/m/Y H:i:s" }}</p>
+      </div>
+
+      <a 
+        href="{% url 'inventario:remito_detalle' remito.id %}" 
+        class="inline-flex items-center justify-center w-full px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+      >
+        Ver Comprobante Completo
+      </a>
+    </div>
+
+    <!-- Si AÚN NO está firmado -->
+    {% else %}
+    <form id="signature-form" method="post" class="bg-white rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/80 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="firma_digital" id="input-firma-base64">
+      <input type="hidden" name="firma_geolocalizacion" id="input-geoloc">
+
+      <div class="border-b border-slate-100 pb-2">
+        <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+          Datos de Quien Recibe en Finca / Depósito
+        </h3>
+        <p class="text-xs text-slate-500">Completa tus datos y firma con el dedo en el recuadro inferior.</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre y Apellido *</label>
+          <input 
+            type="text" 
+            name="firma_nombre_receptor" 
+            required 
+            placeholder="Ej. Carlos Morales"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">DNI / CUIT *</label>
+            <input 
+              type="text" 
+              name="firma_dni_receptor" 
+              required 
+              placeholder="Ej. 34.567.890"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cargo / Relación</label>
+            <input 
+              type="text" 
+              name="firma_aclaracion" 
+              placeholder="Ej. Capataz / Encargado"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de Firma Digital (Signature Pad) -->
+      <div class="space-y-1.5 pt-2">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            Firma Táctil (Dibuja con tu dedo) *
+          </label>
+          <button 
+            type="button" 
+            id="btn-limpiar" 
+            class="text-[11px] font-bold text-rose-600 hover:text-rose-800 active:scale-95 transition-transform"
+          >
+            Limpiar trazo
+          </button>
+        </div>
+
+        <div class="relative bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl overflow-hidden p-1 shadow-inner">
+          <canvas 
+            id="signature-canvas" 
+            class="w-full h-44 bg-white rounded-xl touch-none block"
+          ></canvas>
+          <div id="canvas-placeholder" class="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs font-medium">
+            Toca aquí para firmar con tu dedo
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-400 text-center">
+          Al confirmar declaras haber recibido la mercadería detallada de conformidad.
+        </p>
+      </div>
+
+      <button 
+        type="submit" 
+        id="btn-submit"
+        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>Confirmar Recepción y Firmar</span>
+      </button>
+    </form>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer Móvil -->
+  <footer class="text-center py-3 text-[11px] text-slate-400 bg-slate-100 border-t border-slate-200">
+    ERP Olivícola • Sistema de Remitos &amp; Trazabilidad
+  </footer>
+
+  <!-- Script de Firma Táctil en Canvas -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('signature-canvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const placeholder = document.getElementById('canvas-placeholder');
+      const btnLimpiar = document.getElementById('btn-limpiar');
+      const form = document.getElementById('signature-form');
+      const inputFirma = document.getElementById('input-firma-base64');
+      const inputGeoloc = document.getElementById('input-geoloc');
+
+      let isDrawing = false;
+      let hasDrawn = false;
+
+      // Ajustar resolución del canvas
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#0f172a'; // Slate-900
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Obtener coordenadas relativas
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function startDraw(e) {
+        isDrawing = true;
+        hasDrawn = true;
+        if (placeholder) placeholder.style.display = 'none';
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault();
+      }
+
+      function moveDraw(e) {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        e.preventDefault();
+      }
+
+      function stopDraw(e) {
+        if (isDrawing) {
+          ctx.closePath();
+          isDrawing = false;
+        }
+      }
+
+      // Eventos Touch (Celulares / Tablets)
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', moveDraw, { passive: false });
+      canvas.addEventListener('touchend', stopDraw, { passive: false });
+      canvas.addEventListener('touchcancel', stopDraw, { passive: false });
+
+      // Eventos Mouse (PC / Laptop)
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', moveDraw);
+      canvas.addEventListener('mouseup', stopDraw);
+      canvas.addEventListener('mouseleave', stopDraw);
+
+      // Limpiar firma
+      btnLimpiar.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+        if (placeholder) placeholder.style.display = 'flex';
+      });
+
+      // Capturar geolocalización en background
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            if (inputGeoloc) {
+              inputGeoloc.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+            }
+          },
+          err => {
+            console.warn('Geolocalización omitida:', err.message);
+          },
+          { timeout: 5000 }
+        );
+      }
+
+      // Validación al enviar
+      form.addEventListener('submit', (e) => {
+        if (!hasDrawn) {
+          e.preventDefault();
+          alert('Por favor dibuja tu firma en el recuadro antes de confirmar.');
+          return;
+        }
+        inputFirma.value = canvas.toDataURL('image/png');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -15,6 +15,8 @@ urlpatterns = [
     path('maquinas/crear/', views.MaquinaCreateView.as_view(), name='maquina_create'),
     path('remitos/', views.RemitosListView.as_view(), name='remitos_list'),
     path('remitos/crear/', views.RemitoCreateView.as_view(), name='remito_create'),
+    path('remitos/<int:pk>/', views.RemitoDetailView.as_view(), name='remito_detalle'),
+    path('remitos/<int:pk>/firmar/', views.RemitoFirmarMobileView.as_view(), name='remito_firmar'),
     # Análisis y Control Estratégico (Fase 2)
     path('analisis/', views.AnalisisInventarioView.as_view(), name='analisis_stock'),
     path('ordenes-compra/generar-sugerida/', views.GenerarOCSugeridaView.as_view(), name='oc_generar_sugerida'),

@@ -1,0 +1,290 @@
+<!-- Módulo de Facturación, Cuentas por Pagar/Cobrar & Libro de IVA -->
+<div class="space-y-6" x-data="{
+  tipoLibro: 'COMPRA',
+  modalComprobante: false,
+  tipoComprobanteOperacion: 'COMPRA',
+  modalPago: false,
+  comprobanteSeleccionado: null,
+  abrirPago(comp) {
+    this.comprobanteSeleccionado = comp;
+    this.modalPago = true;
+  }
+}">
+
+  <!-- Header del Módulo con Posición Fiscal y Selector de Período -->
+  <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-oliva-100 text-oliva-800 flex items-center justify-center font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Libro de IVA &amp; Comprobantes Fiscales</h2>
+          <p class="text-xs text-slate-500">Régimen de compras, ventas, crédito y débito fiscal conforme normativa AFIP / ARCA.</p>
+        </div>
+      </div>
+
+      <!-- Selector de Período y Botones de Emisión -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <form method="get" class="flex items-center gap-1.5">
+          <input type="hidden" name="tab" value="libro_iva">
+          <select 
+            name="periodo_mes" 
+            onchange="this.form.submit()"
+            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+          >
+            <option value="1" {% if periodo_mes == 1 %}selected{% endif %}>Enero</option>
+            <option value="2" {% if periodo_mes == 2 %}selected{% endif %}>Febrero</option>
+            <option value="3" {% if periodo_mes == 3 %}selected{% endif %}>Marzo</option>
+            <option value="4" {% if periodo_mes == 4 %}selected{% endif %}>Abril</option>
+            <option value="5" {% if periodo_mes == 5 %}selected{% endif %}>Mayo</option>
+            <option value="6" {% if periodo_mes == 6 %}selected{% endif %}>Junio</option>
+            <option value="7" {% if periodo_mes == 7 %}selected{% endif %}>Julio</option>
+            <option value="8" {% if periodo_mes == 8 %}selected{% endif %}>Agosto</option>
+            <option value="9" {% if periodo_mes == 9 %}selected{% endif %}>Septiembre</option>
+            <option value="10" {% if periodo_mes == 10 %}selected{% endif %}>Octubre</option>
+            <option value="11" {% if periodo_mes == 11 %}selected{% endif %}>Noviembre</option>
+            <option value="12" {% if periodo_mes == 12 %}selected{% endif %}>Diciembre</option>
+          </select>
+          <select 
+            name="periodo_ano" 
+            onchange="this.form.submit()"
+            class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+          >
+            <option value="2025" {% if periodo_ano == 2025 %}selected{% endif %}>2025</option>
+            <option value="2026" {% if periodo_ano == 2026 %}selected{% endif %}>2026</option>
+            <option value="2027" {% if periodo_ano == 2027 %}selected{% endif %}>2027</option>
+          </select>
+        </form>
+
+        <a 
+          href="{% url 'finanzas:exportar_libro_iva' %}?mes={{ periodo_mes }}&ano={{ periodo_ano }}&tipo=COMPRA"
+          class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
+          title="Descargar reporte en formato oficial"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Exportar CSV
+        </a>
+
+        <button 
+          @click="tipoComprobanteOperacion = 'COMPRA'; modalComprobante = true"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          Nueva Factura
+        </button>
+      </div>
+    </div>
+
+    <!-- Posición Mensual de IVA (Cuadro Fiscal de Liquidación) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
+      <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80">
+        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Crédito Fiscal (Compras)</span>
+        <h4 class="text-xl font-black text-blue-950 font-mono mt-1">${{ total_credito_fiscal|floatformat:2 }}</h4>
+        <span class="text-[10px] text-blue-600 mt-0.5 block">Neto Gravado: ${{ total_neto_compras|floatformat:2 }}</span>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200/80">
+        <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wider block">Débito Fiscal (Ventas)</span>
+        <h4 class="text-xl font-black text-purple-950 font-mono mt-1">${{ total_debito_fiscal|floatformat:2 }}</h4>
+        <span class="text-[10px] text-purple-600 mt-0.5 block">Neto Gravado: ${{ total_neto_ventas|floatformat:2 }}</span>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Percepciones IIBB / IVA</span>
+        <h4 class="text-xl font-black text-amber-950 font-mono mt-1">${{ total_percepciones|floatformat:2 }}</h4>
+        <span class="text-[10px] text-amber-600 mt-0.5 block">Catamarca / Regímenes</span>
+      </div>
+
+      <div class="p-3.5 rounded-2xl {% if posicion_iva_neta >= 0 %}bg-rose-50/70 border-rose-200/80 text-rose-950{% else %}bg-emerald-50/70 border-emerald-200/80 text-emerald-950{% endif %} border">
+        <span class="text-[10px] font-bold {% if posicion_iva_neta >= 0 %}text-rose-700{% else %}text-emerald-700{% endif %} uppercase tracking-wider block">
+          Posición Mensual Neta
+        </span>
+        <h4 class="text-xl font-black font-mono mt-1">
+          ${{ posicion_iva_neta|floatformat:2 }}
+        </h4>
+        <span class="text-[10px] font-semibold {% if posicion_iva_neta >= 0 %}text-rose-600{% else %}text-emerald-600{% endif %} mt-0.5 block">
+          {% if posicion_iva_neta > 0 %}Saldo a Pagar a AFIP/ARCA{% elif posicion_iva_neta < 0 %}Saldo Técnico a Favor{% else %}Posición Neutra{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pestañas Libro IVA Compras vs Libro IVA Ventas -->
+  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="flex items-center border-b border-slate-200 px-6 pt-3 bg-slate-50/50 gap-4">
+      <button 
+        type="button" 
+        @click="tipoLibro = 'COMPRA'"
+        :class="tipoLibro === 'COMPRA' ? 'border-oliva-700 text-oliva-950 font-extrabold border-b-2 bg-white' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="pb-3 pt-2 px-3 text-xs transition-all cursor-pointer flex items-center gap-2 rounded-t-xl"
+      >
+        <span>🛒 Libro IVA Compras (Crédito Fiscal &amp; Facturas de Proveedores)</span>
+        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">{{ facturas_compras.count }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="tipoLibro = 'VENTA'"
+        :class="tipoLibro === 'VENTA' ? 'border-oliva-700 text-oliva-950 font-extrabold border-b-2 bg-white' : 'text-slate-500 hover:text-slate-800 font-medium'"
+        class="pb-3 pt-2 px-3 text-xs transition-all cursor-pointer flex items-center gap-2 rounded-t-xl"
+      >
+        <span>🏷️ Libro IVA Ventas (Débito Fiscal &amp; Facturas de Clientes)</span>
+        <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">{{ facturas_ventas.count }}</span>
+      </button>
+    </div>
+
+    <!-- Contenedor Compras -->
+    <div x-show="tipoLibro === 'COMPRA'" class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+          <tr>
+            <th class="px-4 py-3">Fecha</th>
+            <th class="px-4 py-3">Comprobante</th>
+            <th class="px-4 py-3">CUIT &amp; Razón Social</th>
+            <th class="px-4 py-3">Cond. IVA</th>
+            <th class="px-4 py-3 text-right">Neto 21%</th>
+            <th class="px-4 py-3 text-right">Neto 10.5%</th>
+            <th class="px-4 py-3 text-right">IVA Total</th>
+            <th class="px-4 py-3 text-right">Percep. IIBB</th>
+            <th class="px-4 py-3 text-right">Total Facturado</th>
+            <th class="px-4 py-3 text-center">Estado Pago</th>
+            <th class="px-4 py-3 text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-mono">
+          {% for f in facturas_compras %}
+            <tr class="hover:bg-slate-50/70 transition-colors font-sans">
+              <td class="px-4 py-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">{{ f.fecha_emision|date:"d/m/Y" }}</td>
+              <td class="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black {% if 'A' in f.tipo_comprobante %}bg-blue-100 text-blue-800{% elif 'B' in f.tipo_comprobante %}bg-purple-100 text-purple-800{% else %}bg-slate-100 text-slate-800{% endif %}">
+                  {{ f.get_tipo_comprobante_display }}
+                </span>
+                <span class="font-mono text-xs ml-1">{{ f.numero_completo }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-800 truncate max-w-[180px]">{{ f.razon_social }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ f.cuit }}</div>
+              </td>
+              <td class="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">{{ f.get_condicion_iva_display }}</td>
+              <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_21|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_10_5|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-blue-700">${{ f.total_iva|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono text-amber-700">${{ f.percepcion_iibb|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-black text-slate-900">${{ f.total|floatformat:2 }}</td>
+              
+              <!-- Estado de Pago -->
+              <td class="px-4 py-3 text-center whitespace-nowrap">
+                {% if f.estado_pago == 'PAGADA' %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">PAGADA</span>
+                {% elif f.estado_pago == 'PARCIAL' %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">PARCIAL (${{ f.saldo_pendiente|floatformat:0 }})</span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">IMPAGA</span>
+                {% endif %}
+              </td>
+
+              <!-- Botón Pagar -->
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                {% if f.estado_pago != 'PAGADA' %}
+                  <button 
+                    type="button" 
+                    @click="abrirPago({id: '{{ f.id }}', numero: '{{ f.numero_completo }}', razon: '{{ f.razon_social }}', saldo: '{{ f.saldo_pendiente }}', cta_id: '{{ f.cuenta_corriente_id }}'})"
+                    class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    Emitir Pago
+                  </button>
+                {% else %}
+                  <span class="text-[11px] text-slate-400 font-semibold">Cancelada</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="11" class="px-4 py-10 text-center text-slate-400 font-sans text-xs">
+                No hay facturas de compras registradas en este período.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Contenedor Ventas -->
+    <div x-show="tipoLibro === 'VENTA'" x-cloak class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+          <tr>
+            <th class="px-4 py-3">Fecha</th>
+            <th class="px-4 py-3">Comprobante</th>
+            <th class="px-4 py-3">Cliente / CUIT</th>
+            <th class="px-4 py-3">Cond. IVA</th>
+            <th class="px-4 py-3 text-right">Neto 21%</th>
+            <th class="px-4 py-3 text-right">Neto 10.5%</th>
+            <th class="px-4 py-3 text-right">Débito Fiscal</th>
+            <th class="px-4 py-3 text-right">Total Facturado</th>
+            <th class="px-4 py-3 text-center">Estado Cobro</th>
+            <th class="px-4 py-3 text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-mono">
+          {% for f in facturas_ventas %}
+            <tr class="hover:bg-slate-50/70 transition-colors font-sans">
+              <td class="px-4 py-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">{{ f.fecha_emision|date:"d/m/Y" }}</td>
+              <td class="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-purple-100 text-purple-800">
+                  {{ f.get_tipo_comprobante_display }}
+                </span>
+                <span class="font-mono text-xs ml-1">{{ f.numero_completo }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-800 truncate max-w-[180px]">{{ f.razon_social }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ f.cuit }}</div>
+              </td>
+              <td class="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">{{ f.get_condicion_iva_display }}</td>
+              <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_21|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_10_5|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-purple-700">${{ f.total_iva|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-black text-slate-900">${{ f.total|floatformat:2 }}</td>
+              
+              <!-- Estado de Cobro -->
+              <td class="px-4 py-3 text-center whitespace-nowrap">
+                {% if f.estado_pago == 'PAGADA' %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">COBRADA</span>
+                {% else %}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">A COBRAR</span>
+                {% endif %}
+              </td>
+
+              <!-- Botón Cobrar -->
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                {% if f.estado_pago != 'PAGADA' %}
+                  <button 
+                    type="button" 
+                    @click="abrirPago({id: '{{ f.id }}', numero: '{{ f.numero_completo }}', razon: '{{ f.razon_social }}', saldo: '{{ f.saldo_pendiente }}', cta_id: '{{ f.cuenta_corriente_id }}', es_cobro: true})"
+                    class="px-2.5 py-1 rounded-lg bg-oliva-50 hover:bg-oliva-100 text-oliva-800 border border-oliva-200 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    Registrar Cobro
+                  </button>
+                {% else %}
+                  <span class="text-[11px] text-slate-400 font-semibold">Percibido</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="10" class="px-4 py-10 text-center text-slate-400 font-sans text-xs">
+                No hay facturas de ventas emitidas en este período.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modales de Facturación y Pago/Cobro -->
+  {% include 'finanzas/partials/comprobante_form_modal.html' %}
+  {% include 'finanzas/partials/comprobante_pago_modal.html' %}
+
+</div>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ orden.get_tipo_display }} {{ orden.numero }} | ERP Olivícola</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      body { background: white !important; font-size: 12pt; }
+      .no-print { display: none !important; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8 text-slate-800 antialiased">
+
+  <!-- Barra Superior No Imprimible -->
+  <div class="max-w-3xl mx-auto mb-6 flex items-center justify-between no-print">
+    <a 
+      href="{% url 'finanzas:dashboard' %}?tab=libro_iva"
+      class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs hover:bg-slate-50 transition-colors"
+    >
+      &larr; Volver a Finanzas
+    </a>
+    <button 
+      onclick="window.print()" 
+      class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+    >
+      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      <span>Imprimir Comprobante Oficial</span>
+    </button>
+  </div>
+
+  <!-- Documento Formal -->
+  <div class="max-w-3xl mx-auto bg-white rounded-3xl p-8 shadow-sm border border-slate-200 print-shadow-none space-y-6">
+    
+    <!-- Membrete -->
+    <div class="flex items-start justify-between border-b border-slate-200 pb-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm">OL</span>
+          <h1 class="text-xl font-black text-slate-900 tracking-tight">ESTABLECIMIENTO OLIVÍCOLA</h1>
+        </div>
+        <p class="text-xs text-slate-500">Pomán, Catamarca • Producción Agropecuaria e Industrial</p>
+        <p class="text-xs text-slate-500 font-mono">CUIT: 30-71234567-8 • IVA Responsable Inscripto</p>
+      </div>
+
+      <div class="text-right p-3 bg-slate-50 rounded-2xl border border-slate-200 min-w-[200px]">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">COMPROBANTE OFICIAL</span>
+        <h2 class="text-lg font-black text-slate-900 font-mono">{{ orden.numero }}</h2>
+        <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-1">
+          {{ orden.get_tipo_display }}
+        </span>
+        <p class="text-xs text-slate-600 mt-1"><strong>Fecha:</strong> {{ orden.fecha|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+
+    <!-- Beneficiario / Entidad -->
+    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-xs">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase block">Titular de la Cuenta Corriente:</span>
+          <strong class="text-sm font-extrabold text-slate-900">{{ orden.cuenta_corriente.razon_social }}</strong>
+          <p class="text-slate-500 font-mono mt-0.5">CUIT: {{ orden.cuenta_corriente.cuit }}</p>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase block">Cuenta Financiera de Fondos:</span>
+          <strong class="text-slate-800">{{ orden.cuenta_financiera.nombre }}</strong>
+          <p class="text-slate-500 mt-0.5">Medio de Pago: <strong>{{ orden.get_medio_pago_display }}</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de la Operación y Concepto -->
+    <div class="space-y-3 text-xs">
+      <div class="border border-slate-200 rounded-2xl p-4 space-y-2">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Concepto del Movimiento:</span>
+        <p class="text-sm font-medium text-slate-800">{{ orden.concepto }}</p>
+        
+        {% if orden.comprobante_fiscal %}
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs mt-2">
+          <span>Imputado a Factura: <strong>{{ orden.comprobante_fiscal.numero_completo }}</strong></span>
+          <span class="text-slate-500">Total Factura: ${{ orden.comprobante_fiscal.total|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Cuadro de Importe Total -->
+      <div class="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl flex items-center justify-between shadow-xs">
+        <div>
+          <span class="text-xs text-slate-300 uppercase tracking-wider block">Importe Total Liquidado</span>
+          <span class="text-xs text-slate-400">Pesos Argentinos (ARS)</span>
+        </div>
+        <div class="text-right">
+          <span class="text-2xl font-black font-mono tracking-tight">${{ orden.importe_total|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if orden.observaciones %}
+    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+      <strong>Observaciones:</strong> {{ orden.observaciones }}
+    </div>
+    {% endif %}
+
+    <!-- Firmas Formales -->
+    <div class="border-t border-slate-200 pt-10 mt-8 grid grid-cols-2 gap-8 text-center text-xs">
+      <div class="space-y-1">
+        <div class="border-b border-slate-300 w-48 mx-auto h-12"></div>
+        <strong class="block text-slate-800">Autorizado por Administración</strong>
+        <span class="text-[10px] text-slate-400">Firma y Sello de la Empresa</span>
+      </div>
+
+      <div class="space-y-1">
+        <div class="border-b border-slate-300 w-48 mx-auto h-12"></div>
+        <strong class="block text-slate-800">
+          {{ orden.beneficiario_firmante|default:orden.cuenta_corriente.razon_social }}
+        </strong>
+        <span class="text-[10px] text-slate-400">Recibí Conforme (Firma y DNI)</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Remito {{ remito.numero }} | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Barra Superior de Navegación y Acciones -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-200">
+    <div class="flex items-center gap-3">
+      <a 
+        href="{% url 'inventario:remitos_list' %}"
+        class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+        title="Volver al listado"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      </a>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-black text-slate-900 tracking-tight">Remito {{ remito.numero }}</h1>
+          {% if remito.esta_firmado %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              FIRMADO DIGITALMENTE
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              PENDIENTE DE FIRMA
+            </span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">Comprobante de movimiento de insumos y productos con certificación de recepción.</p>
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex items-center gap-2">
+      {% if not remito.esta_firmado %}
+      <a 
+        href="{% url 'inventario:remito_firmar' remito.id %}"
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        <span>Firmar desde Celular</span>
+      </a>
+      {% endif %}
+
+      <button 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span>Imprimir Comprobante</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Documento Formal del Remito (Estilo Factura/Voucher Imprimible) -->
+  <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 print:border-none print:shadow-none space-y-6">
+
+    <!-- Membrete -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-oliva-800 text-white flex items-center justify-center font-black text-sm">OL</span>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">ESTABLECIMIENTO OLIVÍCOLA</h2>
+        </div>
+        <p class="text-xs text-slate-500">Pomán, Catamarca • Rutas Provinciales del Olivo</p>
+        <p class="text-xs text-slate-500 font-mono">CUIT: 30-71234567-8 • IVA Responsable Inscripto</p>
+      </div>
+
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-right sm:min-w-[220px]">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DOCUMENTO DE TRASLADO</span>
+        <h3 class="text-lg font-black text-oliva-900 font-mono">{{ remito.numero }}</h3>
+        <p class="text-xs text-slate-600 mt-1"><strong>Fecha:</strong> {{ remito.fecha|date:"d/m/Y" }}</p>
+        <p class="text-[11px] font-bold text-oliva-700 bg-oliva-100/80 px-2 py-0.5 rounded inline-block mt-1">
+          {{ remito.get_tipo_display }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Origen y Destino -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+      <div class="p-4 bg-slate-50/70 rounded-2xl border border-slate-100 space-y-1">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Remitente / Origen:</span>
+        <h4 class="font-extrabold text-slate-900 text-sm">
+          {% if remito.finca_origen %}{{ remito.finca_origen.nombre }}{% elif remito.entidad_nombre %}{{ remito.entidad_nombre }}{% else %}Establecimiento Central{% endif %}
+        </h4>
+        <p class="text-slate-500">
+          {% if remito.finca_origen %}Finca Agrícola - Lotes Olivícolas{% else %}Despacho de Proveedor Externo{% endif %}
+        </p>
+      </div>
+
+      <div class="p-4 bg-slate-50/70 rounded-2xl border border-slate-100 space-y-1">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Destinatario / Recepción:</span>
+        <h4 class="font-extrabold text-slate-900 text-sm">
+          {% if remito.finca_destino %}{{ remito.finca_destino.nombre }}{% elif remito.entidad_nombre %}{{ remito.entidad_nombre }}{% else %}Cliente Destino{% endif %}
+        </h4>
+        <p class="text-slate-500">
+          {% if remito.finca_destino %}Depósito de Insumos / Almazara Finca{% else %}Entrega Comercial{% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Datos de Transporte -->
+    <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Transportista / Empresa:</span>
+        <strong class="text-slate-800">{{ remito.transportista_nombre|default:"Transporte Propio Finca" }}</strong>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Dominio / Patente:</span>
+        <strong class="font-mono text-slate-800">{{ remito.patente_vehiculo|default:"-" }}</strong>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase block">Estado del Remito:</span>
+        <span class="font-bold text-slate-800">{{ remito.get_estado_display }}</span>
+      </div>
+    </div>
+
+    <!-- Tabla de Ítems del Remito -->
+    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+          <tr>
+            <th class="px-4 py-3">Código</th>
+            <th class="px-4 py-3">Insumo / Descripción de la Carga</th>
+            <th class="px-4 py-3 text-right">Cant. Declarada</th>
+            <th class="px-4 py-3 text-right">Cant. Recibida</th>
+            <th class="px-4 py-3 text-center">Unidad</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for item in remito.items.all %}
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-4 py-3 font-mono text-slate-500">{{ item.insumo.codigo }}</td>
+              <td class="px-4 py-3 font-bold text-slate-900">{{ item.insumo.nombre }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-slate-800">{{ item.cantidad_declarada }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-emerald-700">{{ item.cantidad_recibida|default:item.cantidad_declarada }}</td>
+              <td class="px-4 py-3 text-center text-slate-600">{{ item.insumo.get_unidad_medida_display }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="px-4 py-6 text-center text-slate-400">
+                Remito global según detalle anexo o comprobante de fábrica.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if remito.observaciones %}
+    <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200/70 text-xs text-amber-900">
+      <strong>Observaciones:</strong> {{ remito.observaciones }}
+    </div>
+    {% endif %}
+
+    <!-- Sección de Firma y Certificación Legal -->
+    <div class="border-t border-slate-200 pt-6 mt-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+        
+        <!-- Sello de Despacho / Chofer -->
+        <div class="p-4 rounded-2xl border border-dashed border-slate-300 text-center space-y-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Entregó Conforme (Despacho / Chofer)</span>
+          <div class="h-20 flex items-center justify-center text-slate-300 text-xs font-mono">
+            [ Sello / Firma Salida ]
+          </div>
+          <div class="border-t border-slate-200 pt-1 text-[11px] text-slate-500">
+            Firma y Aclaración
+          </div>
+        </div>
+
+        <!-- Firma Digital del Receptor (Smartphone) -->
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Recibió Conforme (Receptor en Destino)</span>
+          
+          {% if remito.esta_firmado %}
+            <div class="h-20 flex items-center justify-center">
+              <img src="{{ remito.firma_digital }}" alt="Firma Digital" class="max-h-16 mx-auto" />
+            </div>
+            <div class="border-t border-slate-200 pt-1 text-left text-[11px] space-y-0.5 text-slate-700">
+              <p><strong>Aclaración:</strong> {{ remito.firma_nombre_receptor }}</p>
+              <p><strong>DNI / CUIT:</strong> {{ remito.firma_dni_receptor }} • <strong>Cargo:</strong> {{ remito.firma_aclaracion|default:"Receptor" }}</p>
+              <p class="text-[10px] text-slate-400 font-mono">Certificado: {{ remito.firma_fecha_hora|date:"d/m/Y H:i:s" }}{% if remito.firma_geolocalizacion %} • GPS: {{ remito.firma_geolocalizacion }}{% endif %}</p>
+            </div>
+          {% else %}
+            <div class="h-20 flex flex-col items-center justify-center text-slate-400 text-xs space-y-1">
+              <span>Pendiente de firma digital</span>
+              <a 
+                href="{% url 'inventario:remito_firmar' remito.id %}" 
+                class="text-xs text-emerald-700 font-bold hover:underline"
+              >
+                Abrir pantalla de firma en celular &rarr;
+              </a>
+            </div>
+            <div class="border-t border-slate-200 pt-1 text-[11px] text-slate-400">
+              Certificación digital al pie del camión
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -272,6 +272,16 @@ class Remito(TimeStampedModel):
     estado = models.CharField(max_length=20, choices=EstadoRemito.choices, default=EstadoRemito.BORRADOR, verbose_name=_("Estado"))
     observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
     documento_adjunto = models.FileField(upload_to='remitos/', blank=True, null=True, verbose_name=_("Archivo PDF / Foto"))
+    
+    # ── Datos de Transporte y Recepción Digital con Firma Móvil ─────────────────
+    transportista_nombre = models.CharField(max_length=120, blank=True, verbose_name=_("Transportista / Chofer"))
+    patente_vehiculo = models.CharField(max_length=25, blank=True, verbose_name=_("Patente / Dominio Vehículo"))
+    firma_digital = models.TextField(blank=True, verbose_name=_("Firma Digital (Base64 PNG)"))
+    firma_nombre_receptor = models.CharField(max_length=150, blank=True, verbose_name=_("Nombre Receptor"))
+    firma_dni_receptor = models.CharField(max_length=30, blank=True, verbose_name=_("DNI / CUIT Receptor"))
+    firma_aclaracion = models.CharField(max_length=150, blank=True, verbose_name=_("Cargo / Relación"))
+    firma_fecha_hora = models.DateTimeField(null=True, blank=True, verbose_name=_("Fecha y Hora de Firma"))
+    firma_geolocalizacion = models.CharField(max_length=100, blank=True, verbose_name=_("Coordenadas GPS"))
 
     class Meta:
         verbose_name = _("Remito")
@@ -280,6 +290,10 @@ class Remito(TimeStampedModel):
 
     def __str__(self):
         return f"Remito {self.numero} ({self.get_tipo_display()})"
+
+    @property
+    def esta_firmado(self):
+        return bool(self.firma_digital)
 
 
 class ItemRemito(TimeStampedModel):

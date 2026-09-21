@@ -1,0 +1,234 @@
+<!-- Modal Nuevo Remito -->
+<div 
+  x-show="modalRemito" 
+  x-cloak
+  class="fixed inset-0 z-50 overflow-y-auto"
+  aria-labelledby="modal-title" 
+  role="dialog" 
+  aria-modal="true"
+>
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div 
+      x-show="modalRemito"
+      x-transition:enter="ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="modalRemito = false"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+    ></div>
+
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+    <div 
+      x-show="modalRemito"
+      x-transition:enter="ease-out duration-300"
+      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+      x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+      x-transition:leave="ease-in duration-200"
+      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+      class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-100"
+    >
+      <form method="post" action="{% url 'inventario:remito_create' %}">
+        {% csrf_token %}
+        <div class="px-6 py-5 bg-gradient-to-r from-oliva-900 to-oliva-800 text-white flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
+              <svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Nuevo Remito de Carga / Recepción</h3>
+              <p class="text-xs text-oliva-200">Genera el comprobante con enlace para firma táctil en smartphone</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click="modalRemito = false"
+            class="text-white/70 hover:text-white p-1 rounded-xl hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Número de Remito -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Número de Remito *</label>
+              <input 
+                type="text" 
+                name="numero" 
+                required 
+                value="REM-{{ anio_actual|default:'2026' }}-{{ proximo_nro|default:'0010' }}"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              />
+            </div>
+
+            <!-- Tipo de Remito -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Tipo de Remito *</label>
+              <select 
+                name="tipo" 
+                required
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="ENTRADA_PROVEEDOR">Entrada desde Proveedor (Insumos / Materiales)</option>
+                <option value="SALIDA_CLIENTE">Salida a Cliente / Exportación (Aceitunas / Aceite)</option>
+                <option value="INTERNO">Traslado Interno entre Fincas / Depósitos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Fecha -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Fecha de Emisión / Despacho *</label>
+              <input 
+                type="date" 
+                name="fecha" 
+                required 
+                value="{{ fecha_hoy|date:'Y-m-d'|default:'2026-03-21' }}"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              />
+            </div>
+
+            <!-- Proveedor / Cliente -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Proveedor o Cliente Destinatario</label>
+              <input 
+                type="text" 
+                name="entidad_nombre" 
+                placeholder="Ej. Agroquímica Pomán / Aceitera del Valle"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Finca Origen -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Finca Origen</label>
+              <select 
+                name="finca_origen"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="">(Ninguna / Proveedor Externo)</option>
+                {% for f in fincas %}
+                  <option value="{{ f.id }}">{{ f.nombre }} ({{ f.codigo }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Finca Destino -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Finca Destino *</label>
+              <select 
+                name="finca_destino"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="">(Ninguna / Cliente Externo)</option>
+                {% for f in fincas %}
+                  <option value="{{ f.id }}">{{ f.nombre }} ({{ f.codigo }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Datos de Transporte -->
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+              Datos del Transporte y Chofer
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nombre Transportista / Chofer</label>
+                <input 
+                  type="text" 
+                  name="transportista_nombre" 
+                  placeholder="Ej. Juan Pérez (Transportes Andinos)"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+                />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Patente / Dominio Vehículo</label>
+                <input 
+                  type="text" 
+                  name="patente_vehiculo" 
+                  placeholder="Ej. AF 123 CD"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono uppercase text-slate-800 focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Ítems del Remito (Carga Rápida) -->
+          <div class="p-3.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 space-y-2.5">
+            <h4 class="text-xs font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              Carga de Ítem Principal (Insumo o Cosecha)
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-semibold text-emerald-900 mb-1">Insumo / Producto *</label>
+                <select 
+                  name="item_insumo_id" 
+                  class="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
+                >
+                  <option value="">(Seleccionar artículo de inventario)</option>
+                  {% for ins in insumos %}
+                    <option value="{{ ins.id }}">{{ ins.nombre }} ({{ ins.get_unidad_medida_display }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-emerald-900 mb-1">Cantidad Declarada *</label>
+                <input 
+                  type="number" 
+                  name="item_cantidad" 
+                  step="0.01" 
+                  placeholder="0.00"
+                  class="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Observaciones / Instrucciones de Entrega</label>
+            <textarea 
+              name="observaciones" 
+              rows="2" 
+              placeholder="Detalles sobre temperatura, precintos, descarga o estado de los bins..."
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button 
+            type="button" 
+            @click="modalRemito = false"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="px-5 py-2.5 rounded-xl bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white text-xs font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all flex items-center gap-2"
+          >
+            <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Crear Remito y Habilitar Firma
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

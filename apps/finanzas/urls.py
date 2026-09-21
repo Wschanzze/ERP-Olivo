@@ -38,6 +38,12 @@ urlpatterns = [
     path('cuadros-resultado/linea/<int:pk>/editar/', views.LineaCuadroResultadoUpdateView.as_view(), name='linea_resultado_edit'),
     # Tipo de Cambio Mensual / Coeficiente
     path('tipo-cambio/guardar/', views.TipoCambioGuardarView.as_view(), name='tipo_cambio_guardar'),
+    # Facturación, Libro de IVA & Arqueo de Caja
+    path('comprobante/crear/', views.ComprobanteFiscalCreateView.as_view(), name='comprobante_create'),
+    path('comprobante/pago/', views.ComprobantePagoCobroView.as_view(), name='comprobante_pago'),
+    path('arqueo/crear/', views.ArqueoCajaCreateView.as_view(), name='arqueo_create'),
+    path('orden-pago/<int:pk>/imprimir/', views.OrdenPagoReciboPrintView.as_view(), name='orden_pago_print'),
+    path('libro-iva/exportar/', views.ExportarLibroIVAView.as_view(), name='exportar_libro_iva'),
     # Gestión de Datos de Prueba (Demo Q1 2026)
     path('demo/limpiar/', views.LimpiarDatosDemoView.as_view(), name='demo_limpiar'),
     path('demo/poblar/', views.PoblarDatosDemoView.as_view(), name='demo_poblar'),

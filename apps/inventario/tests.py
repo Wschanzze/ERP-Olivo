@@ -5,7 +5,8 @@ from apps.core.models import Empresa, Finca, CentroDeCosto, Usuario
 from apps.campos.models import Cuadro, RegistroFenologico
 from apps.inventario.models import (
     CategoriaInsumo, Insumo, Deposito, StockPorDeposito, MovimientoStock,
-    OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion
+    OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion,
+    Remito, ItemRemito
 )
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -380,5 +381,78 @@ class ERPMejorasCortoPlazoTest(TestCase):
         self.assertEqual(oc.estado, OrdenDeCompra.Estado.BORRADOR)
         self.assertEqual(oc.items.count(), 1)
         self.assertEqual(oc.items.first().insumo, self.insumo)
+
+
+class RemitoFirmaMobileTest(TestCase):
+    def setUp(self):
+        self.empresa, _ = Empresa.objects.get_or_create(razon_social="Olivícola Test S.A.", defaults={'cuit': "30-99887766-5"})
+        self.finca, _ = Finca.objects.get_or_create(codigo="FC-01", defaults={'empresa': self.empresa, 'nombre': "Finca Central", 'superficie_total_ha': Decimal("100.0")})
+        self.finca2, _ = Finca.objects.get_or_create(codigo="FN-02", defaults={'empresa': self.empresa, 'nombre': "Finca Norte", 'superficie_total_ha': Decimal("80.0")})
+        self.categoria, _ = CategoriaInsumo.objects.get_or_create(nombre="Fertilizantes")
+        self.insumo, _ = Insumo.objects.get_or_create(
+            codigo="FERT-UREA",
+            defaults={'nombre': "Urea Granulada", 'categoria': self.categoria, 'unidad_medida': Insumo.UnidadMedida.KILOS}
+        )
+        self.remito = Remito.objects.create(
+            numero="REM-2026-TEST-01",
+            tipo=Remito.TipoRemito.INTERNO,
+            fecha=timezone.now().date(),
+            finca_origen=self.finca,
+            finca_destino=self.finca2,
+            transportista_nombre="Carlos Transporte",
+            patente_vehiculo="AF123CD",
+            estado=Remito.EstadoRemito.BORRADOR
+        )
+        ItemRemito.objects.create(
+            remito=self.remito,
+            insumo=self.insumo,
+            cantidad_declarada=Decimal("500.00"),
+            cantidad_recibida=Decimal("500.00")
+        )
+
+    def test_remitos_list_renders(self):
+        response = self.client.get(reverse('inventario:remitos_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "REM-2026-TEST-01")
+        self.assertIn('total_remitos', response.context)
+        self.assertGreaterEqual(response.context['total_remitos'], 1)
+
+    def test_remito_mobile_signature_get_and_post(self):
+        # 1. GET mobile signature pad
+        url_firmar = reverse('inventario:remito_firmar', kwargs={'pk': self.remito.id})
+        res_get = self.client.get(url_firmar)
+        self.assertEqual(res_get.status_code, 200)
+        self.assertContains(res_get, "Recepción Digital de Remito")
+        self.assertContains(res_get, "signature-canvas")
+
+        # 2. POST mobile signature
+        fake_signature_png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        res_post = self.client.post(url_firmar, {
+            'firma_digital': fake_signature_png,
+            'firma_nombre_receptor': 'Pedro González',
+            'firma_dni_receptor': '32.111.222',
+            'firma_aclaracion': 'Encargado de Depósito Finca Norte',
+            'firma_geolocalizacion': '-28.4689, -65.7789'
+        }, follow=True)
+        self.assertEqual(res_post.status_code, 200)
+
+        # 3. Verify database updates
+        self.remito.refresh_from_db()
+        self.assertTrue(self.remito.esta_firmado)
+        self.assertEqual(self.remito.estado, Remito.EstadoRemito.CONFIRMADO)
+        self.assertEqual(self.remito.firma_nombre_receptor, 'Pedro González')
+        self.assertEqual(self.remito.firma_dni_receptor, '32.111.222')
+        self.assertIsNotNone(self.remito.firma_fecha_hora)
+
+    def test_remito_detalle_renders_signed_voucher(self):
+        self.remito.firma_digital = "data:image/png;base64,fake"
+        self.remito.firma_nombre_receptor = "Pedro González"
+        self.remito.save()
+
+        url_det = reverse('inventario:remito_detalle', kwargs={'pk': self.remito.id})
+        res = self.client.get(url_det)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "FIRMADO DIGITALMENTE")
+        self.assertContains(res, "Pedro González")
 
 
