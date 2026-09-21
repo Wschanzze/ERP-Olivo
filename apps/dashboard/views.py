@@ -64,7 +64,7 @@ class DashboardView(TemplateView):
             partes_count = 0
 
         try:
-            costos_total = CostoPorCentro.objects.aggregate(Sum('importe_ars'))['importe_ars__sum'] or 0
+            costos_total = CostoPorCentro.objects.filter(prorrateo_realizado=False).aggregate(Sum('importe_ars'))['importe_ars__sum'] or 0
         except Exception:
             costos_total = 0
 

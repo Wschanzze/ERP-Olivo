@@ -278,7 +278,7 @@ class CostosDashboardView(ListView):
         ctx['costo_general_ha'] = costo_general_ha
 
         # ── 5. Articulación Dinámica con el Plan de Cuentas (Tab 4) ───────────
-        cuadro_resultado_activo = CuadroResultado.objects.order_by('-fecha_fin').first()
+        cuadro_resultado_activo = CuadroResultado.objects.order_by('-fecha_fin', '-id').first()
         ctx['cuadro_resultado_activo'] = cuadro_resultado_activo
 
         # Obtener todas las cuentas de egresos imputables (4.2.)
@@ -451,6 +451,10 @@ class CostoUpdateView(View):
                 costo.proveedor = None
 
             costo.save()
+            try:
+                sincronizar_costos_con_cuadro_resultado()
+            except Exception:
+                pass
             messages.success(request, f"Imputación #{costo.id} actualizada correctamente.")
         except Exception as e:
             messages.error(request, f"Error al actualizar imputación #{costo.id}: {str(e)}")
@@ -470,6 +474,10 @@ class CostoDeleteView(View):
 
             desc = costo.descripcion
             costo.delete()
+            try:
+                sincronizar_costos_con_cuadro_resultado()
+            except Exception:
+                pass
             extra = f" (y sus {hijos_count} imputaciones prorrateadas)" if hijos_count > 0 else ""
             messages.success(request, f"Costo '{desc}' eliminado correctamente{extra}.")
         except Exception as e:

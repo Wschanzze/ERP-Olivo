@@ -21,7 +21,7 @@ class DashboardKPIView(APIView):
         cosechas_qs = LoteDeCosecha.objects.all()
         empleados_qs = Empleado.objects.filter(activo=True)
         asistencias_qs = RegistroAsistencia.objects.filter(fecha=timezone.now().date())
-        costos_qs = CostoPorCentro.objects.all()
+        costos_qs = CostoPorCentro.objects.filter(prorrateo_realizado=False)
         
         if finca_id:
             cuadros_qs = cuadros_qs.filter(finca_id=finca_id)

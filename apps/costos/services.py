@@ -115,6 +115,12 @@ def registrar_costo(
         documento_origen_id=documento_origen_id
     )
 
+    # 6. Sincronizar automáticamente con el Cuadro de Resultados (P&L) activo
+    try:
+        sincronizar_costos_con_cuadro_resultado()
+    except Exception:
+        pass
+
     return costo
 
 
@@ -184,6 +190,11 @@ def prorratear_costo_indirecto(costo: CostoPorCentro, usuario=None) -> int:
     costo.prorrateo_realizado = True
     costo.save(update_fields=['prorrateo_realizado', 'updated_at'])
 
+    try:
+        sincronizar_costos_con_cuadro_resultado()
+    except Exception:
+        pass
+
     return len(items_generados)
 
 
@@ -194,7 +205,7 @@ def sincronizar_costos_con_cuadro_resultado(cuadro_resultado: CuadroResultado = 
     del Estado de Resultados (P&L), asegurando coherencia total entre gestión y contabilidad.
     """
     if not cuadro_resultado:
-        cuadro_resultado = CuadroResultado.objects.order_by('-fecha_fin').first()
+        cuadro_resultado = CuadroResultado.objects.order_by('-fecha_fin', '-id').first()
         if not cuadro_resultado:
             raise ValueError("No se encontró ningún Cuadro de Resultados activo para sincronizar.")
 
