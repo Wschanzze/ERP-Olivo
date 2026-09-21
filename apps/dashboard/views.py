@@ -39,16 +39,24 @@ class DashboardView(TemplateView):
         except Exception:
             context['campanas_disponibles'] = [campana_activa]
 
-        # Métricas en tiempo real para insignias
+        # Métricas consolidadas en consultas agrupadas
         try:
-            cuadros_count = Cuadro.objects.filter(activo=True).count()
-            ha_totales = Cuadro.objects.filter(activo=True).aggregate(Sum('hectareas_netas'))['hectareas_netas__sum'] or 0
+            cuadros_agg = Cuadro.objects.filter(activo=True).aggregate(
+                c=Count('id'),
+                ha=Sum('hectareas_netas')
+            )
+            cuadros_count = cuadros_agg['c'] or 0
+            ha_totales = cuadros_agg['ha'] or 0
         except Exception:
             cuadros_count, ha_totales = 0, 0
 
         try:
-            insumos_count = Insumo.objects.filter(activo=True).count()
-            insumos_criticos = Insumo.objects.filter(activo=True, stock_actual__lte=F('stock_minimo')).count()
+            insumos_agg = Insumo.objects.filter(activo=True).aggregate(
+                total=Count('id'),
+                criticos=Count('id', filter=Q(stock_actual__lte=F('stock_minimo')))
+            )
+            insumos_count = insumos_agg['total'] or 0
+            insumos_criticos = insumos_agg['criticos'] or 0
         except Exception:
             insumos_count, insumos_criticos = 0, 0
 
@@ -64,14 +72,14 @@ class DashboardView(TemplateView):
             partes_count = 0
 
         try:
-            costos_total = CostoPorCentro.objects.filter(prorrateo_realizado=False).aggregate(Sum('importe_ars'))['importe_ars__sum'] or 0
+            costos_total = CostoPorCentro.objects.filter(prorrateo_realizado=False).aggregate(t=Sum('importe_ars'))['t'] or 0
         except Exception:
             costos_total = 0
 
         # Cosecha y Costo por Kg de la campaña activa
         try:
             lotes_campana = LoteDeCosecha.objects.filter(campana=campana_activa)
-            kg_cosechados_campana = lotes_campana.aggregate(Sum('kg_cosechados'))['kg_cosechados__sum'] or 0
+            kg_cosechados_campana = lotes_campana.aggregate(t=Sum('kg_cosechados'))['t'] or 0
             if kg_cosechados_campana and kg_cosechados_campana > 0 and costos_total > 0:
                 costo_por_kg = round(float(costos_total) / float(kg_cosechados_campana), 2)
             else:
@@ -80,10 +88,14 @@ class DashboardView(TemplateView):
             kg_cosechados_campana, costo_por_kg = 0, None
 
         try:
-            cajas_total = Cuenta.objects.filter(activa=True, moneda='ARS').aggregate(Sum('saldo_actual'))['saldo_actual__sum'] or 0
+            cajas_total = Cuenta.objects.filter(activa=True, moneda='ARS').aggregate(t=Sum('saldo_actual'))['t'] or 0
             cheques_count = Cheque.objects.filter(estado='EN_CARTERA').count()
-            proveedores_count = CuentaCorriente.objects.filter(tipo_entidad='PROVEEDOR').count()
-            clientes_count = CuentaCorriente.objects.filter(tipo_entidad='CLIENTE').count()
+            cc_agg = CuentaCorriente.objects.aggregate(
+                prov=Count('id', filter=Q(tipo_entidad='PROVEEDOR')),
+                cli=Count('id', filter=Q(tipo_entidad='CLIENTE'))
+            )
+            proveedores_count = cc_agg['prov'] or 0
+            clientes_count = cc_agg['cli'] or 0
         except Exception:
             cajas_total, cheques_count, proveedores_count, clientes_count = 0, 0, 0, 0
 

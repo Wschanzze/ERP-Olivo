@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import TimeStampedModel, Empresa, Finca, CentroDeCosto
 
@@ -67,6 +68,10 @@ class CuentaContable(TimeStampedModel):
     @property
     def tiene_hijos(self):
         return self.subcuentas.exists()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete('plan_cuentas_payload')
 
 
 class Cuenta(TimeStampedModel):
@@ -161,8 +166,8 @@ class MovimientoFinanciero(TimeStampedModel):
         related_name='transferencias_entrantes', 
         verbose_name=_("Cuenta Destino (si es transf.)")
     )
-    tipo = models.CharField(max_length=20, choices=TipoMovimiento.choices, verbose_name=_("Tipo de Movimiento"))
-    fecha = models.DateField(verbose_name=_("Fecha"))
+    tipo = models.CharField(max_length=20, choices=TipoMovimiento.choices, db_index=True, verbose_name=_("Tipo de Movimiento"))
+    fecha = models.DateField(db_index=True, verbose_name=_("Fecha"))
     importe = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Importe"))
     moneda = models.CharField(max_length=5, default='ARS', verbose_name=_("Moneda"))
     tipo_cambio = models.DecimalField(max_digits=10, decimal_places=4, default=1.0000, verbose_name=_("Tipo de Cambio"))
@@ -205,6 +210,11 @@ class MovimientoFinanciero(TimeStampedModel):
         verbose_name = _("Movimiento Financiero")
         verbose_name_plural = _("Movimientos Financieros")
         ordering = ['-fecha', '-created_at']
+        indexes = [
+            models.Index(fields=['fecha', 'tipo']),
+            models.Index(fields=['cuenta', 'fecha']),
+            models.Index(fields=['cuenta_corriente', 'fecha']),
+        ]
 
     def __str__(self):
         return f"{self.fecha} - {self.get_tipo_display()} ${self.importe:,.2f} ({self.concepto})"
@@ -359,14 +369,25 @@ class TipoCambioMensual(TimeStampedModel):
     def __str__(self):
         return f"{self.get_mes_display()} {self.ano}: $1 USD = ${self.tc:,.2f} ARS"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Invalidar caché al actualizar tipos de cambio
+        cache.clear()
+
     @classmethod
     def get_tc(cls, empresa=None, ano=None, mes=None, default=Decimal("1050.00")):
-        """Obtiene el tipo de cambio oficial para el año y mes dados, con fallback robusto."""
+        """Obtiene el tipo de cambio oficial para el año y mes dados, con fallback robusto y caché en memoria."""
         if not ano or not mes:
             from django.utils import timezone
             now = timezone.now()
             ano = ano or now.year
             mes = mes or now.month
+        
+        empresa_id = empresa.id if hasattr(empresa, 'id') else empresa
+        cache_key = f"tc_mensual_{empresa_id}_{ano}_{mes}"
+        cached_val = cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
         
         qs = cls.objects.all()
         if empresa:
@@ -374,18 +395,20 @@ class TipoCambioMensual(TimeStampedModel):
             
         exact = qs.filter(ano=ano, mes=mes).first()
         if exact and exact.tc > 0:
-            return exact.tc
+            res = exact.tc
+        else:
+            prev = qs.filter(models.Q(ano__lt=ano) | models.Q(ano=ano, mes__lte=mes)).order_by('-ano', '-mes').first()
+            if prev and prev.tc > 0:
+                res = prev.tc
+            else:
+                latest = qs.order_by('-ano', '-mes').first()
+                if latest and latest.tc > 0:
+                    res = latest.tc
+                else:
+                    res = default
 
-        # Buscar el mes más cercano anterior configurado
-        prev = qs.filter(models.Q(ano__lt=ano) | models.Q(ano=ano, mes__lte=mes)).order_by('-ano', '-mes').first()
-        if prev and prev.tc > 0:
-            return prev.tc
-
-        latest = qs.order_by('-ano', '-mes').first()
-        if latest and latest.tc > 0:
-            return latest.tc
-
-        return default
+        cache.set(cache_key, res, timeout=600)
+        return res
 
 
 class CuadroResultado(TimeStampedModel):
@@ -722,6 +745,11 @@ class ComprobanteFiscal(TimeStampedModel):
         verbose_name_plural = _("Comprobantes Fiscales (Libro IVA)")
         ordering = ['-fecha_emision', '-id']
         unique_together = [['tipo_operacion', 'tipo_comprobante', 'punto_de_venta', 'numero_comprobante', 'cuit']]
+        indexes = [
+            models.Index(fields=['fecha_emision', 'tipo_operacion']),
+            models.Index(fields=['cuenta_corriente', 'estado_pago']),
+            models.Index(fields=['estado_pago', 'fecha_vencimiento']),
+        ]
 
     def __str__(self):
         return f"{self.get_tipo_comprobante_display()} {self.punto_de_venta}-{self.numero_comprobante} ({self.razon_social}) - ${self.total:,.2f}"

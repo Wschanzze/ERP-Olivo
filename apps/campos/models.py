@@ -197,6 +197,10 @@ class LoteDeCosecha(TimeStampedModel):
         verbose_name = _("Lote de Cosecha")
         verbose_name_plural = _("Lotes de Cosecha")
         ordering = ['-fecha_inicio']
+        indexes = [
+            models.Index(fields=['campana']),
+            models.Index(fields=['cuadro', 'campana']),
+        ]
 
     def __str__(self):
         return f"Cosecha {self.campana} - {self.cuadro} ({self.kg_cosechados:,.0f} kg)"

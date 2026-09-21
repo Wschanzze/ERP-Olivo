@@ -51,10 +51,13 @@ class DashboardKPIView(APIView):
         # Proveedores con saldo negativo = debemos dinero (convertir a positivo para display)
         debemos_proveedores_ars = abs(float(CuentaCorriente.objects.filter(tipo_entidad='PROVEEDOR', saldo_actual__lt=0).aggregate(s=Sum('saldo_actual'))['s'] or 0.0))
 
-        # 3. KPIs de Inventario y Operaciones
-        insumos = Insumo.objects.filter(activo=True)
-        valor_stock_estimado_ars = float(sum(ins.stock_actual * ins.costo_unitario_ars for ins in insumos))
-        insumos_bajo_stock = insumos.filter(stock_actual__lte=F('stock_minimo')).count()
+        # 3. KPIs de Inventario y Operaciones (Agregación SQL directa)
+        insumos_agg = Insumo.objects.filter(activo=True).aggregate(
+            valor_total=Sum(F('stock_actual') * F('costo_unitario_ars')),
+            bajo_stock=Count('id', filter=Q(stock_actual__lte=F('stock_minimo')))
+        )
+        valor_stock_estimado_ars = float(insumos_agg['valor_total'] or 0.0)
+        insumos_bajo_stock = insumos_agg['bajo_stock'] or 0
         maquinaria_operativa = Maquina.objects.filter(estado='OPERATIVA').count()
         maquinaria_taller = Maquina.objects.filter(estado='EN_MANTENIMIENTO').count()
 

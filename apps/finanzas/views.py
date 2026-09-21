@@ -7,6 +7,7 @@ from django.utils import timezone
 from decimal import Decimal
 import json
 import datetime
+from django.core.cache import cache
 
 from django.core.management import call_command
 from django.contrib import messages
@@ -25,7 +26,11 @@ from .services import registrar_movimiento_financiero, poblar_lineas_cuadro, get
 
 
 def get_plan_cuentas_payload():
-    """Genera datos serializados y estadísticas para el visor reactivo del Plan de Cuentas."""
+    """Genera datos serializados y estadísticas para el visor reactivo del Plan de Cuentas, con caché en memoria."""
+    cached_payload = cache.get('plan_cuentas_payload')
+    if cached_payload is not None:
+        return cached_payload
+
     qs = list(CuentaContable.objects.all().select_related('padre').prefetch_related(
         'cuentas_financieras', 'categorias_insumo_activo', 'categorias_insumo_gasto', 'centros_de_costo'
     ).order_by('codigo'))
@@ -146,7 +151,9 @@ def get_plan_cuentas_payload():
         'exportacion': total_exportacion,
     }
 
-    return stats, data, qs
+    payload = (stats, data, qs)
+    cache.set('plan_cuentas_payload', payload, timeout=600)
+    return payload
 
 
 def build_cuadro_simplificado(cuadro_activo, tc):
@@ -642,15 +649,17 @@ class FinanzasDashboardView(TemplateView):
         ctx['cuentas_imputables'] = CuentaContable.objects.filter(es_imputable=True, activa=True).order_by('codigo')
 
         # Totales consolidados de liquidez: Base uniforme en ARS con contravalor USD
-        total_ars = Cuenta.objects.filter(activa=True, moneda='ARS').aggregate(t=Sum('saldo_actual'))['t'] or Decimal('0')
-        total_usd = Cuenta.objects.filter(activa=True, moneda='USD').aggregate(t=Sum('saldo_actual'))['t'] or Decimal('0')
+        saldos_cuentas = Cuenta.objects.filter(activa=True).values('moneda').annotate(total=Sum('saldo_actual'))
+        saldos_map = {row['moneda']: (row['total'] or Decimal('0')) for row in saldos_cuentas}
+        total_ars = saldos_map.get('ARS', Decimal('0'))
+        total_usd = saldos_map.get('USD', Decimal('0'))
         total_consolidado_ars = total_ars + (total_usd * tc_vigente)
         total_consolidado_usd = round(total_consolidado_ars / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
         
         ctx['total_consolidado_ars'] = total_consolidado_ars
         ctx['total_consolidado_usd'] = total_consolidado_usd
 
-        # Datos para Módulo de Libro de IVA & Facturación
+        # Datos para Módulo de Libro de IVA & Facturación (1 consulta unificada)
         try:
             mes_iva = int(self.request.GET.get('periodo_mes', 3))
         except (ValueError, TypeError):
@@ -663,9 +672,13 @@ class FinanzasDashboardView(TemplateView):
         ctx['periodo_mes'] = mes_iva
         ctx['periodo_ano'] = ano_iva
 
-        facturas_mes = ComprobanteFiscal.objects.filter(fecha_emision__year=ano_iva, fecha_emision__month=mes_iva)
-        facturas_compras = facturas_mes.filter(tipo_operacion='COMPRA').order_by('-fecha_emision', '-id')
-        facturas_ventas = facturas_mes.filter(tipo_operacion='VENTA').order_by('-fecha_emision', '-id')
+        facturas_mes = list(
+            ComprobanteFiscal.objects.filter(
+                fecha_emision__year=ano_iva, fecha_emision__month=mes_iva
+            ).select_related('cuenta_corriente').order_by('-fecha_emision', '-id')
+        )
+        facturas_compras = [f for f in facturas_mes if f.tipo_operacion == 'COMPRA']
+        facturas_ventas = [f for f in facturas_mes if f.tipo_operacion == 'VENTA']
 
         ctx['facturas_compras'] = facturas_compras
         ctx['facturas_ventas'] = facturas_ventas
@@ -682,6 +695,10 @@ class FinanzasDashboardView(TemplateView):
         ctx['total_neto_ventas'] = tot_neto_ventas
         ctx['total_percepciones'] = tot_percep
         ctx['posicion_iva_neta'] = tot_debito - tot_credito
+
+        # Pre-cargar tipos de cambio en memoria para evitar N+1 queries sobre TipoCambioMensual
+        tcs_empresa = list(TipoCambioMensual.objects.filter(empresa=empresa)) if empresa else []
+        tc_dict = {(tc.ano, tc.mes): tc.tc for tc in tcs_empresa}
 
         # Selector de Período para Flujo de Caja
         periodo_flujo = self.request.GET.get('periodo_flujo')
@@ -722,8 +739,12 @@ class FinanzasDashboardView(TemplateView):
                 siguiente = (mes_ref.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
                 meses_list.append((mes_ref.strftime('%b %y'), mes_ref, siguiente))
 
-        # Movimientos del período analizado
-        movs_periodo = MovimientoFinanciero.objects.filter(fecha__gte=f_desde, fecha__lte=f_hasta)
+        # Movimientos del período analizado (1 consulta precargada en memoria)
+        movs_periodo = list(
+            MovimientoFinanciero.objects.filter(
+                fecha__gte=f_desde, fecha__lte=f_hasta
+            ).select_related('cuenta', 'cuenta_corriente').order_by('-fecha', '-id')
+        )
         
         # Desglose de ingresos y egresos
         ingresos_ars = Decimal('0')
@@ -732,7 +753,7 @@ class FinanzasDashboardView(TemplateView):
         egresos_usd = Decimal('0')
 
         for m in movs_periodo:
-            tc_m = m.tipo_cambio if m.tipo_cambio > 0 else TipoCambioMensual.get_tc(empresa=empresa, ano=m.fecha.year, mes=m.fecha.month, default=tc_vigente)
+            tc_m = m.tipo_cambio if m.tipo_cambio > 0 else tc_dict.get((m.fecha.year, m.fecha.month), tc_vigente)
             if m.tipo == 'INGRESO':
                 if m.moneda == 'USD':
                     ingresos_usd += m.importe
@@ -757,19 +778,19 @@ class FinanzasDashboardView(TemplateView):
         ctx['ingresos_mes'] = ingresos_ars
         ctx['egresos_mes'] = egresos_ars
 
-        # Gráfico dinámico por mes
+        # Gráfico dinámico por mes (Calculado 100% en memoria sobre movs_periodo, 0 queries extra)
         grafico_data = []
         for nombre_mes, d_ini, d_fin in meses_list:
-            qs_mes = MovimientoFinanciero.objects.filter(fecha__gte=d_ini, fecha__lt=d_fin)
-            tc_mes = TipoCambioMensual.get_tc(empresa=empresa, ano=d_ini.year, mes=d_ini.month, default=tc_vigente)
+            tc_mes = tc_dict.get((d_ini.year, d_ini.month), tc_vigente)
             ing_mes = Decimal('0')
             egr_mes = Decimal('0')
-            for m in qs_mes:
-                tc_m = m.tipo_cambio if m.tipo_cambio > 0 else tc_mes
-                if m.tipo == 'INGRESO':
-                    ing_mes += (m.importe * tc_m if m.moneda == 'USD' else m.importe)
-                elif m.tipo == 'EGRESO':
-                    egr_mes += (m.importe * tc_m if m.moneda == 'USD' else m.importe)
+            for m in movs_periodo:
+                if d_ini <= m.fecha < d_fin:
+                    tc_m = m.tipo_cambio if m.tipo_cambio > 0 else tc_mes
+                    if m.tipo == 'INGRESO':
+                        ing_mes += (m.importe * tc_m if m.moneda == 'USD' else m.importe)
+                    elif m.tipo == 'EGRESO':
+                        egr_mes += (m.importe * tc_m if m.moneda == 'USD' else m.importe)
             
             grafico_data.append({
                 'mes': nombre_mes,
@@ -801,7 +822,7 @@ class FinanzasDashboardView(TemplateView):
             {'label': f"${round(max_val_grafico * 0.25 / 1_000_000, 1)}M", 'pct': 25},
             {'label': "$0", 'pct': 0},
         ]
-        ctx['movimientos_flujo'] = movs_periodo.select_related('cuenta', 'cuenta_corriente').order_by('-fecha')[:25]
+        ctx['movimientos_flujo'] = movs_periodo[:25]
 
         # Conciliaciones recientes
         ctx['conciliaciones'] = ConciliacionBancaria.objects.select_related('cuenta').order_by('-fecha_extracto')[:10]

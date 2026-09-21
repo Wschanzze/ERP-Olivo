@@ -287,6 +287,10 @@ class Remito(TimeStampedModel):
         verbose_name = _("Remito")
         verbose_name_plural = _("Remitos")
         ordering = ['-fecha']
+        indexes = [
+            models.Index(fields=['fecha', 'tipo']),
+            models.Index(fields=['estado', 'fecha']),
+        ]
 
     def __str__(self):
         return f"Remito {self.numero} ({self.get_tipo_display()})"

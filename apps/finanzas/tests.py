@@ -4,7 +4,7 @@ from django.utils import timezone
 from apps.core.models import Empresa
 from apps.finanzas.models import (
     Cuenta, CuentaCorriente, MovimientoFinanciero, TipoCambioMensual,
-    ComprobanteFiscal, ArqueoCaja, OrdenPagoRecibo
+    ComprobanteFiscal, ArqueoCaja, OrdenPagoRecibo, Cheque
 )
 from apps.finanzas.services import registrar_movimiento_financiero
 

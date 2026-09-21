@@ -154,6 +154,18 @@ else:
         }
     }
 
+# Sistema de Caché en Memoria RAM (Ultra rápido para tablas de consulta frecuente como TipoCambio y Plan de Cuentas)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'erp-olivo-memory-cache',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
 # Modelo de Usuario personalizado y Backend de Permisos de Guardian
 AUTH_USER_MODEL = 'core.Usuario'
 

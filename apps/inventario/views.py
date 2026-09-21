@@ -5,7 +5,7 @@ from django.views import View
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import F, Q, Sum
+from django.db.models import F, Q, Sum, Count
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 
@@ -68,14 +68,17 @@ class InsumosListView(ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        todos_insumos = Insumo.objects.filter(activo=True)
+        
+        # 1 consulta de agregación en SQL para total, valorización y bajo stock
+        insumo_stats = Insumo.objects.filter(activo=True).aggregate(
+            total_count=Count('id'),
+            total_valor=Sum(F('stock_actual') * F('costo_unitario_ars')),
+            total_criticos=Count('id', filter=Q(stock_actual__lte=F('stock_minimo')))
+        )
 
-        total_valorizado = sum(i.valor_total_stock_ars for i in todos_insumos)
-        total_criticos = todos_insumos.filter(stock_actual__lte=F('stock_minimo')).count()
-
-        ctx['total_insumos_count'] = todos_insumos.count()
-        ctx['total_valorizado_ars'] = total_valorizado
-        ctx['total_criticos_count'] = total_criticos
+        ctx['total_insumos_count'] = insumo_stats['total_count'] or 0
+        ctx['total_valorizado_ars'] = insumo_stats['total_valor'] or Decimal('0.00')
+        ctx['total_criticos_count'] = insumo_stats['total_criticos'] or 0
         ctx['categorias'] = CategoriaInsumo.objects.all()
         ctx['depositos'] = Deposito.objects.filter(activo=True).select_related('finca')
 

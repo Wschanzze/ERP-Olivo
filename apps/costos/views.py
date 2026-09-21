@@ -163,17 +163,26 @@ class CostosDashboardView(ListView):
         # cuyo prorrateo ya fue distribuido a los cuadros, para evitar duplicación
         base_agregados = base_qs.filter(prorrateo_realizado=False)
 
-        # ── 1. Totales Generales ──────────────────────────────────────────────
-        total_ars = base_agregados.aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
-        total_usd = base_agregados.aggregate(t=Sum('importe_usd'))['t'] or Decimal('0.00')
+        # ── 1. Totales Generales y Distribución en 1 sola consulta SQL ────────
+        totales_res = base_agregados.aggregate(
+            total_ars=Sum('importe_ars'),
+            total_usd=Sum('importe_usd'),
+            costo_agricola=Sum('importe_ars', filter=Q(centro_de_costo__tipo='PRODUCTIVO_CAMPO')),
+            costo_almazara=Sum('importe_ars', filter=Q(centro_de_costo__tipo='FABRICA_ALMAZARA')),
+            costo_admin=Sum('importe_ars', filter=Q(centro_de_costo__tipo='ESTRUCTURA_ADMIN')),
+            costos_generales_campo=Sum('importe_ars', filter=Q(cuadro__isnull=True, centro_de_costo__tipo='PRODUCTIVO_CAMPO')),
+        )
+
+        total_ars = totales_res['total_ars'] or Decimal('0.00')
+        total_usd = totales_res['total_usd'] or Decimal('0.00')
+        costo_agricola = totales_res['costo_agricola'] or Decimal('0.00')
+        costo_almazara = totales_res['costo_almazara'] or Decimal('0.00')
+        costo_admin = totales_res['costo_admin'] or Decimal('0.00')
+        costos_generales_campo = totales_res['costos_generales_campo'] or Decimal('0.00')
+
         ctx['total_costos_ars'] = total_ars
         ctx['total_costos_usd'] = total_usd
         ctx['total_registros'] = base_qs.count()
-
-        # ── 2. Distribución por Destino / Centro de Costo ──────────────────────
-        costo_agricola = base_agregados.filter(centro_de_costo__tipo='PRODUCTIVO_CAMPO').aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
-        costo_almazara = base_agregados.filter(centro_de_costo__tipo='FABRICA_ALMAZARA').aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
-        costo_admin = base_agregados.filter(centro_de_costo__tipo='ESTRUCTURA_ADMIN').aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
 
         ctx['costo_agricola_ars'] = costo_agricola
         ctx['costo_almazara_ars'] = costo_almazara
@@ -226,6 +235,33 @@ class CostosDashboardView(ListView):
         if finca_filter:
             cuadros_qs = cuadros_qs.filter(finca_id=finca_filter)
 
+        # Bulk Query 1: Costos totales por cuadro (0 queries dentro del loop)
+        costos_cuadro_raw = base_agregados.filter(cuadro__isnull=False).values('cuadro_id').annotate(
+            total_ars=Sum('importe_ars'),
+            total_usd=Sum('importe_usd')
+        )
+        costos_cuadro_map = {
+            r['cuadro_id']: (r['total_ars'] or Decimal('0.00'), r['total_usd'] or Decimal('0.00'))
+            for r in costos_cuadro_raw
+        }
+
+        # Bulk Query 2: Kg de cosecha por cuadro
+        cosecha_raw = LoteDeCosecha.objects.filter(cuadro__in=cuadros_qs).values('cuadro_id').annotate(
+            total_kg=Sum('kg_cosechados')
+        )
+        cosecha_map = {r['cuadro_id']: (r['total_kg'] or Decimal('0.00')) for r in cosecha_raw}
+
+        # Bulk Query 3: Desglose de labores por cuadro y origen
+        desglose_raw = base_agregados.filter(cuadro__isnull=False).values('cuadro_id', 'tipo_origen').annotate(
+            sub=Sum('importe_ars')
+        ).order_by('cuadro_id', '-sub')
+        desglose_map = {}
+        for d in desglose_raw:
+            desglose_map.setdefault(d['cuadro_id'], []).append({
+                'tipo_origen': d['tipo_origen'],
+                'sub': d['sub'] or Decimal('0.00')
+            })
+
         resumen_cuadros = []
         total_ha_cuadros = Decimal('0.00')
         total_directo_cuadros = Decimal('0.00')
@@ -235,19 +271,17 @@ class CostosDashboardView(ListView):
             ha = cua.hectareas_netas or Decimal('0.00')
             total_ha_cuadros += ha
 
-            costos_cua = base_agregados.filter(cuadro=cua)
-            c_ars = costos_cua.aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
-            c_usd = costos_cua.aggregate(t=Sum('importe_usd'))['t'] or Decimal('0.00')
+            c_ars, c_usd = costos_cuadro_map.get(cua.id, (Decimal('0.00'), Decimal('0.00')))
             total_directo_cuadros += c_ars
 
             costo_ha = round(c_ars / ha, 2) if ha > 0 else Decimal('0.00')
             if costo_ha > max_costo_ha:
                 max_costo_ha = costo_ha
 
-            kg_cosecha = LoteDeCosecha.objects.filter(cuadro=cua).aggregate(t=Sum('kg_cosechados'))['t'] or Decimal('0.00')
+            kg_cosecha = cosecha_map.get(cua.id, Decimal('0.00'))
             costo_kg = round(c_ars / kg_cosecha, 2) if kg_cosecha > 0 else None
 
-            desglose_labores = costos_cua.values('tipo_origen').annotate(sub=Sum('importe_ars')).order_by('-sub')
+            desglose_labores = desglose_map.get(cua.id, [])
 
             resumen_cuadros.append({
                 'cuadro': cua,
@@ -261,10 +295,6 @@ class CostosDashboardView(ListView):
                 'desglose': desglose_labores,
             })
 
-        costos_generales_campo = base_agregados.filter(
-            cuadro__isnull=True,
-            centro_de_costo__tipo='PRODUCTIVO_CAMPO'
-        ).aggregate(t=Sum('importe_ars'))['t'] or Decimal('0.00')
         costo_general_ha = round(costos_generales_campo / total_ha_cuadros, 2) if total_ha_cuadros > 0 else Decimal('0.00')
 
         for it in resumen_cuadros:
