@@ -70,32 +70,6 @@
     </button>
   </div>
 
-  <!-- Identidad de Usuario y Contexto Operativo (Visible en Móvil) -->
-  <div class="lg:hidden px-3 py-2.5 border-b border-[#344024]/70 bg-[#12170B]/50 flex-shrink-0">
-    <div class="bg-gradient-to-r from-white/10 to-white/5 rounded-xl p-2.5 border border-white/10 flex items-center justify-between">
-      <div class="flex items-center space-x-2.5 min-w-0">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#4E5F36] to-[#252E19] text-[#F3F6F0] flex items-center justify-center font-bold text-xs border border-emerald-400/40 shrink-0 shadow-xs">
-          {% if user.is_authenticated and user.iniciales %}{{ user.iniciales }}{% else %}GO{% endif %}
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="text-xs font-bold text-white truncate">
-            {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Gonzalo Olivar{% endif %}
-          </span>
-          <span class="text-[10px] text-[#A2B38F] font-medium truncate flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
-            <span>{% if user.is_authenticated %}{{ user.get_rol_display }}{% else %}Administrador General{% endif %}</span>
-          </span>
-        </div>
-      </div>
-      {% if finca_activa %}
-      <div class="text-right shrink-0 pl-2">
-        <span class="text-[9px] uppercase tracking-wider text-[#A2B38F] font-semibold block">Finca</span>
-        <span class="text-[11px] font-bold text-amber-300 font-mono">{{ finca_activa.nombre|truncatechars:12 }}</span>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
   <!-- Navegación de Módulos (Scrollable interno con min-h-0) -->
   <nav 
     @click="if (window.innerWidth < 1024 && $event.target.closest('a')) mobileMenuOpen = false;"
