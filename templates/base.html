@@ -90,6 +90,11 @@
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
       }
+      html.sidebar-collapsed #sidebar-footer {
+        justify-content: center !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
       html.sidebar-collapsed .sidebar-open-only {
         display: none !important;
       }
@@ -150,7 +155,6 @@
 </head>
 <body 
   class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
-  :class="{ 'overflow-hidden': mobileMenuOpen }"
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
   x-data="{ 
     sidebarOpen: window.__sidebarInitial, 
@@ -159,14 +163,7 @@
     modalOpen: false, 
     modalTitle: '', 
     activeTab: 'caja',
-    isExpanded() {
-      return this.windowWidth < 1024 || this.sidebarOpen;
-    },
     toggleSidebar() {
-      if (this.windowWidth < 1024) {
-        this.mobileMenuOpen = !this.mobileMenuOpen;
-        return;
-      }
       this.sidebarOpen = !this.sidebarOpen;
       document.documentElement.classList.toggle('sidebar-collapsed', !this.sidebarOpen);
       try { localStorage.setItem('erp_sidebar_open', this.sidebarOpen); } catch(e) {}

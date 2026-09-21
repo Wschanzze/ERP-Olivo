@@ -9,36 +9,34 @@
     'lg:w-64 lg:max-w-[16rem]': sidebarOpen,
     'lg:w-20 lg:max-w-[5rem]': !sidebarOpen
   }"
-  class="fixed top-0 bottom-0 left-0 z-50 lg:z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-[transform,width,max-width] duration-300 ease-in-out border-r border-[#344024] select-none overflow-hidden w-80 max-w-[85vw] lg:w-64 lg:max-w-[16rem]"
+  class="fixed inset-y-0 left-0 z-50 lg:z-30 flex flex-col bg-[#18200F] text-[#E5EBDD] transition-transform duration-300 ease-in-out border-r border-[#344024] overflow-hidden w-80 max-w-[85vw] lg:w-64 lg:max-w-[16rem] -translate-x-full lg:translate-x-0 h-full max-h-full"
+  style="height: 100dvh; max-height: 100dvh;"
 >
-  <!-- Capa 1: Imagen '250.jpg' difuminada (estática, sin transiciones que causen destellos) -->
+  <!-- Capa 1: Imagen '250.jpg' sutil -->
   <div 
-    class="absolute inset-0 z-0 bg-cover bg-center pointer-events-none transform scale-110 filter blur-[3px] opacity-20"
+    class="absolute inset-0 z-0 bg-cover bg-center pointer-events-none opacity-20"
     style="background-image: url('{% static 'img/250.jpg' %}');"
   ></div>
 
   <!-- Capa 2: Gradiente verde oliva oscuro -->
-  <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#151C0D]/92 via-[#1F2714]/95 to-[#12170B]/98 pointer-events-none"></div>
+  <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#151C0D]/95 via-[#1F2714]/95 to-[#12170B]/98 pointer-events-none"></div>
 
-  <!-- Logo / Branding Corporativo (Fijo en la parte superior - ÚNICA instancia del logo) -->
+  <!-- Logo / Branding Corporativo (Fijo en la parte superior) -->
   <div 
     id="sidebar-header"
-    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/80 border-b border-[#344024]/80 transition-all duration-300"
-    :class="isExpanded() ? 'px-4 justify-between' : 'px-2 justify-center'"
+    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/90 border-b border-[#344024]/80 px-4 justify-between transition-all duration-300"
   >
-    <!-- Logo y Título Corporativo (Único enlace con comportamiento reactivo) -->
+    <!-- Logo y Título Corporativo -->
     <a
       href="{% url 'dashboard:index' %}"
       @click="if (window.innerWidth < 1024) { mobileMenuOpen = false; } else if (!sidebarOpen) { $event.preventDefault(); toggleSidebar(); }"
-      :title="isExpanded() ? 'Ir al Panel Principal' : 'Expandir menú lateral'"
+      title="Ir al Panel Principal"
       class="flex items-center space-x-3 overflow-hidden min-w-0 group cursor-pointer"
     >
-      <!-- ÚNICA imagen del Logo en el DOM (Nunca se duplica al cargar la página) -->
       <div class="flex-shrink-0 flex items-center justify-center">
         <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP Olivícola" class="w-11 h-11 object-contain drop-shadow-md group-hover:scale-105 transition-transform" />
       </div>
-      <!-- Texto descriptivo (Oculto instantáneamente por CSS si la sidebar está colapsada en desktop) -->
-      <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0 sidebar-open-only" x-show="isExpanded()">
+      <div class="flex flex-col whitespace-nowrap overflow-hidden min-w-0 sidebar-open-only">
         <span class="font-bold text-sm tracking-wider text-white uppercase truncate">ERP Olivícola</span>
         <span class="text-[10px] text-[#A2B38F] font-mono tracking-wider font-semibold truncate">AGRO & ALMAZARA</span>
       </div>
@@ -73,10 +71,10 @@
   </div>
 
   <!-- Identidad de Usuario y Contexto Operativo (Visible en Móvil) -->
-  <div class="lg:hidden px-3 pt-3 pb-2 border-b border-[#344024]/70 bg-[#12170B]/50 flex-shrink-0">
-    <div class="bg-gradient-to-r from-white/10 to-white/5 rounded-xl p-3 border border-white/10 flex items-center justify-between">
+  <div class="lg:hidden px-3 py-2.5 border-b border-[#344024]/70 bg-[#12170B]/50 flex-shrink-0">
+    <div class="bg-gradient-to-r from-white/10 to-white/5 rounded-xl p-2.5 border border-white/10 flex items-center justify-between">
       <div class="flex items-center space-x-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4E5F36] to-[#252E19] text-[#F3F6F0] flex items-center justify-center font-bold text-xs border border-emerald-400/40 shrink-0 shadow-xs">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#4E5F36] to-[#252E19] text-[#F3F6F0] flex items-center justify-center font-bold text-xs border border-emerald-400/40 shrink-0 shadow-xs">
           {% if user.is_authenticated and user.iniciales %}{{ user.iniciales }}{% else %}GO{% endif %}
         </div>
         <div class="flex flex-col min-w-0">
@@ -98,17 +96,14 @@
     </div>
   </div>
 
-  <!-- Navegación de Módulos (Scrollable interno con min-h-0 agrupado en listas desplegables) -->
+  <!-- Navegación de Módulos (Scrollable interno con min-h-0) -->
   <nav 
     @click="if (window.innerWidth < 1024 && $event.target.closest('a')) mobileMenuOpen = false;"
-    class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden touch-pan-y"
-    style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;"
+    class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar pb-32 sm:pb-8"
+    style="-webkit-overflow-scrolling: touch;"
     :class="ready ? 'sidebar-ready' : ''"
     x-data="{
       ready: false,
-      isExpanded() {
-        return (window.innerWidth < 1024) || sidebarOpen;
-      },
       openGroups: (function() {
         let saved = {};
         try {
@@ -149,7 +144,7 @@
         } catch(e) {}
       },
       toggleGroup(group) {
-        if (!this.isExpanded()) {
+        if (window.innerWidth >= 1024 && !sidebarOpen) {
           toggleSidebar();
           this.openGroups[group] = true;
           this.saveGroups();
@@ -167,17 +162,16 @@
       <button 
         type="button" 
         @click="toggleGroup('tableros')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'dashboard' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'dashboard' %}bg-white/5 text-white{% endif %}"
         title="Tableros &amp; BI"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Tableros &amp; BI</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Tableros &amp; BI</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -191,7 +185,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.tableros) ? 'is-open' : ''"
+        :class="openGroups.tableros ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
@@ -217,17 +211,16 @@
       <button 
         type="button" 
         @click="toggleGroup('campo')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'campos' or request.resolver_match.app_name == 'parte_diario' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'campos' or request.resolver_match.app_name == 'parte_diario' %}bg-white/5 text-white{% endif %}"
         title="Campo &amp; Operaciones"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Campo &amp; Operaciones</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Campo &amp; Operaciones</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -241,7 +234,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.campo) ? 'is-open' : ''"
+        :class="openGroups.campo ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
@@ -267,17 +260,16 @@
       <button 
         type="button" 
         @click="toggleGroup('personal')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'personal' or request.resolver_match.app_name == 'liquidacion' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'personal' or request.resolver_match.app_name == 'liquidacion' %}bg-white/5 text-white{% endif %}"
         title="Personal &amp; Cuadrillas"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Personal &amp; Cuadrillas</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Personal &amp; Cuadrillas</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">4</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -291,7 +283,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.personal) ? 'is-open' : ''"
+        :class="openGroups.personal ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
@@ -331,17 +323,16 @@
       <button 
         type="button" 
         @click="toggleGroup('finanzas')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'finanzas' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'finanzas' %}bg-white/5 text-white{% endif %}"
         title="Finanzas &amp; Contabilidad"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">8</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -355,7 +346,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.finanzas) ? 'is-open' : ''"
+        :class="openGroups.finanzas ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <!-- Resultados del Período (P&L / Cuadro de Resultados) -->
@@ -444,17 +435,16 @@
       <button 
         type="button" 
         @click="toggleGroup('costos')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'costos' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'costos' %}bg-white/5 text-white{% endif %}"
         title="Costos &amp; Gestión"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Costos &amp; Gestión</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Costos &amp; Gestión</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">1</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -468,7 +458,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.costos) ? 'is-open' : ''"
+        :class="openGroups.costos ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
@@ -487,17 +477,16 @@
       <button 
         type="button" 
         @click="toggleGroup('inventario')"
-        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'inventario' %}bg-white/5 text-white{% endif %}"
+        class="sidebar-item-link w-full flex items-center px-2.5 justify-between py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'inventario' %}bg-white/5 text-white{% endif %}"
         title="Inventario &amp; Compras"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="sidebar-item-icon w-5 h-5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
+          <span class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
         </div>
-        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -511,7 +500,7 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(isExpanded() && openGroups.inventario) ? 'is-open' : ''"
+        :class="openGroups.inventario ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
@@ -536,14 +525,14 @@
 
   <!-- Pie de Barra / Versión y Estado (Fijo en la parte inferior) -->
   <div 
-    class="relative z-10 flex-shrink-0 p-3.5 pb-5 sm:pb-3 bg-[#12170B]/90 border-t border-[#344024]/80 flex items-center justify-between"
-    :class="isExpanded() ? 'justify-between' : 'justify-center'"
+    id="sidebar-footer"
+    class="relative z-10 flex-shrink-0 p-3 bg-[#12170B]/95 border-t border-[#344024]/80 flex items-center justify-between"
   >
-    <div x-show="isExpanded()" class="sidebar-open-only text-[11px] text-[#A2B38F] truncate">
+    <div class="sidebar-open-only text-[11px] text-[#A2B38F] truncate">
       <p class="font-bold text-[#E5EBDD] tracking-wide truncate">PostgreSQL 16</p>
       <p class="text-[10px] text-[#7E9169] truncate">Django 5.1 • Celery Worker</p>
     </div>
-    <div class="flex items-center space-x-1.5 flex-shrink-0" :title="isExpanded() ? 'Sistema en línea' : 'Sistema en línea (PostgreSQL 16 & Celery)'">
+    <div class="flex items-center space-x-1.5 flex-shrink-0" title="Sistema en línea (PostgreSQL 16 & Celery)">
       <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50 animate-pulse"></div>
     </div>
   </div>
