@@ -137,7 +137,7 @@
       try {
         var open = localStorage.getItem('erp_sidebar_open') !== 'false';
         window.__sidebarInitial = open;
-        if (!open) {
+        if (!open && window.innerWidth >= 1024) {
           document.documentElement.classList.add('sidebar-collapsed');
         }
       } catch(e) {
@@ -150,14 +150,23 @@
 </head>
 <body 
   class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
+  :class="{ 'overflow-hidden': mobileMenuOpen }"
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
   x-data="{ 
     sidebarOpen: window.__sidebarInitial, 
     mobileMenuOpen: false,
+    windowWidth: window.innerWidth,
     modalOpen: false, 
     modalTitle: '', 
     activeTab: 'caja',
+    isExpanded() {
+      return this.windowWidth < 1024 || this.sidebarOpen;
+    },
     toggleSidebar() {
+      if (this.windowWidth < 1024) {
+        this.mobileMenuOpen = !this.mobileMenuOpen;
+        return;
+      }
       this.sidebarOpen = !this.sidebarOpen;
       document.documentElement.classList.toggle('sidebar-collapsed', !this.sidebarOpen);
       try { localStorage.setItem('erp_sidebar_open', this.sidebarOpen); } catch(e) {}
@@ -166,6 +175,7 @@
       this.mobileMenuOpen = false;
     }
   }"
+  @resize.window.debounce.100ms="windowWidth = window.innerWidth"
   @keydown.escape.window="mobileMenuOpen = false; modalOpen = false;"
 >
 

@@ -9,7 +9,7 @@
     'lg:w-64 lg:max-w-[16rem]': sidebarOpen,
     'lg:w-20 lg:max-w-[5rem]': !sidebarOpen
   }"
-  class="fixed top-0 bottom-0 left-0 z-50 lg:z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-[transform,width,max-width] duration-300 ease-in-out border-r border-[#344024] select-none overflow-hidden w-72 max-w-[85vw] lg:w-64 lg:max-w-[16rem]"
+  class="fixed top-0 bottom-0 left-0 z-50 lg:z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-[transform,width,max-width] duration-300 ease-in-out border-r border-[#344024] select-none overflow-hidden w-80 max-w-[85vw] lg:w-64 lg:max-w-[16rem]"
 >
   <!-- Capa 1: Imagen '250.jpg' difuminada (estática, sin transiciones que causen destellos) -->
   <div 
@@ -23,22 +23,22 @@
   <!-- Logo / Branding Corporativo (Fijo en la parte superior - ÚNICA instancia del logo) -->
   <div 
     id="sidebar-header"
-    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/80 border-b border-[#344024]/80 px-4 justify-between transition-all duration-300"
-    :class="sidebarOpen ? 'px-4 justify-between' : 'px-2 lg:justify-center justify-between'"
+    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/80 border-b border-[#344024]/80 transition-all duration-300"
+    :class="isExpanded() ? 'px-4 justify-between' : 'px-2 justify-center'"
   >
     <!-- Logo y Título Corporativo (Único enlace con comportamiento reactivo) -->
     <a
       href="{% url 'dashboard:index' %}"
       @click="if (window.innerWidth < 1024) { mobileMenuOpen = false; } else if (!sidebarOpen) { $event.preventDefault(); toggleSidebar(); }"
-      :title="sidebarOpen ? 'Ir al Panel Principal' : 'Expandir menú lateral'"
+      :title="isExpanded() ? 'Ir al Panel Principal' : 'Expandir menú lateral'"
       class="flex items-center space-x-3 overflow-hidden min-w-0 group cursor-pointer"
     >
       <!-- ÚNICA imagen del Logo en el DOM (Nunca se duplica al cargar la página) -->
       <div class="flex-shrink-0 flex items-center justify-center">
-        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP Olivícola" class="w-12 h-12 object-contain drop-shadow-md group-hover:scale-105 transition-transform" />
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP Olivícola" class="w-11 h-11 object-contain drop-shadow-md group-hover:scale-105 transition-transform" />
       </div>
       <!-- Texto descriptivo (Oculto instantáneamente por CSS si la sidebar está colapsada en desktop) -->
-      <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0 sidebar-open-only" x-show="sidebarOpen || window.innerWidth < 1024">
+      <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0 sidebar-open-only" x-show="isExpanded()">
         <span class="font-bold text-sm tracking-wider text-white uppercase truncate">ERP Olivícola</span>
         <span class="text-[10px] text-[#A2B38F] font-mono tracking-wider font-semibold truncate">AGRO & ALMAZARA</span>
       </div>
@@ -46,7 +46,7 @@
 
     <!-- Botón Toggle de Colapso (Visible solo en Desktop) -->
     <button 
-      type="button"
+      type="button" 
       x-show="sidebarOpen"
       x-cloak
       @click="toggleSidebar()" 
@@ -60,9 +60,9 @@
 
     <!-- Botón Cerrar Drawer Móvil (Visible solo en < lg) -->
     <button 
-      type="button"
+      type="button" 
       @click="mobileMenuOpen = false"
-      class="lg:hidden flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors flex items-center justify-center p-2 cursor-pointer"
+      class="lg:hidden flex-shrink-0 rounded-xl bg-white/5 hover:bg-white/15 active:bg-white/20 text-[#C8D6BC] hover:text-white transition-all flex items-center justify-center w-9 h-9 cursor-pointer border border-[#344024]"
       title="Cerrar menú"
       aria-label="Cerrar menú"
     >
@@ -72,13 +72,43 @@
     </button>
   </div>
 
+  <!-- Identidad de Usuario y Contexto Operativo (Visible en Móvil) -->
+  <div class="lg:hidden px-3 pt-3 pb-2 border-b border-[#344024]/70 bg-[#12170B]/50 flex-shrink-0">
+    <div class="bg-gradient-to-r from-white/10 to-white/5 rounded-xl p-3 border border-white/10 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4E5F36] to-[#252E19] text-[#F3F6F0] flex items-center justify-center font-bold text-xs border border-emerald-400/40 shrink-0 shadow-xs">
+          {% if user.is_authenticated and user.iniciales %}{{ user.iniciales }}{% else %}GO{% endif %}
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="text-xs font-bold text-white truncate">
+            {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Gonzalo Olivar{% endif %}
+          </span>
+          <span class="text-[10px] text-[#A2B38F] font-medium truncate flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
+            <span>{% if user.is_authenticated %}{{ user.get_rol_display }}{% else %}Administrador General{% endif %}</span>
+          </span>
+        </div>
+      </div>
+      {% if finca_activa %}
+      <div class="text-right shrink-0 pl-2">
+        <span class="text-[9px] uppercase tracking-wider text-[#A2B38F] font-semibold block">Finca</span>
+        <span class="text-[11px] font-bold text-amber-300 font-mono">{{ finca_activa.nombre|truncatechars:12 }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- Navegación de Módulos (Scrollable interno con min-h-0 agrupado en listas desplegables) -->
   <nav 
     @click="if (window.innerWidth < 1024 && $event.target.closest('a')) mobileMenuOpen = false;"
-    class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden"
+    class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden touch-pan-y"
+    style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;"
     :class="ready ? 'sidebar-ready' : ''"
     x-data="{
       ready: false,
+      isExpanded() {
+        return (window.innerWidth < 1024) || sidebarOpen;
+      },
       openGroups: (function() {
         let saved = {};
         try {
@@ -119,7 +149,7 @@
         } catch(e) {}
       },
       toggleGroup(group) {
-        if (!sidebarOpen) {
+        if (!this.isExpanded()) {
           toggleSidebar();
           this.openGroups[group] = true;
           this.saveGroups();
@@ -137,17 +167,17 @@
       <button 
         type="button" 
         @click="toggleGroup('tableros')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'dashboard' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'dashboard' %}bg-white/5 text-white{% endif %}"
         title="Tableros &amp; BI"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Tableros &amp; BI</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Tableros &amp; BI</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -161,19 +191,19 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.tableros) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.tableros) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
             href="{% url 'dashboard:index' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Inicio &amp; Accesos</span>
           </a>
           <a 
             href="{% url 'dashboard:tablero' %}?vista=tablero" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Tablero Ejecutivo (BI)</span>
@@ -187,17 +217,17 @@
       <button 
         type="button" 
         @click="toggleGroup('campo')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'campos' or request.resolver_match.app_name == 'parte_diario' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'campos' or request.resolver_match.app_name == 'parte_diario' %}bg-white/5 text-white{% endif %}"
         title="Campo &amp; Operaciones"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Campo &amp; Operaciones</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Campo &amp; Operaciones</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -211,19 +241,19 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.campo) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.campo) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
             href="{% url 'campos:cuadros_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Campos y Cuadros</span>
           </a>
           <a 
             href="{% url 'parte_diario:partes_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Partes Diarios de Labor</span>
@@ -237,17 +267,17 @@
       <button 
         type="button" 
         @click="toggleGroup('personal')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'personal' or request.resolver_match.app_name == 'liquidacion' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'personal' or request.resolver_match.app_name == 'liquidacion' %}bg-white/5 text-white{% endif %}"
         title="Personal &amp; Cuadrillas"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Personal &amp; Cuadrillas</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Personal &amp; Cuadrillas</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">4</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -261,33 +291,33 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.personal) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.personal) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
             href="{% url 'personal:empleados_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Legajos de Personal</span>
           </a>
           <a 
             href="{% url 'personal:asistencia_diaria' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Asistencia Cuadrillas</span>
           </a>
           <a 
             href="{% url 'personal:fichaje_qr' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'fichaje-qr' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if 'fichaje-qr' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'fichaje-qr' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Fichaje por QR</span>
           </a>
           <a 
             href="{% url 'liquidacion:periodos_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'liquidacion' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'liquidacion' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Liquidación de Haberes</span>
@@ -301,17 +331,17 @@
       <button 
         type="button" 
         @click="toggleGroup('finanzas')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'finanzas' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'finanzas' %}bg-white/5 text-white{% endif %}"
         title="Finanzas &amp; Contabilidad"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#C29B38] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Finanzas &amp; Contabilidad</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">8</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -325,13 +355,13 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.finanzas) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.finanzas) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <!-- Resultados del Período (P&L / Cuadro de Resultados) -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=resultados" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-emerald-300/90 hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-emerald-300/90 hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-emerald-400{% else %}bg-emerald-500 group-hover:bg-emerald-300{% endif %}"></span>
             <span class="truncate font-medium flex items-center justify-between w-full">
@@ -343,7 +373,7 @@
           <!-- Plan de Cuentas (Destacado Árbol) -->
           <a 
             href="{% url 'finanzas:plan_cuentas' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate font-medium flex items-center gap-1.5">
@@ -355,7 +385,7 @@
           <!-- Tesorería & Flujo -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=flujo" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Tesorería &amp; Flujo</span>
@@ -364,7 +394,7 @@
           <!-- Cajas y Bancos -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=caja" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Cajas y Bancos</span>
@@ -373,7 +403,7 @@
           <!-- Proveedores -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=proveedores" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Cuentas Proveedores</span>
@@ -382,7 +412,7 @@
           <!-- Clientes -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=clientes" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Cuentas Clientes</span>
@@ -391,7 +421,7 @@
           <!-- Cheques -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=cheques" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Cheques en Cartera</span>
@@ -400,7 +430,7 @@
           <!-- Conciliaciones -->
           <a 
             href="{% url 'finanzas:dashboard' %}?tab=conciliacion" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Conciliaciones Bancarias</span>
@@ -414,17 +444,17 @@
       <button 
         type="button" 
         @click="toggleGroup('costos')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'costos' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'costos' %}bg-white/5 text-white{% endif %}"
         title="Costos &amp; Gestión"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Costos &amp; Gestión</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Costos &amp; Gestión</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">1</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -438,12 +468,12 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.costos) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.costos) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
             href="{% url 'costos:dashboard' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'costos' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'costos' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Costos por Centro</span>
@@ -457,17 +487,17 @@
       <button 
         type="button" 
         @click="toggleGroup('inventario')"
-        :class="!sidebarOpen ? 'justify-center px-0' : 'px-2.5 justify-between'"
-        class="sidebar-item-link w-full flex items-center py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'inventario' %}bg-white/5 text-white{% endif %}"
+        :class="!isExpanded() ? 'justify-center px-0' : 'px-2.5 justify-between'"
+        class="sidebar-item-link w-full flex items-center py-2.5 sm:py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 group cursor-pointer text-[#B2C69E] hover:text-white hover:bg-white/10 {% if request.resolver_match.app_name == 'inventario' %}bg-white/5 text-white{% endif %}"
         title="Inventario &amp; Compras"
       >
         <div class="flex items-center space-x-2.5 min-w-0">
-          <svg :class="!sidebarOpen ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg :class="!isExpanded() ? 'mr-0' : 'mr-2.5'" class="sidebar-item-icon w-5 h-5 flex-shrink-0 text-[#B2C69E] group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <span x-show="sidebarOpen" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
+          <span x-show="isExpanded()" class="sidebar-open-only text-xs font-bold tracking-wide truncate">Inventario &amp; Compras</span>
         </div>
-        <div x-show="sidebarOpen" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
+        <div x-show="isExpanded()" class="sidebar-open-only flex items-center space-x-1.5 flex-shrink-0">
           <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-[#A2B38F] font-mono">2</span>
           <svg 
             class="sidebar-chevron w-3.5 h-3.5 transform text-[#A2B38F] group-hover:text-white"
@@ -481,19 +511,19 @@
 
       <div 
         class="sidebar-submenu-wrapper"
-        :class="(sidebarOpen && openGroups.inventario) ? 'is-open' : ''"
+        :class="(isExpanded() && openGroups.inventario) ? 'is-open' : ''"
       >
         <div class="sidebar-submenu-inner pl-3 ml-3 border-l border-[#3D4A2A] space-y-1 my-1">
           <a 
             href="{% url 'inventario:insumos_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'insumos_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'insumos_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'insumos_list' %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Stock de Insumos</span>
           </a>
           <a 
             href="{% url 'inventario:ordenes_compra_list' %}" 
-            class="flex items-center px-2.5 py-1.5 text-xs rounded-lg transition-colors group {% if 'ordenes-compra' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            class="flex items-center px-2.5 py-2 sm:py-1.5 text-xs rounded-lg transition-colors group {% if 'ordenes-compra' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-semibold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="w-1.5 h-1.5 rounded-full mr-2 flex-shrink-0 {% if 'ordenes-compra' in request.path %}bg-emerald-400{% else %}bg-[#7E9169] group-hover:bg-white{% endif %}"></span>
             <span class="truncate">Órdenes de Compra</span>
@@ -506,14 +536,14 @@
 
   <!-- Pie de Barra / Versión y Estado (Fijo en la parte inferior) -->
   <div 
-    class="relative z-10 flex-shrink-0 p-3 bg-[#12170B]/85 border-t border-[#344024]/80 flex items-center justify-between"
-    :class="sidebarOpen ? 'justify-between' : 'justify-center'"
+    class="relative z-10 flex-shrink-0 p-3.5 pb-5 sm:pb-3 bg-[#12170B]/90 border-t border-[#344024]/80 flex items-center justify-between"
+    :class="isExpanded() ? 'justify-between' : 'justify-center'"
   >
-    <div x-show="sidebarOpen" class="sidebar-open-only text-[11px] text-[#A2B38F] truncate">
+    <div x-show="isExpanded()" class="sidebar-open-only text-[11px] text-[#A2B38F] truncate">
       <p class="font-bold text-[#E5EBDD] tracking-wide truncate">PostgreSQL 16</p>
       <p class="text-[10px] text-[#7E9169] truncate">Django 5.1 • Celery Worker</p>
     </div>
-    <div class="flex items-center space-x-1.5 flex-shrink-0" :title="sidebarOpen ? 'Sistema en línea' : 'Sistema en línea (PostgreSQL 16 & Celery)'">
+    <div class="flex items-center space-x-1.5 flex-shrink-0" :title="isExpanded() ? 'Sistema en línea' : 'Sistema en línea (PostgreSQL 16 & Celery)'">
       <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50 animate-pulse"></div>
     </div>
   </div>
