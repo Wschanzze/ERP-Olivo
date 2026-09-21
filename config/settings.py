@@ -115,11 +115,16 @@ elif USE_SQLITE or (IS_VERCEL and not os.getenv('DB_HOST')):
         seed_db = BASE_DIR / 'db_seed.sqlite3'
         if not seed_db.exists():
             seed_db = BASE_DIR / 'db.sqlite3'
-        if seed_db.exists() and not sqlite_path.exists():
+        if seed_db.exists():
             try:
-                shutil.copy2(seed_db, sqlite_path)
-            except Exception:
-                pass
+                if not sqlite_path.exists() or sqlite_path.stat().st_size == 0:
+                    shutil.copyfile(seed_db, sqlite_path)
+                try:
+                    os.chmod(sqlite_path, 0o666)
+                except Exception:
+                    pass
+            except Exception as e:
+                print(f"Aviso al inicializar db en /tmp: {e}")
     else:
         sqlite_path = BASE_DIR / 'db.sqlite3'
 
@@ -172,7 +177,15 @@ if (BASE_DIR / 'Public').exists():
     STATICFILES_DIRS.append(BASE_DIR / 'Public')
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = '/media/'
