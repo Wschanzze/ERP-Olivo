@@ -1,0 +1,294 @@
+<!-- Modal: Registrar Imputación de Costo Agrícola / Operativo -->
+<div 
+  x-show="modalRegistrarCosto" 
+  x-cloak
+  class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+  x-transition:enter="ease-out duration-300"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="ease-in duration-200"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+>
+  <div 
+    @click.away="modalRegistrarCosto = false" 
+    class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden"
+    x-data="{
+      fincaId: '',
+      tipoOrigen: 'INSUMO',
+      metodoPago: 'SOLO_COSTO',
+      importeArs: '',
+      tipoCambio: 1050,
+      cuentaContableSugerida: '',
+      actualizarSugerencia() {
+        const mapa = {
+          'MANO_DE_OBRA': '4.2.1.01.000000',
+          'INSUMO': '4.2.1.02.000000',
+          'COMBUSTIBLE': '4.2.1.06.000000',
+          'CONTRATISTA': '4.2.1.05.000000',
+          'ENERGIA_RIEGO': '4.2.1.02.000000',
+          'MANTENIMIENTO': '4.2.1.07.000000',
+          'ESTRUCTURA_ADMIN': '4.2.5.01.000000'
+        };
+        const targetCod = mapa[this.tipoOrigen];
+        const sel = document.getElementById('select-cuenta-contable-form');
+        if (sel && targetCod) {
+          for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].text.includes(targetCod)) {
+              sel.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+    }"
+  >
+    <!-- Cabecera del Modal -->
+    <div class="px-6 py-5 bg-gradient-to-r from-[#3D4A2A] to-[#2B351E] text-white flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center font-bold text-lg border border-white/20">
+          🌱
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold tracking-tight">Registrar Imputación de Costo</h3>
+          <p class="text-xs text-white/80">Imputación directa a cuadro o indirecta de finca, articulada con el Plan de Cuentas.</p>
+        </div>
+      </div>
+      <button @click="modalRegistrarCosto = false" type="button" class="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" action="{% url 'costos:crear' %}" class="p-6 space-y-4">
+      {% csrf_token %}
+
+      <!-- Fila 1: Finca y Cuadro -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Finca Destino *</label>
+          <select 
+            name="finca_id" 
+            required 
+            x-model="fincaId"
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+          >
+            <option value="">-- Seleccione Finca --</option>
+            {% for f in fincas %}
+              <option value="{{ f.id }}">{{ f.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Cuadro / Cuartel</label>
+          <select 
+            name="cuadro_id" 
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+          >
+            <option value="general">[Costo General de Finca - Sin Cuadro]</option>
+            {% for cua in cuadros %}
+              <option 
+                value="{{ cua.id }}" 
+                x-show="!fincaId || fincaId == '{{ cua.finca.id }}'"
+              >
+                {{ cua.finca.nombre|slice:":4" }} - {{ cua.codigo }} ({{ cua.get_variedad_olivo_display|default:cua.nombre }} - {{ cua.hectareas_netas }} ha)
+              </option>
+            {% endfor %}
+          </select>
+          <p class="text-[10px] text-slate-400 mt-0.5">Si es general (ej: pozo o taller), podrá prorratearlo automáticamente por ha luego.</p>
+        </div>
+      </div>
+
+      <!-- Fila 2: Centro de Costo y Tipo de Gasto -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Centro de Costo *</label>
+          <select 
+            name="centro_id" 
+            required 
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+          >
+            {% for cc in centros_costo %}
+              <option value="{{ cc.id }}">{{ cc.nombre }} ({{ cc.codigo }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Concepto / Tipo de Origen *</label>
+          <select 
+            name="tipo_origen" 
+            required 
+            x-model="tipoOrigen"
+            @change="actualizarSugerencia()"
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+          >
+            {% for code, label in tipos_origen %}
+              <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Fila 3: Cuenta Contable del Plan de Cuentas -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">
+          Cuenta Contable Asignada (Plan de Cuentas - Rubro 4) *
+        </label>
+        <select 
+          id="select-cuenta-contable-form"
+          name="cuenta_contable_id" 
+          required 
+          class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+        >
+          <option value="">-- Seleccione Cuenta Contable --</option>
+          {% for cta in cuentas_contables %}
+            <option value="{{ cta.id }}">{{ cta.codigo }} - {{ cta.nombre }}</option>
+          {% endfor %}
+        </select>
+        <p class="text-[10px] text-slate-400 mt-0.5">Se debita automáticamente en el Libro Diario y se refleja en el Cuadro de Resultados (P&amp;L).</p>
+      </div>
+
+      <!-- Fila 4: Fecha e Importe ARS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de Imputación *</label>
+          <input 
+            type="date" 
+            name="fecha" 
+            required 
+            value="{% now 'Y-m-d' %}"
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Importe en Pesos ($ ARS) *</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-mono font-bold text-slate-400">$</span>
+            <input 
+              type="number" 
+              name="importe_ars" 
+              step="0.01" 
+              min="0.01" 
+              required 
+              x-model="importeArs"
+              placeholder="0.00" 
+              class="w-full text-xs font-bold font-mono pl-7 pr-24 py-2.5 rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+            >
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-[11px] font-mono font-semibold text-slate-500">
+              <span x-text="importeArs > 0 ? '≈ u$s ' + (importeArs / tipoCambio).toFixed(2) : 'u$s 0.00'"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 5: Descripción y Detalle -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Descripción / Detalle del Gasto *</label>
+        <input 
+          type="text" 
+          name="descripcion" 
+          required 
+          placeholder="Ej: Fertirriego foliar nitrato de potasio 25kg, jornal tractorista, service bomba..." 
+          class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+        >
+      </div>
+
+      <!-- Fila 6: Integración con Proveedores y Finanzas -->
+      <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Integración con Proveedores &amp; Finanzas (Opcional)
+          </span>
+          <span class="text-[10px] font-mono text-slate-400 font-bold uppercase">Relacional</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Proveedor / Contratista</label>
+            <select 
+              name="proveedor_id" 
+              class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-white px-3 py-2 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+            >
+              <option value="">-- Sin Proveedor Asociado --</option>
+              {% for p in proveedores %}
+                <option value="{{ p.id }}">{{ p.razon_social }} (Saldo: ${{ p.saldo_actual|floatformat:2 }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Medio de Pago / Financiación</label>
+            <select 
+              name="metodo_pago" 
+              x-model="metodoPago"
+              class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-white px-3 py-2 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+            >
+              <option value="SOLO_COSTO">Solo Imputación de Costo (Interno / No afecta caja)</option>
+              <option value="CUENTA_CORRIENTE">A Cuenta Corriente Proveedor (Aumenta deuda comercial)</option>
+              <option value="CONTADO">Pagado al Contado con Caja/Banco (Egreso financiero inmediato)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Si elige CONTADO, seleccionar Caja o Banco -->
+        <div x-show="metodoPago === 'CONTADO'" class="pt-2 border-t border-slate-200/60" x-cloak>
+          <label class="block text-[11px] font-bold text-emerald-800 mb-1">Caja o Banco de Origen de Fondos *</label>
+          <select 
+            name="cuenta_financiera_id" 
+            :required="metodoPago === 'CONTADO'"
+            class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-white px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          >
+            <option value="">-- Seleccione Cuenta Financiera --</option>
+            {% for cta in cuentas_financieras %}
+              <option value="{{ cta.id }}">{{ cta.nombre }} (${{ cta.saldo_actual|floatformat:2 }} {{ cta.moneda }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Tipo y N° Comprobante -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo Comprobante</label>
+            <input 
+              type="text" 
+              name="documento_origen_tipo" 
+              placeholder="Ej: Factura A, Remito, Ticket, Liquidación..." 
+              class="w-full text-xs rounded-xl border-slate-200 bg-white px-3 py-2 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+            >
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">N° Comprobante</label>
+            <input 
+              type="text" 
+              name="documento_origen_id" 
+              placeholder="Ej: 0001-00045892" 
+              class="w-full text-xs rounded-xl border-slate-200 bg-white px-3 py-2 focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+        <button 
+          @click="modalRegistrarCosto = false" 
+          type="button" 
+          class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="px-5 py-2.5 text-xs font-bold text-white bg-[#3D4A2A] hover:bg-[#323d22] rounded-xl shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span>Confirmar e Imputar Costo</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

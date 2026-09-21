@@ -6,6 +6,7 @@ from .models import ParteDiario, ParteDiarioInsumo, ParteDiarioPersonal
 from apps.inventario.models import MovimientoStock, StockPorDeposito
 from apps.costos.models import CostoPorCentro
 from apps.core.models import CentroDeCosto
+from apps.finanzas.models import CuentaContable, TipoCambioMensual
 
 @transaction.atomic
 def confirmar_y_cerrar_parte_diario(parte_diario_id: int, usuario=None) -> ParteDiario:
@@ -79,12 +80,17 @@ def confirmar_y_cerrar_parte_diario(parte_diario_id: int, usuario=None) -> Parte
 
         # Registrar Costo por Insumo
         if costo_total > 0:
+            tc = TipoCambioMensual.get_tc(ano=parte.fecha.year, mes=parte.fecha.month)
+            imp_usd = round(costo_total / tc, 2) if tc > 0 else Decimal('0.00')
+            cta_insumo = CuentaContable.objects.filter(codigo='4.2.1.02.000000', es_imputable=True).first()
             CostoPorCentro.objects.create(
                 centro_de_costo=centro_costo,
                 finca=parte.finca,
                 cuadro=parte.cuadro,
                 fecha=parte.fecha,
                 importe_ars=costo_total,
+                importe_usd=imp_usd,
+                cuenta_contable=cta_insumo,
                 tipo_origen=CostoPorCentro.TipoOrigen.INSUMO,
                 descripcion=f"Consumo {insumo.nombre} ({item.cantidad_utilizada} {insumo.unidad_medida}) en {parte.cuadro.codigo}",
                 documento_origen_tipo="ParteDiario",
@@ -102,12 +108,17 @@ def confirmar_y_cerrar_parte_diario(parte_diario_id: int, usuario=None) -> Parte
         item_pers.save(update_fields=['costo_jornal_calculado_ars', 'updated_at'])
 
         if costo_mo > 0:
+            tc = TipoCambioMensual.get_tc(ano=parte.fecha.year, mes=parte.fecha.month)
+            imp_usd = round(costo_mo / tc, 2) if tc > 0 else Decimal('0.00')
+            cta_mo = CuentaContable.objects.filter(codigo='4.2.1.01.000000', es_imputable=True).first()
             CostoPorCentro.objects.create(
                 centro_de_costo=centro_costo,
                 finca=parte.finca,
                 cuadro=parte.cuadro,
                 fecha=parte.fecha,
                 importe_ars=costo_mo,
+                importe_usd=imp_usd,
+                cuenta_contable=cta_mo,
                 tipo_origen=CostoPorCentro.TipoOrigen.MANO_DE_OBRA,
                 descripcion=f"Mano de obra {emp.nombre_completo} ({item_pers.horas_normales}h) en {parte.cuadro.codigo}",
                 documento_origen_tipo="ParteDiario",

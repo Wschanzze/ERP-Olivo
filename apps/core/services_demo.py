@@ -28,6 +28,7 @@ from apps.finanzas.models import (
 )
 from apps.finanzas.services import poblar_lineas_cuadro
 from apps.costos.models import CostoPorCentro
+from apps.costos.services import resolver_cuenta_contable_defecto
 
 User = get_user_model()
 
@@ -1414,6 +1415,7 @@ def poblar_datos_demo_q1_2026():
             defaults={
                 'importe_ars': imp,
                 'importe_usd': round(imp / tc_mes, 2),
+                'cuenta_contable': resolver_cuenta_contable_defecto(torig, cc),
                 'descripcion': desc,
                 'documento_origen_tipo': d_tipo,
                 'documento_origen_id': d_id,

@@ -43,6 +43,58 @@ class CostoPorCentro(TimeStampedModel):
         verbose_name=_("Tipo de Origen / Concepto")
     )
     descripcion = models.CharField(max_length=255, verbose_name=_("Descripción / Detalle"))
+    
+    # Vinculación directa con el Plan de Cuentas Contable (Rubro 4.2 Egresos)
+    cuenta_contable = models.ForeignKey(
+        'finanzas.CuentaContable',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='costos_imputados',
+        verbose_name=_("Cuenta Contable (Plan de Cuentas)"),
+        help_text=_("Cuenta contable del Rubro 4 (Egresos) a la que se imputa este costo.")
+    )
+
+    # Vinculación con Proveedores y Finanzas
+    proveedor = models.ForeignKey(
+        'finanzas.CuentaCorriente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='costos_proveedor',
+        verbose_name=_("Proveedor / Contratista Vinculado"),
+        help_text=_("Proveedor o contratista emisor del comprobante o servicio.")
+    )
+    movimiento_financiero = models.ForeignKey(
+        'finanzas.MovimientoFinanciero',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='costos_asociados',
+        verbose_name=_("Movimiento Financiero (Caja/Banco)"),
+        help_text=_("Egreso de caja o cuenta bancaria si fue abonado al contado.")
+    )
+
+    # Prorrateo Agronómico de Costos Indirectos / Comunes
+    es_prorrateado = models.BooleanField(
+        default=False,
+        verbose_name=_("¿Es Prorrateado?"),
+        help_text=_("Indica si este costo proviene del prorrateo de un gasto indirecto o común.")
+    )
+    prorrateo_realizado = models.BooleanField(
+        default=False,
+        verbose_name=_("¿Prorrateo Realizado?"),
+        help_text=_("Indica si este costo indirecto ya fue distribuido entre los cuadros de la finca.")
+    )
+    costo_origen_prorrateo = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='costos_hijos_prorrateados',
+        verbose_name=_("Costo Indirecto Origen")
+    )
+
     documento_origen_tipo = models.CharField(
         max_length=50, 
         blank=True, 
@@ -58,13 +110,34 @@ class CostoPorCentro(TimeStampedModel):
     class Meta:
         verbose_name = _("Costo por Centro")
         verbose_name_plural = _("Costos por Centro")
-        ordering = ['-fecha']
+        ordering = ['-fecha', '-id']
         indexes = [
             models.Index(fields=['centro_de_costo', 'fecha']),
             models.Index(fields=['finca', 'fecha']),
             models.Index(fields=['cuadro', 'fecha']),
+            models.Index(fields=['cuenta_contable', 'fecha']),
             models.Index(fields=['documento_origen_tipo', 'documento_origen_id']),
         ]
 
     def __str__(self):
         return f"{self.fecha} - {self.centro_de_costo.codigo}: ${self.importe_ars:,.2f} ({self.get_tipo_origen_display()})"
+
+    @property
+    def cuenta_contable_display(self):
+        """Retorna código y nombre de la cuenta contable efectiva."""
+        if self.cuenta_contable:
+            return f"{self.cuenta_contable.codigo} - {self.cuenta_contable.nombre}"
+        if self.centro_de_costo and self.centro_de_costo.cuenta_contable_defecto:
+            c = self.centro_de_costo.cuenta_contable_defecto
+            return f"{c.codigo} - {c.nombre}"
+        
+        fallbacks = {
+            self.TipoOrigen.MANO_DE_OBRA: '4.2.1.01.000000 - Sueldos y cargas sociales - producción agrícola',
+            self.TipoOrigen.INSUMO: '4.2.1.02.000000 - Fertilizantes, agroquímicos y riego',
+            self.TipoOrigen.COMBUSTIBLE_MAQUINARIA: '4.2.1.00.000000 - Costo de la producción agrícola',
+            self.TipoOrigen.SERVICIO_CONTRATISTA: '4.2.1.05.000000 - Cosecha - servicios de terceros / contratistas',
+            self.TipoOrigen.ENERGIA_RIEGO: '4.2.1.02.000000 - Fertilizantes, agroquímicos y riego',
+            self.TipoOrigen.MANTENIMIENTO: '4.2.1.07.000000 - Amortizaciones y conservación agrícola',
+            self.TipoOrigen.ESTRUCTURA_ADMIN: '4.2.5.01.000000 - Gastos de estructura y administración',
+        }
+        return fallbacks.get(self.tipo_origen, '4.2.1.00.000000 - Costo de la producción agrícola')

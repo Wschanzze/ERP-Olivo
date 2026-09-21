@@ -1,0 +1,77 @@
+<!-- Modal: Prorratear Costo Indirecto Agronómicamente por Hectárea -->
+<div 
+  x-show="modalProrratear" 
+  x-cloak
+  class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+  x-transition:enter="ease-out duration-300"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="ease-in duration-200"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+>
+  <div 
+    @click.away="modalProrratear = false" 
+    class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden"
+  >
+    <div class="px-6 py-5 bg-gradient-to-r from-cyan-800 to-cyan-950 text-white flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center font-bold text-lg border border-white/20">
+          ⚖️
+        </div>
+        <div>
+          <h3 class="text-sm font-extrabold tracking-tight">Prorrateo de Costo Indirecto</h3>
+          <p class="text-xs text-cyan-200">Distribución proporcional por superficie neta (ha).</p>
+        </div>
+      </div>
+      <button @click="modalProrratear = false" type="button" class="p-1.5 text-cyan-200 hover:text-white rounded-xl transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form method="post" :action="'/costos/' + prorrateoCostoId + '/prorratear/'" class="p-6 space-y-4">
+      {% csrf_token %}
+
+      <!-- Tarjeta Resumen del Costo -->
+      <div class="bg-cyan-50/60 border border-cyan-200/70 p-4 rounded-2xl space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-500 font-medium">Gasto Indirecto:</span>
+          <span class="font-bold text-slate-800 font-mono">#<span x-text="prorrateoCostoId"></span></span>
+        </div>
+        <p class="text-xs font-semibold text-slate-900 line-clamp-2" x-text="prorrateoDesc"></p>
+        <div class="flex items-center justify-between pt-2 border-t border-cyan-200/50">
+          <span class="text-xs text-slate-500 font-medium">Importe a distribuir:</span>
+          <span class="text-lg font-black font-mono text-cyan-900" x-text="'$' + prorrateoImporte"></span>
+        </div>
+      </div>
+
+      <!-- Explicación Técnica -->
+      <div class="text-xs text-slate-600 space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/60">
+        <p class="font-bold text-slate-800">¿Cómo funciona el prorrateo automático?</p>
+        <ul class="space-y-1 list-disc list-inside text-slate-600 text-[11px]">
+          <li>Identifica todos los cuadros activos de la finca <strong x-text="prorrateoFinca"></strong>.</li>
+          <li>Calcula la participación porcentual de cada cuadro en base a sus <strong>hectáreas netas</strong>.</li>
+          <li>Genera imputaciones directas hijas con la misma fecha y cuenta contable.</li>
+          <li>El costo indirecto original queda marcado como <span class="font-semibold text-cyan-800">"Prorrateado"</span> para evitar duplicación en los balances y el P&amp;L.</li>
+        </ul>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+        <button 
+          @click="modalProrratear = false" 
+          type="button" 
+          class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl transition-colors cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          class="px-5 py-2.5 text-xs font-bold text-white bg-cyan-700 hover:bg-cyan-800 rounded-xl shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Ejecutar Prorrateo Agronómico</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
