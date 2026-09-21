@@ -102,10 +102,10 @@
         </div>
 
         <!-- Botones de Acción -->
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
           <button 
             @click="modalEditarNotas = true" 
-            class="inline-flex items-center px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
+            class="inline-flex items-center justify-center px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
             <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
@@ -115,7 +115,7 @@
           <a 
             href="{% url 'finanzas:cuadro_resultado_print' cuadro_activo.id %}" 
             target="_blank" 
-            class="inline-flex items-center px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
+            class="inline-flex items-center justify-center px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-colors hover:border-slate-300">
             <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
@@ -124,7 +124,7 @@
 
           <button 
             @click="modalNuevoCuadro = true" 
-            class="inline-flex items-center px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors">
+            class="inline-flex items-center justify-center px-3.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors">
             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -304,7 +304,7 @@
 
       <!-- TABLA A: VISTA GERENCIAL SIMPLIFICADA (MANEJO INTERNO EMPRESARIAL) -->
       <div x-show="vistaModo === 'simplificado'" class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-700">
+        <table class="w-full text-left text-xs text-slate-700 min-w-[640px]">
           <thead>
             <tr class="bg-slate-100/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
               <th class="py-3 px-4 w-5/12">Concepto Gerencial / Margen Operativo</th>
@@ -418,7 +418,7 @@
 
       <!-- TABLA B: VISTA CONTABLE DETALLADA (PLAN DE CUENTAS 56 SUBCUENTAS) -->
       <div x-show="vistaModo === 'detallado'" class="overflow-x-auto" x-cloak>
-        <table class="w-full text-left text-xs text-slate-600">
+        <table class="w-full text-left text-xs text-slate-600 min-w-[680px]">
           <thead>
             <tr class="bg-slate-100/70 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
               <th class="py-3 px-4 w-5/12">Cuenta Contable / Rubro</th>

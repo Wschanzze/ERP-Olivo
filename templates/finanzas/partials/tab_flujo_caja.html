@@ -40,7 +40,7 @@
   </div>
 
   <!-- KPI Cards superiores -->
-  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
     <!-- Saldo ARS -->
     <div class="bg-gradient-to-br from-oliva-700 to-oliva-900 rounded-2xl p-5 text-white shadow">
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Flujo Neto Operativo -->
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs col-span-2 lg:col-span-1">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs col-span-1 sm:col-span-2 lg:col-span-1">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Flujo Neto del Período</p>
       <p class="text-2xl font-extrabold font-mono {% if flujo_neto_periodo >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %} mt-2 tabular-nums">
         {% if flujo_neto_periodo >= 0 %}+{% endif %}${{ flujo_neto_periodo|floatformat:2 }}
@@ -227,7 +227,7 @@
       <span class="text-[11px] text-slate-400 font-mono">{{ movimientos_flujo|default:movimientos_recientes|length }} registros</span>
     </div>
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm">
+      <table class="w-full text-left border-collapse text-sm min-w-[600px]">
         <thead>
           <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
             <th class="py-3 px-4">Fecha</th>

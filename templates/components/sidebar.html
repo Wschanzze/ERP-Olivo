@@ -1,9 +1,15 @@
 {% load static %}
-<!-- Sidebar Fija Oscura con Restricción Estricta al Viewport (No desborda la pantalla) -->
+<!-- Sidebar Fija Oscura / Drawer Móvil Deslizante -->
 <aside 
   id="app-sidebar"
-  :class="sidebarOpen ? 'w-64 max-w-[16rem]' : 'w-20 max-w-[5rem]'" 
-  class="w-64 max-w-[16rem] fixed top-0 bottom-0 left-0 z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-[width,max-width] duration-300 ease-in-out border-r border-[#344024] shadow-2xl select-none overflow-hidden"
+  :class="{
+    'translate-x-0 shadow-2xl': mobileMenuOpen,
+    '-translate-x-full': !mobileMenuOpen,
+    'lg:translate-x-0': true,
+    'lg:w-64 lg:max-w-[16rem]': sidebarOpen,
+    'lg:w-20 lg:max-w-[5rem]': !sidebarOpen
+  }"
+  class="fixed top-0 bottom-0 left-0 z-50 lg:z-30 h-screen max-h-screen flex flex-col bg-[#18200F] text-[#E5EBDD] transition-[transform,width,max-width] duration-300 ease-in-out border-r border-[#344024] select-none overflow-hidden w-72 max-w-[85vw] lg:w-64 lg:max-w-[16rem]"
 >
   <!-- Capa 1: Imagen '250.jpg' difuminada (estática, sin transiciones que causen destellos) -->
   <div 
@@ -14,50 +20,61 @@
   <!-- Capa 2: Gradiente verde oliva oscuro -->
   <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#151C0D]/92 via-[#1F2714]/95 to-[#12170B]/98 pointer-events-none"></div>
 
-  <!-- Logo / Branding Corporativo (Fijo en la parte superior) -->
+  <!-- Logo / Branding Corporativo (Fijo en la parte superior - ÚNICA instancia del logo) -->
   <div 
-    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/80 border-b border-[#344024]/80 px-4 justify-between"
-    :class="sidebarOpen ? 'px-4 justify-between' : 'px-2 justify-center'"
+    id="sidebar-header"
+    class="relative z-10 flex-shrink-0 flex items-center h-16 bg-[#12170B]/80 border-b border-[#344024]/80 px-4 justify-between transition-all duration-300"
+    :class="sidebarOpen ? 'px-4 justify-between' : 'px-2 lg:justify-center justify-between'"
   >
-    <!-- Logo + Título (visible cuando está expandida) -->
-    <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 overflow-hidden min-w-0 sidebar-open-only" x-show="sidebarOpen">
-      <!-- Ícono Oficial de la Empresa (Sin remarco verde, ampliado) -->
+    <!-- Logo y Título Corporativo (Único enlace con comportamiento reactivo) -->
+    <a
+      href="{% url 'dashboard:index' %}"
+      @click="if (window.innerWidth < 1024) { mobileMenuOpen = false; } else if (!sidebarOpen) { $event.preventDefault(); toggleSidebar(); }"
+      :title="sidebarOpen ? 'Ir al Panel Principal' : 'Expandir menú lateral'"
+      class="flex items-center space-x-3 overflow-hidden min-w-0 group cursor-pointer"
+    >
+      <!-- ÚNICA imagen del Logo en el DOM (Nunca se duplica al cargar la página) -->
       <div class="flex-shrink-0 flex items-center justify-center">
-        <img src="{% static 'icono.png' %}?v=2" alt="Logo Empresa" class="w-12 h-12 object-contain drop-shadow-md hover:scale-105 transition-transform" />
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP Olivícola" class="w-12 h-12 object-contain drop-shadow-md group-hover:scale-105 transition-transform" />
       </div>
-      <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0">
+      <!-- Texto descriptivo (Oculto instantáneamente por CSS si la sidebar está colapsada en desktop) -->
+      <div class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200 min-w-0 sidebar-open-only" x-show="sidebarOpen || window.innerWidth < 1024">
         <span class="font-bold text-sm tracking-wider text-white uppercase truncate">ERP Olivícola</span>
         <span class="text-[10px] text-[#A2B38F] font-mono tracking-wider font-semibold truncate">AGRO & ALMAZARA</span>
       </div>
     </a>
 
-    <!-- Ícono cuando está colapsada (Sin remarco verde, clic expande la sidebar) -->
-    <button 
-      type="button"
-      @click="toggleSidebar()" 
-      x-show="!sidebarOpen"
-      class="flex items-center justify-center hover:opacity-90 hover:scale-105 transition-all cursor-pointer p-1"
-      title="Expandir menú lateral"
-    >
-      <img src="{% static 'icono.png' %}?v=2" alt="Logo Empresa" class="w-12 h-12 object-contain drop-shadow-md" />
-    </button>
-
-    <!-- Botón Toggle de Colapso (visible cuando está expandida) -->
+    <!-- Botón Toggle de Colapso (Visible solo en Desktop) -->
     <button 
       type="button"
       x-show="sidebarOpen"
+      x-cloak
       @click="toggleSidebar()" 
-      class="flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors flex items-center justify-center p-1.5 ml-1 cursor-pointer"
+      class="hidden lg:flex flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors items-center justify-center p-1.5 ml-1 cursor-pointer sidebar-open-only"
       title="Colapsar menú lateral"
     >
       <svg class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
       </svg>
     </button>
+
+    <!-- Botón Cerrar Drawer Móvil (Visible solo en < lg) -->
+    <button 
+      type="button"
+      @click="mobileMenuOpen = false"
+      class="lg:hidden flex-shrink-0 rounded-xl hover:bg-white/10 text-[#A2B38F] hover:text-white transition-colors flex items-center justify-center p-2 cursor-pointer"
+      title="Cerrar menú"
+      aria-label="Cerrar menú"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
 
   <!-- Navegación de Módulos (Scrollable interno con min-h-0 agrupado en listas desplegables) -->
   <nav 
+    @click="if (window.innerWidth < 1024 && $event.target.closest('a')) mobileMenuOpen = false;"
     class="relative z-10 flex-1 min-h-0 px-2.5 py-3 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden"
     :class="ready ? 'sidebar-ready' : ''"
     x-data="{

@@ -76,24 +76,34 @@
     }
     [x-cloak] { display: none !important; }
 
-    /* Estado inicial si la sidebar fue colapsada previamente (renderizado instantáneo) */
-    html.sidebar-collapsed #app-sidebar {
-      width: 5rem !important;
-      max-width: 5rem !important;
-    }
-    html.sidebar-collapsed #main-layout-container {
-      padding-left: 5rem !important;
-    }
-    html.sidebar-collapsed .sidebar-open-only {
-      display: none !important;
-    }
-    html.sidebar-collapsed .sidebar-item-link {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      justify-content: center !important;
-    }
-    html.sidebar-collapsed .sidebar-item-icon {
-      margin-right: 0 !important;
+    /* Estado inicial si la sidebar fue colapsada previamente (renderizado instantáneo en desktop >= 1024px) */
+    @media (min-width: 1024px) {
+      html.sidebar-collapsed #app-sidebar {
+        width: 5rem !important;
+        max-width: 5rem !important;
+      }
+      html.sidebar-collapsed #main-layout-container {
+        padding-left: 5rem !important;
+      }
+      html.sidebar-collapsed #sidebar-header {
+        justify-content: center !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
+      html.sidebar-collapsed .sidebar-open-only {
+        display: none !important;
+      }
+      html.sidebar-collapsed .sidebar-item-link {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        justify-content: center !important;
+      }
+      html.sidebar-collapsed .sidebar-item-icon {
+        margin-right: 0 !important;
+      }
+      html.sidebar-collapsed .sidebar-submenu-wrapper {
+        display: none !important;
+      }
     }
 
     /* Submenús en cascada/acordeón con animación CSS Grid */
@@ -111,9 +121,6 @@
     .sidebar-submenu-inner {
       overflow: hidden;
       min-height: 0;
-    }
-    html.sidebar-collapsed .sidebar-submenu-wrapper {
-      display: none !important;
     }
 
     /* Las transiciones SOLO se activan cuando la barra lateral está lista (evita el efecto de despliegue al navegar) */
@@ -146,6 +153,7 @@
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
   x-data="{ 
     sidebarOpen: window.__sidebarInitial, 
+    mobileMenuOpen: false,
     modalOpen: false, 
     modalTitle: '', 
     activeTab: 'caja',
@@ -153,31 +161,50 @@
       this.sidebarOpen = !this.sidebarOpen;
       document.documentElement.classList.toggle('sidebar-collapsed', !this.sidebarOpen);
       try { localStorage.setItem('erp_sidebar_open', this.sidebarOpen); } catch(e) {}
+    },
+    closeMobileMenu() {
+      this.mobileMenuOpen = false;
     }
   }"
+  @keydown.escape.window="mobileMenuOpen = false; modalOpen = false;"
 >
+
+  <!-- Backdrop oscuro móvil para cuando el drawer lateral está abierto -->
+  <div
+    x-show="mobileMenuOpen"
+    x-cloak
+    x-transition:enter="transition-opacity ease-linear duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity ease-linear duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="mobileMenuOpen = false"
+    class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden"
+    aria-hidden="true"
+  ></div>
 
   <div class="min-h-full flex">
     
-    <!-- Barra Lateral Fija -->
+    <!-- Barra Lateral Fija / Drawer Móvil -->
     {% include 'components/sidebar.html' %}
 
-    <!-- Contenedor Principal (ajustable según ancho de sidebar) -->
-    <div 
+    <!-- Contenedor Principal (ajustable según ancho de sidebar en desktop y 100% fluido en móvil) -->
+    <div
       id="main-layout-container"
-      :class="sidebarOpen ? 'pl-64' : 'pl-20'" 
-      class="pl-64 flex-1 flex flex-col min-w-0 transition-[padding-left] duration-300 ease-in-out min-h-screen"
+      :class="sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'"
+      class="pl-0 lg:pl-64 flex-1 flex flex-col min-w-0 transition-[padding-left] duration-300 ease-in-out min-h-screen w-full"
     >
       <!-- Cabecera Superior -->
       {% include 'components/header.html' %}
 
       <!-- Contenido Dinámico HTMX / Template -->
-      <main id="main-content" class="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+      <main id="main-content" class="flex-1 p-3 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
         {% block content %}{% endblock %}
       </main>
 
-      <!-- Pie de Página Sobrio -->
-      <footer class="py-4 px-8 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center bg-white">
+      <!-- Pie de Página Responsivo -->
+      <footer class="py-3 sm:py-4 px-4 sm:px-8 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row gap-2 justify-between items-center bg-white text-center sm:text-left">
         <span>&copy; 2026 {{ empresa_actual.razon_social|default:"Empresa Olivícola S.A." }} — Sistema ERP Agroindustrial</span>
         <span class="font-mono text-[11px] text-slate-400">PostgreSQL 16 • Django ORM • Celery</span>
       </footer>
@@ -185,7 +212,7 @@
 
   </div>
 
-  <!-- Contenedor Universal para Formularios Modales HTMX con animación suave -->
+  <!-- Contenedor Universal para Formularios Modales HTMX con animación suave y scroll móvil -->
   <div 
     id="modal-container"
     x-show="modalOpen" 
@@ -196,7 +223,7 @@
     x-transition:leave="transition ease-in duration-150"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4"
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
     @click.self="modalOpen = false"
   >
     <div 
@@ -207,7 +234,7 @@
       x-transition:leave="transition ease-in duration-150"
       x-transition:leave-start="opacity-100 scale-100 translate-y-0"
       x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
-      class="bg-white rounded-3xl shadow-2xl border border-slate-200/80 max-w-2xl w-full p-7 relative overflow-hidden"
+      class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/80 max-w-2xl w-full p-4 sm:p-7 relative overflow-hidden max-h-[92vh] overflow-y-auto my-auto"
       id="modal-body"
     >
       <!-- Se inyecta contenido HTMX aquí -->

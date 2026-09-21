@@ -78,17 +78,17 @@
       </div>
 
       <!-- Footer -->
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+      <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:space-x-2">
         <button 
           type="button" 
           @click="modalEditarLinea = false" 
-          class="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+          class="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-center"
         >
           Cancelar
         </button>
         <button 
           type="submit" 
-          class="px-4 py-1.5 text-xs font-bold text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-xs transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-xs font-bold text-white bg-oliva-700 hover:bg-oliva-800 rounded-xl shadow-xs transition-colors text-center"
         >
           Actualizar Línea
         </button>

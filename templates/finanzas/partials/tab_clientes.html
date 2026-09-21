@@ -6,49 +6,51 @@
   </div>
 
   <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-    <table class="w-full text-left border-collapse text-sm">
-      <thead>
-        <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-          <th class="py-3.5 px-4">Razón Social</th>
-          <th class="py-3.5 px-4">CUIT</th>
-          <th class="py-3.5 px-4">Contacto</th>
-          <th class="py-3.5 px-4">Límite Crédito</th>
-          <th class="py-3.5 px-4 text-right">Saldo a Cobrar</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100 text-xs">
-        {% for cli in clientes %}
-        <tr class="hover:bg-oliva-50/40 transition-colors">
-          <td class="py-3.5 px-4 font-semibold text-slate-900">
-            <div class="flex items-center space-x-2">
-              <span class="w-1.5 h-1.5 rounded-full {% if cli.saldo_actual > 0 %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
-              <span>{{ cli.razon_social }}</span>
-            </div>
-            {% if cli.nombre_comercial %}
-              <span class="block text-[11px] text-slate-400 font-normal pl-3.5">{{ cli.nombre_comercial }}</span>
-            {% endif %}
-          </td>
-          <td class="py-3.5 px-4 font-mono text-xs text-slate-500">{{ cli.cuit }}</td>
-          <td class="py-3.5 px-4 text-xs text-slate-600">
-            <div>{{ cli.email|default:"-" }}</div>
-            <div class="text-slate-400 font-mono text-[11px]">{{ cli.telefono }}</div>
-          </td>
-          <td class="py-3.5 px-4 font-mono text-xs text-slate-500 tabular-nums">${{ cli.limite_credito|floatformat:2 }}</td>
-          <td class="py-3.5 px-4 text-right font-mono font-bold text-xs tabular-nums tracking-tight {% if cli.saldo_actual > 0 %}text-emerald-700{% else %}text-slate-600{% endif %}">
-            ${{ cli.saldo_actual|floatformat:2 }}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
-            <div class="flex flex-col items-center justify-center space-y-2">
-              <img src="{% static 'img/quality-control_12006595.png' %}" alt="Vacío" class="w-8 h-8 opacity-40" />
-              <p>No hay clientes registrados aún.</p>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm min-w-[640px]">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+            <th class="py-3.5 px-4">Razón Social</th>
+            <th class="py-3.5 px-4">CUIT</th>
+            <th class="py-3.5 px-4">Contacto</th>
+            <th class="py-3.5 px-4">Límite Crédito</th>
+            <th class="py-3.5 px-4 text-right">Saldo a Cobrar</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-xs">
+          {% for cli in clientes %}
+          <tr class="hover:bg-oliva-50/40 transition-colors">
+            <td class="py-3.5 px-4 font-semibold text-slate-900">
+              <div class="flex items-center space-x-2">
+                <span class="w-1.5 h-1.5 rounded-full {% if cli.saldo_actual > 0 %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
+                <span>{{ cli.razon_social }}</span>
+              </div>
+              {% if cli.nombre_comercial %}
+                <span class="block text-[11px] text-slate-400 font-normal pl-3.5">{{ cli.nombre_comercial }}</span>
+              {% endif %}
+            </td>
+            <td class="py-3.5 px-4 font-mono text-xs text-slate-500">{{ cli.cuit }}</td>
+            <td class="py-3.5 px-4 text-xs text-slate-600">
+              <div>{{ cli.email|default:"-" }}</div>
+              <div class="text-slate-400 font-mono text-[11px]">{{ cli.telefono }}</div>
+            </td>
+            <td class="py-3.5 px-4 font-mono text-xs text-slate-500 tabular-nums">${{ cli.limite_credito|floatformat:2 }}</td>
+            <td class="py-3.5 px-4 text-right font-mono font-bold text-xs tabular-nums tracking-tight {% if cli.saldo_actual > 0 %}text-emerald-700{% else %}text-slate-600{% endif %}">
+              ${{ cli.saldo_actual|floatformat:2 }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Vacío" class="w-8 h-8 opacity-40" />
+                <p>No hay clientes registrados aún.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

@@ -321,14 +321,16 @@
       </div>
     </div>
 
-    <!-- Encabezado de columnas de la tabla -->
-    <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-      <div class="col-span-6 md:col-span-5">Código y Rubro / Cuenta</div>
-      <div class="col-span-2 hidden md:block text-left">Clase Contable</div>
-      <div class="col-span-2 hidden md:block text-center">Saldo Habitual</div>
-      <div class="col-span-3 md:col-span-2 text-center">Tipo / Nivel</div>
-      <div class="col-span-3 md:col-span-1 text-right">Detalle</div>
-    </div>
+    <div class="overflow-x-auto">
+      <div class="min-w-[620px]">
+        <!-- Encabezado de columnas de la tabla -->
+        <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+          <div class="col-span-6 md:col-span-5">Código y Rubro / Cuenta</div>
+          <div class="col-span-2 hidden md:block text-left">Clase Contable</div>
+          <div class="col-span-2 hidden md:block text-center">Saldo Habitual</div>
+          <div class="col-span-3 md:col-span-2 text-center">Tipo / Nivel</div>
+          <div class="col-span-3 md:col-span-1 text-right">Detalle</div>
+        </div>
 
     <!-- Lista interactiva de Cuentas con soporte para plegar/desplegar ramas -->
     <div id="plan-cuentas-tree" class="divide-y divide-slate-100 max-h-[750px] overflow-y-auto custom-scrollbar">
@@ -489,6 +491,8 @@
         <p class="mt-1">Hacé clic en "Sincronizar Excel" para cargarlas desde el archivo en la raíz.</p>
       </div>
       {% endfor %}
+    </div>
+      </div>
     </div>
   </div>
 

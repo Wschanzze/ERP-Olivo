@@ -49,30 +49,32 @@
         </svg>
         Insumos Utilizados (Descuento de Stock)
       </h3>
-      <table class="w-full text-left text-sm">
-        <thead class="text-[11px] font-bold text-slate-400 uppercase border-b border-slate-100">
-          <tr>
-            <th class="pb-2">Insumo</th>
-            <th class="pb-2">Depósito</th>
-            <th class="pb-2 text-right">Cantidad</th>
-            <th class="pb-2 text-right">Costo Imputado</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for item in parte.insumos_utilizados.all %}
-          <tr>
-            <td class="py-2.5 font-medium text-slate-900">{{ item.insumo.nombre }}</td>
-            <td class="py-2.5 text-xs text-slate-500">{{ item.deposito_origen.nombre }}</td>
-            <td class="py-2.5 text-right font-mono font-bold text-slate-800">{{ item.cantidad_utilizada }} {{ item.insumo.unidad_medida }}</td>
-            <td class="py-2.5 text-right font-mono text-slate-700">${{ item.costo_total_ars|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4" class="py-4 text-center text-slate-400 text-xs">No se cargaron insumos en este parte.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[420px]">
+          <thead class="text-[11px] font-bold text-slate-400 uppercase border-b border-slate-100">
+            <tr>
+              <th class="pb-2">Insumo</th>
+              <th class="pb-2">Depósito</th>
+              <th class="pb-2 text-right">Cantidad</th>
+              <th class="pb-2 text-right">Costo Imputado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for item in parte.insumos_utilizados.all %}
+            <tr>
+              <td class="py-2.5 font-medium text-slate-900">{{ item.insumo.nombre }}</td>
+              <td class="py-2.5 text-xs text-slate-500">{{ item.deposito_origen.nombre }}</td>
+              <td class="py-2.5 text-right font-mono font-bold text-slate-800">{{ item.cantidad_utilizada }} {{ item.insumo.unidad_medida }}</td>
+              <td class="py-2.5 text-right font-mono text-slate-700">${{ item.costo_total_ars|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-400 text-xs">No se cargaron insumos en este parte.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Personal Asignado -->
@@ -83,30 +85,32 @@
         </svg>
         Cuadrilla de Personal y Horas
       </h3>
-      <table class="w-full text-left text-sm">
-        <thead class="text-[11px] font-bold text-slate-400 uppercase border-b border-slate-100">
-          <tr>
-            <th class="pb-2">Trabajador</th>
-            <th class="pb-2 text-center">Horas</th>
-            <th class="pb-2">Labor</th>
-            <th class="pb-2 text-right">Costo Jornal</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for p in parte.personal_asignado.all %}
-          <tr>
-            <td class="py-2.5 font-medium text-slate-900">{{ p.empleado.nombre_completo }}</td>
-            <td class="py-2.5 text-center font-mono text-xs">{{ p.horas_normales }}h</td>
-            <td class="py-2.5 text-xs text-slate-500">{{ p.tarea_especifica|default:"General" }}</td>
-            <td class="py-2.5 text-right font-mono text-slate-700">${{ p.costo_jornal_calculado_ars|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4" class="py-4 text-center text-slate-400 text-xs">No se asignó personal a este parte.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[420px]">
+          <thead class="text-[11px] font-bold text-slate-400 uppercase border-b border-slate-100">
+            <tr>
+              <th class="pb-2">Trabajador</th>
+              <th class="pb-2 text-center">Horas</th>
+              <th class="pb-2">Labor</th>
+              <th class="pb-2 text-right">Costo Jornal</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for p in parte.personal_asignado.all %}
+            <tr>
+              <td class="py-2.5 font-medium text-slate-900">{{ p.empleado.nombre_completo }}</td>
+              <td class="py-2.5 text-center font-mono text-xs">{{ p.horas_normales }}h</td>
+              <td class="py-2.5 text-xs text-slate-500">{{ p.tarea_especifica|default:"General" }}</td>
+              <td class="py-2.5 text-right font-mono text-slate-700">${{ p.costo_jornal_calculado_ars|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-400 text-xs">No se asignó personal a este parte.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>

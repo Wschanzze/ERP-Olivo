@@ -20,36 +20,36 @@
       <p class="text-sm text-slate-500 mt-0.5">Control de liquidez, cuentas, movimientos internos y conciliaciones bancarias.</p>
     </div>
 
-    <!-- Botones de Acción Rápida -->
-    <div class="flex flex-wrap items-center gap-2">
+    <!-- Botones de Acción Rápida Responsivos -->
+    <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
       <button
         @click="modalCuenta = true"
-        class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-all duration-150 hover:border-slate-300"
+        class="inline-flex items-center justify-center px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-all duration-150 hover:border-slate-300"
       >
-        <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
         </svg>
-        Nueva Cuenta
+        <span>Nueva Cuenta</span>
       </button>
 
       <button
         @click="modalTransferencia = true"
-        class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-all duration-150 hover:border-slate-300"
+        class="inline-flex items-center justify-center px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition-all duration-150 hover:border-slate-300"
       >
-        <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3.5 h-3.5 mr-1.5 text-oliva-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
         </svg>
-        Transferencia
+        <span>Transferencia</span>
       </button>
 
       <button
         @click="modalMovimiento = true"
-        class="inline-flex items-center px-4 py-2 bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white font-semibold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all duration-150 hover:shadow"
+        class="col-span-2 sm:col-auto inline-flex items-center justify-center px-4 py-2 bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white font-semibold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all duration-150 hover:shadow"
       >
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        Nuevo Movimiento
+        <span>Nuevo Movimiento</span>
       </button>
     </div>
   </div>
@@ -143,28 +143,32 @@
     </div>
 
     <!-- Indicador de Coeficiente Mensual y Liquidez Consolidada -->
-    <div class="flex flex-wrap items-center gap-3 self-end sm:self-center">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
       <!-- Botón Widget Coeficiente Mensual TC -->
       <button 
         @click="modalTipoCambio = true" 
         type="button" 
-        class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer group"
+        class="inline-flex items-center justify-between sm:justify-start gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer group w-full sm:w-auto"
         title="Ver y configurar el coeficiente de cotización mensual para convertir ARS a USD"
       >
-        <span class="flex h-2 w-2 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span>TC Mensual: <strong class="font-mono text-slate-900">$1 USD = ${{ tc_vigente|floatformat:2 }} ARS</strong></span>
+        <div class="flex items-center gap-2">
+          <span class="flex h-2 w-2 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span>TC Mensual: <strong class="font-mono text-slate-900">$1 USD = ${{ tc_vigente|floatformat:2 }} ARS</strong></span>
+        </div>
         <span class="text-[10px] text-oliva-700 bg-oliva-50 px-1.5 py-0.5 rounded group-hover:bg-oliva-100 font-bold uppercase">Fijar TC</span>
       </button>
 
       <!-- Liquidez Consolidada ARS & USD -->
-      <div class="hidden md:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono">
-        <span class="text-slate-400">Total Cajas &amp; Bancos:</span>
-        <strong class="text-slate-800">${{ total_consolidado_ars|floatformat:0 }} ARS</strong>
-        <span class="text-slate-300">•</span>
-        <span class="text-slate-500">(u$s{{ total_consolidado_usd|floatformat:0 }} USD)</span>
+      <div class="flex items-center justify-between sm:justify-start gap-2 px-3.5 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono w-full sm:w-auto">
+        <span class="text-slate-400 text-[11px] sm:text-xs">Total Cajas &amp; Bancos:</span>
+        <div class="flex items-center gap-1.5">
+          <strong class="text-slate-800">${{ total_consolidado_ars|floatformat:0 }} ARS</strong>
+          <span class="text-slate-300">•</span>
+          <span class="text-slate-500 text-[11px] sm:text-xs">(u$s{{ total_consolidado_usd|floatformat:0 }})</span>
+        </div>
       </div>
     </div>
   </div>

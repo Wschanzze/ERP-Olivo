@@ -17,27 +17,27 @@
     </div>
   </div>
 
-  <!-- KPI Cards de Nómina -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+  <!-- KPI Cards de Nómina Responsivas -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Períodos Liquidados</p>
       <p class="text-2xl font-extrabold font-mono text-slate-900 mt-2">{{ periodos|length }}</p>
       <p class="text-[11px] text-slate-400 mt-1">Enero a Marzo 2026 (Q1)</p>
     </div>
 
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Recibos Devengados</p>
       <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2">{{ total_recibos_count }}</p>
       <p class="text-[11px] text-emerald-600 font-medium mt-1">Disponibles en PDF</p>
     </div>
 
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Masa Salarial Neta</p>
       <p class="text-2xl font-extrabold font-mono text-slate-900 mt-2 tabular-nums">${{ total_neto_historico|floatformat:2 }}</p>
       <p class="text-[11px] text-slate-400 mt-1">Total neto liquidado ARS</p>
     </div>
 
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Convenio Laboral</p>
       <p class="text-base font-bold text-oliva-800 mt-2">UATRE / CCT 267</p>
       <p class="text-[11px] text-slate-400 mt-1">Régimen Agrario Nacional</p>
@@ -45,11 +45,11 @@
   </div>
 
   <!-- Pestañas de Navegación -->
-  <div class="flex items-center space-x-2 border-b border-slate-200/80 pb-3">
+  <div class="flex items-center space-x-2 border-b border-slate-200/80 pb-3 overflow-x-auto no-scrollbar">
     <button
       @click="currentTab = 'periodos'"
       :class="currentTab === 'periodos' ? 'bg-[#3D4A2A] text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'"
-      class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all cursor-pointer"
+      class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all cursor-pointer whitespace-nowrap"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -57,16 +57,15 @@
       <span>Períodos de Liquidación</span>
       <span class="px-2 py-0.5 text-[10px] rounded-full" :class="currentTab === 'periodos' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'">{{ periodos|length }}</span>
     </button>
-
     <button
       @click="currentTab = 'recibos'"
       :class="currentTab === 'recibos' ? 'bg-[#3D4A2A] text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'"
-      class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all cursor-pointer"
+      class="px-4 py-2 text-xs rounded-xl flex items-center space-x-2 transition-all cursor-pointer whitespace-nowrap"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      <span>Recibos de Sueldo Devengados</span>
+      <span>Todos los Recibos</span>
       <span class="px-2 py-0.5 text-[10px] rounded-full" :class="currentTab === 'recibos' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800 font-bold'">{{ total_recibos_count }}</span>
     </button>
   </div>
@@ -74,25 +73,8 @@
   <!-- TAB 1: PERÍODOS DE LIQUIDACIÓN -->
   <div x-show="currentTab === 'periodos'" x-cloak class="space-y-4">
     <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-      <table class="w-full text-left border-collapse text-sm">
-        <thead>
-          <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
-            <th class="py-3.5 px-4">Período</th>
-            <th class="py-3.5 px-4">Mes / Año</th>
-            <th class="py-3.5 px-4">Vigencia</th>
-            <th class="py-3.5 px-4 text-center">Recibos Devengados</th>
-            <th class="py-3.5 px-4 text-right">Neto Liquidado</th>
-            <th class="py-3.5 px-4 text-center">Estado</th>
-            <th class="py-3.5 px-4 text-right">Acción</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for per in periodos %}
-          <tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="py-3 px-4 font-semibold text-slate-900">{{ per.get_tipo_display }}</td>
-            <td class="py-3 px-4 font-mono text-xs text-slate-600 font-bold">{{ per.fecha_inicio|date:"m/Y" }}</td>
-            <td class="py-3 px-4 font-mono text-xs text-slate-500">{{ per.fecha_inicio|date:"d/m/Y" }} &rarr; {{ per.fecha_fin|date:"d/m/Y" }}</td>
-            <td class="py-3 px-4 text-center">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm min-w-[600px]">
               <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                 <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 {{ per.total_liquidaciones|default:per.liquidaciones.count }} recibos
@@ -126,6 +108,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 
