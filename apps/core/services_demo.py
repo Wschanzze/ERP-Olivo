@@ -6,6 +6,7 @@ del 1° Trimestre de 2026 (Enero a Marzo 2026) en todos los módulos del ERP Oli
 import datetime
 from decimal import Decimal
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
@@ -163,7 +164,40 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
-    # 4. Insumos y Depósitos
+    # 4. Insumos y Depósitos (Multidepósito & Plan de Cuentas)
+    def _registrar_movimiento(insumo_obj, dep_orig, tipo_mov, cant, costo_u, fecha_dt, motivo_txt, dep_dest=None, ref=""):
+        cant = Decimal(str(cant))
+        costo_u = Decimal(str(costo_u))
+        aware_dt = timezone.make_aware(fecha_dt) if timezone.is_naive(fecha_dt) else fecha_dt
+        mov = MovimientoStock.objects.create(
+            insumo=insumo_obj,
+            deposito=dep_orig,
+            deposito_destino=dep_dest,
+            tipo=tipo_mov,
+            cantidad=cant,
+            costo_unitario=costo_u,
+            fecha=aware_dt,
+            motivo=motivo_txt,
+            referencia_origen=ref or "",
+            usuario=usuario
+        )
+        if tipo_mov in [MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO]:
+            sp, _ = StockPorDeposito.objects.get_or_create(deposito=dep_orig, insumo=insumo_obj, defaults={'cantidad': Decimal('0.00')})
+            sp.cantidad += cant
+            sp.save(update_fields=['cantidad'])
+        elif tipo_mov in [MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, MovimientoStock.TipoMovimiento.SALIDA_MERMA, MovimientoStock.TipoMovimiento.AJUSTE_NEGATIVO]:
+            sp, _ = StockPorDeposito.objects.get_or_create(deposito=dep_orig, insumo=insumo_obj, defaults={'cantidad': Decimal('0.00')})
+            sp.cantidad -= cant
+            sp.save(update_fields=['cantidad'])
+        elif tipo_mov == MovimientoStock.TipoMovimiento.TRANSFERENCIA and dep_dest:
+            sp_orig, _ = StockPorDeposito.objects.get_or_create(deposito=dep_orig, insumo=insumo_obj, defaults={'cantidad': Decimal('0.00')})
+            sp_orig.cantidad -= cant
+            sp_orig.save(update_fields=['cantidad'])
+            sp_dest, _ = StockPorDeposito.objects.get_or_create(deposito=dep_dest, insumo=insumo_obj, defaults={'cantidad': Decimal('0.00')})
+            sp_dest.cantidad += cant
+            sp_dest.save(update_fields=['cantidad'])
+        return mov
+
     dep_central, _ = Deposito.objects.get_or_create(
         codigo="DEP-FNORTE-01",
         defaults={
@@ -172,30 +206,82 @@ def poblar_datos_demo_q1_2026():
             'es_deposito_central': True
         }
     )
+    dep_sur, _ = Deposito.objects.get_or_create(
+        codigo="DEP-FSUR-01",
+        defaults={
+            'finca': finca_sur,
+            'nombre': "Galpón Tinglado Sur",
+            'es_deposito_central': False
+        }
+    )
 
-    cat_fert, _ = CategoriaInsumo.objects.get_or_create(nombre="Fertilizantes y Nutrición")
-    cat_quim, _ = CategoriaInsumo.objects.get_or_create(nombre="Fitosanitarios y Curas")
-    cat_comb, _ = CategoriaInsumo.objects.get_or_create(nombre="Combustibles y Lubricantes")
-    cat_env, _ = CategoriaInsumo.objects.get_or_create(nombre="Envases, Tapas y Embalaje")
+    # Cuentas Contables del Rubro 1.1.5 (Bienes de Cambio) y 4.2.1 (Costos Agrícolas)
+    cta_fert_act = CuentaContable.objects.filter(codigo='1.1.5.01.000001').first()
+    cta_herb_act = CuentaContable.objects.filter(codigo='1.1.5.01.000002').first()
+    cta_fung_act = CuentaContable.objects.filter(codigo='1.1.5.01.000003').first()
+    cta_riego_act = CuentaContable.objects.filter(codigo='1.1.5.01.000004').first()
+    cta_agro_act = CuentaContable.objects.filter(codigo='1.1.5.01.000000').first()
+    cta_bot_act = CuentaContable.objects.filter(codigo='1.1.5.05.000001').first()
+    cta_tap_act = CuentaContable.objects.filter(codigo='1.1.5.05.000003').first()
+    cta_emb_act = CuentaContable.objects.filter(codigo='1.1.5.05.000005').first()
+    cta_gasto_agro = CuentaContable.objects.filter(codigo='4.2.1.02.000000').first()
+    cta_gasto_gral = CuentaContable.objects.filter(codigo='4.2.1.00.000000').first()
+
+    cat_fert, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Fertilizantes y Nutrición",
+        defaults={'cuenta_contable_activo': cta_fert_act, 'cuenta_contable_gasto': cta_gasto_agro, 'descripcion': "Fertilizantes hidrosolubles y granulados para fertirriego y suelo"}
+    )
+    cat_quim, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Fitosanitarios y Curas",
+        defaults={'cuenta_contable_activo': cta_fung_act, 'cuenta_contable_gasto': cta_gasto_agro, 'descripcion': "Fungicidas, bactericidas e insecticidas para control fitosanitario"}
+    )
+    cat_herb, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Herbicidas y Manejo de Suelo",
+        defaults={'cuenta_contable_activo': cta_herb_act, 'cuenta_contable_gasto': cta_gasto_agro, 'descripcion': "Herbicidas sistémicos y residuales"}
+    )
+    cat_comb, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Combustibles y Lubricantes",
+        defaults={'cuenta_contable_activo': cta_agro_act, 'cuenta_contable_gasto': cta_gasto_gral, 'descripcion': "Gasoil agro y aceites para tractores y bombas"}
+    )
+    cat_env, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Envases y Botellas de Vidrio",
+        defaults={'cuenta_contable_activo': cta_bot_act, 'cuenta_contable_gasto': cta_gasto_gral, 'descripcion': "Botellas cónicas para fraccionado"}
+    )
+    cat_cierres, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Tapas y Cierres D.O.P.",
+        defaults={'cuenta_contable_activo': cta_tap_act, 'cuenta_contable_gasto': cta_gasto_gral, 'descripcion': "Tapas irrellenables con pico vertedor"}
+    )
+    cat_embalaje, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Cajas y Bins de Cosecha",
+        defaults={'cuenta_contable_activo': cta_emb_act, 'cuenta_contable_gasto': cta_gasto_gral, 'descripcion': "Cajas de cartón corrugado y bins de cosecha"}
+    )
+    cat_riego, _ = CategoriaInsumo.objects.get_or_create(
+        nombre="Insumos y Repuestos de Riego",
+        defaults={'cuenta_contable_activo': cta_riego_act, 'cuenta_contable_gasto': cta_gasto_agro, 'descripcion': "Goteros autocompensantes y repuestos de riego"}
+    )
 
     insumos_data = [
-        ('INS-UREA-01', "Urea Granulada 46% N Soluble", cat_fert, Insumo.UnidadMedida.KILOS, Decimal("12500.00"), Decimal("2000.00"), Decimal("850.00"), Decimal("0.81")),
-        ('INS-NITRATO-01', "Nitrato de Potasio Fertirriego 13-0-45", cat_fert, Insumo.UnidadMedida.KILOS, Decimal("8400.00"), Decimal("1500.00"), Decimal("1650.00"), Decimal("1.57")),
-        ('INS-COBRE-01', "Oxicloruro de Cobre 50% WP (Repilo)", cat_quim, Insumo.UnidadMedida.KILOS, Decimal("950.00"), Decimal("150.00"), Decimal("14500.00"), Decimal("13.80")),
-        ('INS-GASOIL-01', "Gasoil Grado 2 Agro (Tractores)", cat_comb, Insumo.UnidadMedida.LITROS, Decimal("6800.00"), Decimal("1000.00"), Decimal("1120.00"), Decimal("1.07")),
-        ('INS-BOT-500', "Botella Vidrio UVAG 500ml Cónica", cat_env, Insumo.UnidadMedida.UNIDADES, Decimal("24000.00"), Decimal("5000.00"), Decimal("580.00"), Decimal("0.55")),
-        ('INS-TAPAS-01', "Tapa Irrellenable D.O.P. Verde Olivo", cat_env, Insumo.UnidadMedida.UNIDADES, Decimal("32000.00"), Decimal("5000.00"), Decimal("190.00"), Decimal("0.18")),
-        ('INS-BINS-01', "Bins Plásticos Ventilados 400kg Cosecha", cat_env, Insumo.UnidadMedida.UNIDADES, Decimal("450.00"), Decimal("50.00"), Decimal("95000.00"), Decimal("90.47")),
+        ('INS-UREA-01', "Urea Granulada 46% N Soluble", cat_fert, cta_fert_act, Insumo.UnidadMedida.KILOS, Decimal("2000.00"), Decimal("850.00"), Decimal("0.81")),
+        ('INS-NITRATO-01', "Nitrato de Potasio Fertirriego 13-0-45", cat_fert, cta_fert_act, Insumo.UnidadMedida.KILOS, Decimal("1500.00"), Decimal("1650.00"), Decimal("1.57")),
+        ('INS-COBRE-01', "Oxicloruro de Cobre 50% WP (Repilo)", cat_quim, cta_fung_act, Insumo.UnidadMedida.KILOS, Decimal("150.00"), Decimal("14500.00"), Decimal("13.80")),
+        ('INS-GLIFO-01', "Glifosato 48% SL Control Malezas", cat_herb, cta_herb_act, Insumo.UnidadMedida.LITROS, Decimal("100.00"), Decimal("9200.00"), Decimal("8.76")),
+        ('INS-GASOIL-01', "Gasoil Grado 2 Agro (Tractores)", cat_comb, cta_agro_act, Insumo.UnidadMedida.LITROS, Decimal("1500.00"), Decimal("1120.00"), Decimal("1.07")),
+        ('INS-BOT-500', "Botella Vidrio UVAG 500ml Cónica", cat_env, cta_bot_act, Insumo.UnidadMedida.UNIDADES, Decimal("5000.00"), Decimal("580.00"), Decimal("0.55")),
+        ('INS-TAPAS-01', "Tapa Irrellenable D.O.P. Verde Olivo", cat_cierres, cta_tap_act, Insumo.UnidadMedida.UNIDADES, Decimal("5000.00"), Decimal("190.00"), Decimal("0.18")),
+        ('INS-CAJAS-12', "Cajas Cartón Corrugado x 12 Botellas", cat_embalaje, cta_emb_act, Insumo.UnidadMedida.UNIDADES, Decimal("500.00"), Decimal("1250.00"), Decimal("1.19")),
+        ('INS-BINS-01', "Bins Plásticos Ventilados 400kg Cosecha", cat_embalaje, cta_emb_act, Insumo.UnidadMedida.UNIDADES, Decimal("50.00"), Decimal("95000.00"), Decimal("90.47")),
+        ('INS-GOTERO-01', "Goteros Autocompensantes 2.2 L/h Netafim", cat_riego, cta_riego_act, Insumo.UnidadMedida.UNIDADES, Decimal("1000.00"), Decimal("120.00"), Decimal("0.11")),
     ]
     insumos = {}
-    for cod, nom, cat, um, stock, st_min, c_ars, c_usd in insumos_data:
-        ins, _ = Insumo.objects.get_or_create(
+    for cod, nom, cat, cta, um, st_min, c_ars, c_usd in insumos_data:
+        ins, _ = Insumo.objects.update_or_create(
             codigo=cod,
             defaults={
                 'nombre': nom,
                 'categoria': cat,
+                'cuenta_contable': cta,
                 'unidad_medida': um,
-                'stock_actual': stock,
+                'stock_actual': Decimal('0.00'),
                 'stock_minimo': st_min,
                 'costo_unitario_ars': c_ars,
                 'costo_unitario_usd': c_usd,
@@ -203,10 +289,36 @@ def poblar_datos_demo_q1_2026():
             }
         )
         insumos[cod] = ins
-        StockPorDeposito.objects.get_or_create(
-            deposito=dep_central,
-            insumo=ins,
-            defaults={'cantidad': stock}
+
+    # Stock Inicial de Apertura de Campaña (02/01/2026) en ambos depósitos
+    stock_inicial_central = [
+        ('INS-UREA-01', Decimal("10000.00"), Decimal("850.00")),
+        ('INS-NITRATO-01', Decimal("7000.00"), Decimal("1650.00")),
+        ('INS-COBRE-01', Decimal("700.00"), Decimal("14500.00")),
+        ('INS-GLIFO-01', Decimal("400.00"), Decimal("9200.00")),
+        ('INS-GASOIL-01', Decimal("3000.00"), Decimal("1120.00")),
+        ('INS-BOT-500', Decimal("15000.00"), Decimal("580.00")),
+        ('INS-TAPAS-01', Decimal("22000.00"), Decimal("190.00")),
+        ('INS-CAJAS-12', Decimal("1500.00"), Decimal("1250.00")),
+        ('INS-BINS-01', Decimal("350.00"), Decimal("95000.00")),
+        ('INS-GOTERO-01', Decimal("5000.00"), Decimal("120.00")),
+    ]
+    for cod, cant, c_u in stock_inicial_central:
+        _registrar_movimiento(
+            insumos[cod], dep_central, MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO,
+            cant, c_u, datetime.datetime(2026, 1, 2, 8, 0),
+            "[DEMO] Inventario inicial apertura campaña 2026 - Depósito Central", ref="INI-20260102-1"
+        )
+
+    stock_inicial_sur = [
+        ('INS-GASOIL-01', Decimal("1000.00"), Decimal("1120.00")),
+        ('INS-BINS-01', Decimal("50.00"), Decimal("95000.00")),
+    ]
+    for cod, cant, c_u in stock_inicial_sur:
+        _registrar_movimiento(
+            insumos[cod], dep_sur, MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO,
+            cant, c_u, datetime.datetime(2026, 1, 2, 8, 30),
+            "[DEMO] Inventario inicial apertura campaña 2026 - Galpón Tinglado Sur", ref="INI-20260102-2"
         )
 
     # 5. Maquinaria
@@ -383,7 +495,7 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
-    # Órdenes de Compra Enero
+    # Órdenes de Compra y Recepciones Enero
     oc_fert = OrdenDeCompra.objects.create(
         proveedor=prov_agroquimica,
         finca_destino=finca_norte,
@@ -407,10 +519,12 @@ def poblar_datos_demo_q1_2026():
         total_real_ars=oc_fert.total_estimado_ars,
         observaciones="[DEMO] Recepción conforme de fertilizantes en nave central."
     )
-    ItemRecepcion.objects.create(recepcion=rec_fert, insumo=insumos['INS-UREA-01'], cantidad_en_oc=Decimal("3000.00"), cantidad_recibida=Decimal("3000.00"), precio_unitario_real_ars=Decimal("850.00"))
-    ItemRecepcion.objects.create(recepcion=rec_fert, insumo=insumos['INS-NITRATO-01'], cantidad_en_oc=Decimal("1500.00"), cantidad_recibida=Decimal("1500.00"), precio_unitario_real_ars=Decimal("1650.00"))
+    mov_u_ene = _registrar_movimiento(insumos['INS-UREA-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("3000.00"), Decimal("850.00"), datetime.datetime(2026, 1, 12, 10, 0), "[DEMO] Recepción OC OC-2026-001 remito R-0004-00129841", ref="OC-2026-001")
+    mov_n_ene = _registrar_movimiento(insumos['INS-NITRATO-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("1500.00"), Decimal("1650.00"), datetime.datetime(2026, 1, 12, 10, 0), "[DEMO] Recepción OC OC-2026-001 remito R-0004-00129841", ref="OC-2026-001")
+    ItemRecepcion.objects.create(recepcion=rec_fert, insumo=insumos['INS-UREA-01'], cantidad_en_oc=Decimal("3000.00"), cantidad_recibida=Decimal("3000.00"), precio_unitario_real_ars=Decimal("850.00"), movimiento_stock=mov_u_ene)
+    ItemRecepcion.objects.create(recepcion=rec_fert, insumo=insumos['INS-NITRATO-01'], cantidad_en_oc=Decimal("1500.00"), cantidad_recibida=Decimal("1500.00"), precio_unitario_real_ars=Decimal("1650.00"), movimiento_stock=mov_n_ene)
 
-    # OC Combustible Enero
+    # OC Combustible Enero y Recepción
     oc_comb = OrdenDeCompra.objects.create(
         proveedor=prov_ypf,
         finca_destino=finca_norte,
@@ -422,6 +536,22 @@ def poblar_datos_demo_q1_2026():
     )
     ItemOrdenDeCompra.objects.create(orden=oc_comb, insumo=insumos['INS-GASOIL-01'], cantidad_solicitada=Decimal("5000.00"), precio_unitario_estimado_ars=Decimal("1120.00"))
     oc_comb.recalcular_total()
+
+    rec_comb = RecepcionMercaderia.objects.create(
+        orden=oc_comb,
+        deposito_destino=dep_central,
+        fecha_recepcion=datetime.date(2026, 1, 16),
+        numero_remito_proveedor="R-0001-00094120",
+        numero_factura_proveedor="FC-A-0001-00031890",
+        estado=RecepcionMercaderia.Estado.CONFIRMADA,
+        total_real_ars=oc_comb.total_estimado_ars,
+        observaciones="[DEMO] Descarga de combustible cisterna YPF en tanques nave central."
+    )
+    mov_g_ene = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("5000.00"), Decimal("1120.00"), datetime.datetime(2026, 1, 16, 11, 30), "[DEMO] Recepción cisterna YPF remito R-0001-00094120", ref="OC-2026-002")
+    ItemRecepcion.objects.create(recepcion=rec_comb, insumo=insumos['INS-GASOIL-01'], cantidad_en_oc=Decimal("5000.00"), cantidad_recibida=Decimal("5000.00"), precio_unitario_real_ars=Decimal("1120.00"), movimiento_stock=mov_g_ene)
+
+    # Transferencia Inter-depósito Enero (14/01/2026)
+    _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.TRANSFERENCIA, Decimal("1000.00"), Decimal("1120.00"), datetime.datetime(2026, 1, 14, 15, 0), "[DEMO] Traslado de gasoil para bombas de riego Finca Sur", dep_dest=dep_sur, ref="TRF-20260114")
 
     # Partes Diarios Enero (Riego por goteo & Fertirriego)
     ot_riego_ene = OrdenDeTrabajo.objects.create(
@@ -457,15 +587,7 @@ def poblar_datos_demo_q1_2026():
         costo_jornal_calculado_ars=Decimal("32000.00"),
         tarea_especifica="Operación cabezal y monitoreo goteros"
     )
-    mov_fert = MovimientoStock.objects.create(
-        insumo=insumos['INS-NITRATO-01'],
-        deposito=dep_central,
-        tipo=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
-        cantidad=Decimal("150.00"),
-        costo_unitario=Decimal("1650.00"),
-        fecha=timezone.make_aware(datetime.datetime(2026, 1, 18, 10, 0)),
-        motivo="[DEMO] Fertirriego en Cuadro 2 Arbequina"
-    )
+    mov_fert = _registrar_movimiento(insumos['INS-NITRATO-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("150.00"), Decimal("1650.00"), datetime.datetime(2026, 1, 18, 10, 0), "[DEMO] Fertirriego en Cuadro 2 Arbequina")
     ParteDiarioInsumo.objects.create(
         parte_diario=pd_riego_ene,
         insumo=insumos['INS-NITRATO-01'],
@@ -476,6 +598,46 @@ def poblar_datos_demo_q1_2026():
         costo_total_ars=Decimal("247500.00"),
         movimiento_stock_generado=mov_fert
     )
+
+    # Parte Diario Laboreo de Suelo Enero (22/01/2026)
+    ot_laboreo = OrdenDeTrabajo.objects.create(
+        cuadro=cuadro_a1,
+        tipo_labor=OrdenDeTrabajo.TipoLabor.LABOR_SUELO,
+        fecha_programada=datetime.date(2026, 1, 22),
+        responsable=usuario,
+        estado=OrdenDeTrabajo.Estado.FINALIZADA,
+        instrucciones_tecnicas="[DEMO] Desmalezado mecánico y pasada de rastra de discos entre hileras."
+    )
+    pd_laboreo = ParteDiario.objects.create(
+        orden_de_trabajo=ot_laboreo,
+        finca=finca_norte,
+        cuadro=cuadro_a1,
+        fecha=datetime.date(2026, 1, 22),
+        supervisor=usuario,
+        estado=ParteDiario.Estado.CONFIRMADO_CERRADO,
+        observaciones="[DEMO] Pasada de rastra en 35 ha completada con Tractor John Deere."
+    )
+    ParteDiarioPersonal.objects.create(
+        parte_diario=pd_laboreo,
+        empleado=empleados['LEG-002'],
+        horas_normales=Decimal("8.0"),
+        costo_jornal_calculado_ars=Decimal("35000.00"),
+        tarea_especifica="Tractorista con rastra de discos"
+    )
+    mov_gasoil_ene = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("350.00"), Decimal("1120.00"), datetime.datetime(2026, 1, 22, 16, 0), "[DEMO] Consumo gasoil laboreo y rastra Cuadro Arauco")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_laboreo,
+        insumo=insumos['INS-GASOIL-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("350.00"),
+        dosis_por_hectarea="10.0 L/ha",
+        costo_unitario_aplicado_ars=Decimal("1120.00"),
+        costo_total_ars=Decimal("392000.00"),
+        movimiento_stock_generado=mov_gasoil_ene
+    )
+
+    # Ajuste Físico de Fin de Mes Enero (30/01/2026)
+    _registrar_movimiento(insumos['INS-UREA-01'], dep_central, MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO, Decimal("20.00"), Decimal("850.00"), datetime.datetime(2026, 1, 30, 17, 0), "[DEMO] Ajuste de inventario físico mensual - sobrante balanza", ref="AJU-20260130")
 
     # Asistencia Diaria Enero (muestra representativa de días clave)
     dias_ene = [datetime.date(2026, 1, d) for d in range(5, 31, 2) if datetime.date(2026, 1, d).weekday() < 6]
@@ -596,19 +758,70 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
-    # OC Envases Febrero
+    # OC Envases Febrero y Recepción Confirmada
     oc_env = OrdenDeCompra.objects.create(
         proveedor=prov_envases,
         finca_destino=finca_norte,
         numero="OC-2026-003",
-        fecha_emision=datetime.date(2026, 2, 12),
-        fecha_entrega_estimada=datetime.date(2026, 2, 20),
+        fecha_emision=datetime.date(2026, 2, 10),
+        fecha_entrega_estimada=datetime.date(2026, 2, 15),
         estado=OrdenDeCompra.Estado.RECIBIDA,
-        observaciones="[DEMO] Envases y botellas de vidrio cónicas para la línea de fraccionado."
+        observaciones="[DEMO] Envases de vidrio, tapas irrellenables y cajas para la línea de fraccionado."
     )
     ItemOrdenDeCompra.objects.create(orden=oc_env, insumo=insumos['INS-BOT-500'], cantidad_solicitada=Decimal("10000.00"), precio_unitario_estimado_ars=Decimal("580.00"))
     ItemOrdenDeCompra.objects.create(orden=oc_env, insumo=insumos['INS-TAPAS-01'], cantidad_solicitada=Decimal("10000.00"), precio_unitario_estimado_ars=Decimal("190.00"))
+    ItemOrdenDeCompra.objects.create(orden=oc_env, insumo=insumos['INS-CAJAS-12'], cantidad_solicitada=Decimal("800.00"), precio_unitario_estimado_ars=Decimal("1250.00"))
     oc_env.recalcular_total()
+
+    rec_env = RecepcionMercaderia.objects.create(
+        orden=oc_env,
+        deposito_destino=dep_central,
+        fecha_recepcion=datetime.date(2026, 2, 15),
+        numero_remito_proveedor="R-0008-00034190",
+        numero_factura_proveedor="FC-A-0008-00012480",
+        estado=RecepcionMercaderia.Estado.CONFIRMADA,
+        total_real_ars=oc_env.total_estimado_ars,
+        observaciones="[DEMO] Recepción paletizada de botellas, tapas y cajas en depósito central."
+    )
+    mov_b_feb = _registrar_movimiento(insumos['INS-BOT-500'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("10000.00"), Decimal("580.00"), datetime.datetime(2026, 2, 15, 10, 0), "[DEMO] Ingreso botellas UVAG 500ml OC-2026-003", ref="OC-2026-003")
+    mov_t_feb = _registrar_movimiento(insumos['INS-TAPAS-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("10000.00"), Decimal("190.00"), datetime.datetime(2026, 2, 15, 10, 0), "[DEMO] Ingreso tapas irrellenables D.O.P. OC-2026-003", ref="OC-2026-003")
+    mov_c_feb = _registrar_movimiento(insumos['INS-CAJAS-12'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("800.00"), Decimal("1250.00"), datetime.datetime(2026, 2, 15, 10, 0), "[DEMO] Ingreso cajas corrugadas x 12 OC-2026-003", ref="OC-2026-003")
+    ItemRecepcion.objects.create(recepcion=rec_env, insumo=insumos['INS-BOT-500'], cantidad_en_oc=Decimal("10000.00"), cantidad_recibida=Decimal("10000.00"), precio_unitario_real_ars=Decimal("580.00"), movimiento_stock=mov_b_feb)
+    ItemRecepcion.objects.create(recepcion=rec_env, insumo=insumos['INS-TAPAS-01'], cantidad_en_oc=Decimal("10000.00"), cantidad_recibida=Decimal("10000.00"), precio_unitario_real_ars=Decimal("190.00"), movimiento_stock=mov_t_feb)
+    ItemRecepcion.objects.create(recepcion=rec_env, insumo=insumos['INS-CAJAS-12'], cantidad_en_oc=Decimal("800.00"), cantidad_recibida=Decimal("800.00"), precio_unitario_real_ars=Decimal("1250.00"), movimiento_stock=mov_c_feb)
+
+    # OC Fitosanitarios y Herbicidas Febrero
+    oc_quim = OrdenDeCompra.objects.create(
+        proveedor=prov_agroquimica,
+        finca_destino=finca_norte,
+        numero="OC-2026-004",
+        fecha_emision=datetime.date(2026, 2, 12),
+        fecha_entrega_estimada=datetime.date(2026, 2, 15),
+        estado=OrdenDeCompra.Estado.RECIBIDA,
+        observaciones="[DEMO] Fitosanitarios para cura preventiva de repilo y control de malezas."
+    )
+    ItemOrdenDeCompra.objects.create(orden=oc_quim, insumo=insumos['INS-COBRE-01'], cantidad_solicitada=Decimal("300.00"), precio_unitario_estimado_ars=Decimal("14500.00"))
+    ItemOrdenDeCompra.objects.create(orden=oc_quim, insumo=insumos['INS-GLIFO-01'], cantidad_solicitada=Decimal("200.00"), precio_unitario_estimado_ars=Decimal("9200.00"))
+    oc_quim.recalcular_total()
+
+    rec_quim = RecepcionMercaderia.objects.create(
+        orden=oc_quim,
+        deposito_destino=dep_central,
+        fecha_recepcion=datetime.date(2026, 2, 15),
+        numero_remito_proveedor="R-0004-00130982",
+        numero_factura_proveedor="FC-A-0004-00055810",
+        estado=RecepcionMercaderia.Estado.CONFIRMADA,
+        total_real_ars=oc_quim.total_estimado_ars,
+        observaciones="[DEMO] Recepción fitosanitarios y herbicida en nave central."
+    )
+    mov_cu_feb = _registrar_movimiento(insumos['INS-COBRE-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("300.00"), Decimal("14500.00"), datetime.datetime(2026, 2, 15, 14, 0), "[DEMO] Ingreso cobre repilo OC-2026-004", ref="OC-2026-004")
+    mov_gl_feb = _registrar_movimiento(insumos['INS-GLIFO-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("200.00"), Decimal("9200.00"), datetime.datetime(2026, 2, 15, 14, 0), "[DEMO] Ingreso glifosato herbicida OC-2026-004", ref="OC-2026-004")
+    ItemRecepcion.objects.create(recepcion=rec_quim, insumo=insumos['INS-COBRE-01'], cantidad_en_oc=Decimal("300.00"), cantidad_recibida=Decimal("300.00"), precio_unitario_real_ars=Decimal("14500.00"), movimiento_stock=mov_cu_feb)
+    ItemRecepcion.objects.create(recepcion=rec_quim, insumo=insumos['INS-GLIFO-01'], cantidad_en_oc=Decimal("200.00"), cantidad_recibida=Decimal("200.00"), precio_unitario_real_ars=Decimal("9200.00"), movimiento_stock=mov_gl_feb)
+
+    # Transferencia Inter-depósito Febrero (17/02/2026)
+    _registrar_movimiento(insumos['INS-COBRE-01'], dep_central, MovimientoStock.TipoMovimiento.TRANSFERENCIA, Decimal("50.00"), Decimal("14500.00"), datetime.datetime(2026, 2, 17, 14, 0), "[DEMO] Traslado de cobre preventivo a Galpón Tinglado Sur", dep_dest=dep_sur, ref="TRF-20260217")
+    _registrar_movimiento(insumos['INS-GLIFO-01'], dep_central, MovimientoStock.TipoMovimiento.TRANSFERENCIA, Decimal("50.00"), Decimal("9200.00"), datetime.datetime(2026, 2, 17, 14, 0), "[DEMO] Traslado de glifosato a Galpón Tinglado Sur", dep_dest=dep_sur, ref="TRF-20260217")
 
     # Partes Diarios Febrero
     ot_cura_feb = OrdenDeTrabajo.objects.create(
@@ -636,15 +849,7 @@ def poblar_datos_demo_q1_2026():
         costo_jornal_calculado_ars=Decimal("48125.00"),
         tarea_especifica="Tractorista con atomizadora"
     )
-    mov_cobre = MovimientoStock.objects.create(
-        insumo=insumos['INS-COBRE-01'],
-        deposito=dep_central,
-        tipo=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
-        cantidad=Decimal("70.00"),
-        costo_unitario=Decimal("14500.00"),
-        fecha=timezone.make_aware(datetime.datetime(2026, 2, 16, 9, 30)),
-        motivo="[DEMO] Cura sanitaria Cuadro Arauco"
-    )
+    mov_cobre = _registrar_movimiento(insumos['INS-COBRE-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("70.00"), Decimal("14500.00"), datetime.datetime(2026, 2, 16, 9, 30), "[DEMO] Cura sanitaria repilo Cuadro Arauco")
     ParteDiarioInsumo.objects.create(
         parte_diario=pd_cura_feb,
         insumo=insumos['INS-COBRE-01'],
@@ -655,6 +860,57 @@ def poblar_datos_demo_q1_2026():
         costo_total_ars=Decimal("1015000.00"),
         movimiento_stock_generado=mov_cobre
     )
+
+    # Parte Diario Control de Malezas Febrero (20/02/2026)
+    ot_desm = OrdenDeTrabajo.objects.create(
+        cuadro=cuadro_b2,
+        tipo_labor=OrdenDeTrabajo.TipoLabor.DESMALEZADO,
+        fecha_programada=datetime.date(2026, 2, 20),
+        responsable=usuario,
+        estado=OrdenDeTrabajo.Estado.FINALIZADA,
+        instrucciones_tecnicas="[DEMO] Aplicación dirigida de herbicida en ruedo y borduras con pulverizadora."
+    )
+    pd_desm = ParteDiario.objects.create(
+        orden_de_trabajo=ot_desm,
+        finca=finca_norte,
+        cuadro=cuadro_b2,
+        fecha=datetime.date(2026, 2, 20),
+        supervisor=usuario,
+        estado=ParteDiario.Estado.CONFIRMADO_CERRADO,
+        observaciones="[DEMO] Tratamiento de malezas completado en Cuadro Arbequina."
+    )
+    ParteDiarioPersonal.objects.create(
+        parte_diario=pd_desm,
+        empleado=empleados['LEG-002'],
+        horas_normales=Decimal("8.0"),
+        costo_jornal_calculado_ars=Decimal("35000.00"),
+        tarea_especifica="Tractorista aplicación herbicida"
+    )
+    mov_glifo_feb = _registrar_movimiento(insumos['INS-GLIFO-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("40.00"), Decimal("9200.00"), datetime.datetime(2026, 2, 20, 11, 0), "[DEMO] Herbicida glifosato Cuadro Arbequina")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_desm,
+        insumo=insumos['INS-GLIFO-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("40.00"),
+        dosis_por_hectarea="0.8 L/ha",
+        costo_unitario_aplicado_ars=Decimal("9200.00"),
+        costo_total_ars=Decimal("368000.00"),
+        movimiento_stock_generado=mov_glifo_feb
+    )
+    mov_gasoil_feb = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("250.00"), Decimal("1120.00"), datetime.datetime(2026, 2, 20, 16, 0), "[DEMO] Gasoil tractor aplicación herbicida")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_desm,
+        insumo=insumos['INS-GASOIL-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("250.00"),
+        dosis_por_hectarea="5.1 L/ha",
+        costo_unitario_aplicado_ars=Decimal("1120.00"),
+        costo_total_ars=Decimal("280000.00"),
+        movimiento_stock_generado=mov_gasoil_feb
+    )
+
+    # Merma de Envases Febrero (27/02/2026)
+    _registrar_movimiento(insumos['INS-BOT-500'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_MERMA, Decimal("35.00"), Decimal("580.00"), datetime.datetime(2026, 2, 27, 16, 30), "[DEMO] Merma por rotura de pallet durante descarga en depósito", ref="MER-20260227")
 
     # Asistencia Febrero
     dias_feb = [datetime.date(2026, 2, d) for d in range(2, 28, 2) if datetime.date(2026, 2, d).weekday() < 6]
@@ -820,6 +1076,61 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
+    # Órdenes de Compra y Recepciones Marzo
+    oc_gasoil_mar = OrdenDeCompra.objects.create(
+        proveedor=prov_ypf,
+        finca_destino=finca_norte,
+        numero="OC-2026-005",
+        fecha_emision=datetime.date(2026, 3, 2),
+        fecha_entrega_estimada=datetime.date(2026, 3, 4),
+        estado=OrdenDeCompra.Estado.RECIBIDA,
+        observaciones="[DEMO] Gasoil para campaña de cosecha mecánica y fletes de campo a almazara."
+    )
+    ItemOrdenDeCompra.objects.create(orden=oc_gasoil_mar, insumo=insumos['INS-GASOIL-01'], cantidad_solicitada=Decimal("8000.00"), precio_unitario_estimado_ars=Decimal("1150.00"))
+    oc_gasoil_mar.recalcular_total()
+
+    rec_gasoil_mar = RecepcionMercaderia.objects.create(
+        orden=oc_gasoil_mar,
+        deposito_destino=dep_central,
+        fecha_recepcion=datetime.date(2026, 3, 4),
+        numero_remito_proveedor="R-0001-00095810",
+        numero_factura_proveedor="FC-A-0001-00032990",
+        estado=RecepcionMercaderia.Estado.CONFIRMADA,
+        total_real_ars=oc_gasoil_mar.total_estimado_ars,
+        observaciones="[DEMO] Descarga cisterna YPF 8.000 L para campaña de cosecha."
+    )
+    mov_g_mar = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("8000.00"), Decimal("1150.00"), datetime.datetime(2026, 3, 4, 11, 0), "[DEMO] Ingreso gasoil cisterna cosecha OC-2026-005", ref="OC-2026-005")
+    ItemRecepcion.objects.create(recepcion=rec_gasoil_mar, insumo=insumos['INS-GASOIL-01'], cantidad_en_oc=Decimal("8000.00"), cantidad_recibida=Decimal("8000.00"), precio_unitario_real_ars=Decimal("1150.00"), movimiento_stock=mov_g_mar)
+
+    oc_bins_mar = OrdenDeCompra.objects.create(
+        proveedor=prov_envases,
+        finca_destino=finca_norte,
+        numero="OC-2026-006",
+        fecha_emision=datetime.date(2026, 3, 3),
+        fecha_entrega_estimada=datetime.date(2026, 3, 5),
+        estado=OrdenDeCompra.Estado.RECIBIDA,
+        observaciones="[DEMO] 100 Bins plásticos ventilados 400kg para recolección y logística de cosecha."
+    )
+    ItemOrdenDeCompra.objects.create(orden=oc_bins_mar, insumo=insumos['INS-BINS-01'], cantidad_solicitada=Decimal("100.00"), precio_unitario_estimado_ars=Decimal("95000.00"))
+    oc_bins_mar.recalcular_total()
+
+    rec_bins_mar = RecepcionMercaderia.objects.create(
+        orden=oc_bins_mar,
+        deposito_destino=dep_central,
+        fecha_recepcion=datetime.date(2026, 3, 5),
+        numero_remito_proveedor="R-0008-00035120",
+        numero_factura_proveedor="FC-A-0008-00013210",
+        estado=RecepcionMercaderia.Estado.CONFIRMADA,
+        total_real_ars=oc_bins_mar.total_estimado_ars,
+        observaciones="[DEMO] Recepción 100 bins plásticos nuevos en nave central."
+    )
+    mov_b_mar = _registrar_movimiento(insumos['INS-BINS-01'], dep_central, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA, Decimal("100.00"), Decimal("95000.00"), datetime.datetime(2026, 3, 5, 15, 0), "[DEMO] Ingreso 100 bins cosecha OC-2026-006", ref="OC-2026-006")
+    ItemRecepcion.objects.create(recepcion=rec_bins_mar, insumo=insumos['INS-BINS-01'], cantidad_en_oc=Decimal("100.00"), cantidad_recibida=Decimal("100.00"), precio_unitario_real_ars=Decimal("95000.00"), movimiento_stock=mov_b_mar)
+
+    # Transferencia Logística Cosecha Sur (06/03/2026)
+    _registrar_movimiento(insumos['INS-BINS-01'], dep_central, MovimientoStock.TipoMovimiento.TRANSFERENCIA, Decimal("50.00"), Decimal("95000.00"), datetime.datetime(2026, 3, 6, 9, 0), "[DEMO] Traslado de 50 bins al Galpón Tinglado Sur para cosecha", dep_dest=dep_sur, ref="TRF-20260306")
+    _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.TRANSFERENCIA, Decimal("2500.00"), Decimal("1150.00"), datetime.datetime(2026, 3, 6, 9, 0), "[DEMO] Traslado de 2500 L gasoil para cosecha en Finca Sur", dep_dest=dep_sur, ref="TRF-20260306")
+
     # Partes Diarios de Cosecha Marzo
     ot_cosecha = OrdenDeTrabajo.objects.create(
         cuadro=cuadro_a1,
@@ -847,6 +1158,95 @@ def poblar_datos_demo_q1_2026():
             costo_jornal_calculado_ars=Decimal("38000.00"),
             tarea_especifica="Cosechero manual y acopio en bines"
         )
+    mov_gasoil_cos1 = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("450.00"), Decimal("1150.00"), datetime.datetime(2026, 3, 8, 18, 0), "[DEMO] Gasoil acarreo de bines cosecha Arauco")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_cosecha,
+        insumo=insumos['INS-GASOIL-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("450.00"),
+        dosis_por_hectarea="12.8 L/ha",
+        costo_unitario_aplicado_ars=Decimal("1150.00"),
+        costo_total_ars=Decimal("517500.00"),
+        movimiento_stock_generado=mov_gasoil_cos1
+    )
+
+    # Parte Diario Cosecha Mecánica Arbequina (18/03/2026)
+    ot_cos_mec = OrdenDeTrabajo.objects.create(
+        cuadro=cuadro_b2,
+        tipo_labor=OrdenDeTrabajo.TipoLabor.COSECHA_MECANICA,
+        fecha_programada=datetime.date(2026, 3, 18),
+        responsable=usuario,
+        estado=OrdenDeTrabajo.Estado.FINALIZADA,
+        instrucciones_tecnicas="[DEMO] Cosecha intensiva con cosechadora cabalgante vibradora y acarreo a tolva."
+    )
+    pd_cos_mec = ParteDiario.objects.create(
+        orden_de_trabajo=ot_cos_mec,
+        finca=finca_norte,
+        cuadro=cuadro_b2,
+        fecha=datetime.date(2026, 3, 18),
+        supervisor=usuario,
+        estado=ParteDiario.Estado.CONFIRMADO_CERRADO,
+        observaciones="[DEMO] Jornada de cosecha mecánica en Cuadro 2 Arbequina completada."
+    )
+    ParteDiarioPersonal.objects.create(
+        parte_diario=pd_cos_mec,
+        empleado=empleados['LEG-002'],
+        horas_normales=Decimal("8.0"),
+        horas_extras=Decimal("2.0"),
+        costo_jornal_calculado_ars=Decimal("48125.00"),
+        tarea_especifica="Operador cosechadora cabalgante"
+    )
+    mov_gasoil_cos2 = _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("900.00"), Decimal("1150.00"), datetime.datetime(2026, 3, 18, 19, 0), "[DEMO] Gasoil cosechadora vibradora y tractores acarreadores")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_cos_mec,
+        insumo=insumos['INS-GASOIL-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("900.00"),
+        dosis_por_hectarea="18.5 L/ha",
+        costo_unitario_aplicado_ars=Decimal("1150.00"),
+        costo_total_ars=Decimal("1035000.00"),
+        movimiento_stock_generado=mov_gasoil_cos2
+    )
+
+    # Parte Diario Fertirriego Post-Cosecha (22/03/2026)
+    ot_riego_post = OrdenDeTrabajo.objects.create(
+        cuadro=cuadro_a1,
+        tipo_labor=OrdenDeTrabajo.TipoLabor.FERTIRRIEGO,
+        fecha_programada=datetime.date(2026, 3, 22),
+        responsable=usuario,
+        estado=OrdenDeTrabajo.Estado.FINALIZADA,
+        instrucciones_tecnicas="[DEMO] Riego de recuperación post-cosecha con urea soluble."
+    )
+    pd_riego_post = ParteDiario.objects.create(
+        orden_de_trabajo=ot_riego_post,
+        finca=finca_norte,
+        cuadro=cuadro_a1,
+        fecha=datetime.date(2026, 3, 22),
+        supervisor=usuario,
+        estado=ParteDiario.Estado.CONFIRMADO_CERRADO,
+        observaciones="[DEMO] Turno de fertirriego post-cosecha completado."
+    )
+    ParteDiarioPersonal.objects.create(
+        parte_diario=pd_riego_post,
+        empleado=empleados['LEG-003'],
+        horas_normales=Decimal("8.0"),
+        costo_jornal_calculado_ars=Decimal("32000.00"),
+        tarea_especifica="Regador monitoreo cabezal de riego"
+    )
+    mov_urea_mar = _registrar_movimiento(insumos['INS-UREA-01'], dep_central, MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO, Decimal("200.00"), Decimal("850.00"), datetime.datetime(2026, 3, 22, 10, 0), "[DEMO] Fertirriego post-cosecha Cuadro 1")
+    ParteDiarioInsumo.objects.create(
+        parte_diario=pd_riego_post,
+        insumo=insumos['INS-UREA-01'],
+        deposito_origen=dep_central,
+        cantidad_utilizada=Decimal("200.00"),
+        dosis_por_hectarea="5.7 kg/ha",
+        costo_unitario_aplicado_ars=Decimal("850.00"),
+        costo_total_ars=Decimal("170000.00"),
+        movimiento_stock_generado=mov_urea_mar
+    )
+
+    # Ajuste Físico de Fin de Trimestre Marzo (30/03/2026)
+    _registrar_movimiento(insumos['INS-GASOIL-01'], dep_central, MovimientoStock.TipoMovimiento.AJUSTE_NEGATIVO, Decimal("50.00"), Decimal("1150.00"), datetime.datetime(2026, 3, 30, 17, 0), "[DEMO] Ajuste trimestral por diferencia de aforo y evaporación en cisterna", ref="AJU-20260330")
 
     # Asistencias Marzo
     dias_mar = [datetime.date(2026, 3, d) for d in range(2, 31, 2) if datetime.date(2026, 3, d).weekday() < 6]
@@ -963,14 +1363,19 @@ def poblar_datos_demo_q1_2026():
         # Enero
         (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("320000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales fertirriego y control de goteros en Cuadro 2"),
         (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("247500.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Nitrato de potasio aplicado en fertirriego"),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("392000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil tractor laboreo y desmalezado Cuadro Arauco"),
         (cc_prod_norte, finca_norte, None, datetime.date(2026, 1, 25), Decimal("520000.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica trifásica bombeo de pozo Enero"),
         # Febrero
         (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("1015000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre cura sanitaria Cuadro Arauco"),
         (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("48125.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista pulverización repilo"),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("648000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Herbicida glifosato y gasoil tractor control de malezas"),
         (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 10), Decimal("480000.00"), CostoPorCentro.TipoOrigen.MANTENIMIENTO, "[DEMO] Service preventivo y lubricantes Tractor John Deere"),
         # Marzo
         (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 12), Decimal("1450000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales de cuadrilla cosecha manual aceituna Arauco"),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("517500.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil acarreo de bines cosecha Arauco"),
         (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 20), Decimal("1890000.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operadores cosecha mecánica vibradora Cuadro 2"),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("1035000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Gasoil cosechadora mecánica intensiva Cuadro Arbequina"),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("170000.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Urea soluble fertirriego post-cosecha"),
         (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda y centrífuga almazara"),
         (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura y logística de exportación"),
     ]
@@ -1032,12 +1437,17 @@ def poblar_datos_demo_q1_2026():
 
     poblar_lineas_cuadro(cuadro_q1, inicializar_con_valores_demo=True)
     # Expresamos las líneas en Pesos Argentinos (ARS) para el 1° Trimestre
-    # (~$510M ARS ventas trimestrales = $486k USD @ TC 1050)
     for l in cuadro_q1.lineas.all():
         l.monto_real = round(l.monto_real * Decimal("294.00"), 2)
         l.monto_presupuestado = round(l.monto_presupuestado * Decimal("294.00"), 2)
         l.save(update_fields=['monto_real', 'monto_presupuestado'])
     cuadro_q1.recalcular_totales(save=True)
+
+    # 9. Consolidación Final y Verificación Matemática de Stock
+    for ins_obj in insumos.values():
+        total_dep = StockPorDeposito.objects.filter(insumo=ins_obj).aggregate(t=Sum('cantidad'))['t'] or Decimal('0.00')
+        ins_obj.stock_actual = total_dep
+        ins_obj.save(update_fields=['stock_actual'])
 
     stats['estado'] = 'OK'
     stats['mensaje'] = "Datos de prueba del 1° Trimestre 2026 (Ene-Mar) generados con éxito en Pesos Argentinos (ARS)."
@@ -1110,10 +1520,16 @@ def limpiar_datos_demo_q1_2026():
     reporte['ordenes_compra'] = q_ocs.count()
     q_ocs.delete()
 
-    # 9. Movimientos de Stock
+    # 9. Movimientos de Stock y Existencias
     q_stock = MovimientoStock.objects.filter(fecha__gte=desde_dt, fecha__lte=hasta_dt)
     reporte['movimientos_stock'] = q_stock.count()
     q_stock.delete()
+
+    q_stock_dep = StockPorDeposito.objects.all()
+    reporte['stock_por_deposito'] = q_stock_dep.count()
+    q_stock_dep.delete()
+    Insumo.objects.all().update(stock_actual=Decimal("0.00"))
+    Insumo.objects.filter(codigo__in=['INS-GASOIL-AGRO', 'INS-UREA-46']).delete()
 
     # 10. Lotes de Cosecha, Eventos de Cuadro y Fenología
     q_lotes = LoteDeCosecha.objects.filter(campana="2025/2026", fecha_inicio__gte=desde, fecha_inicio__lte=hasta)

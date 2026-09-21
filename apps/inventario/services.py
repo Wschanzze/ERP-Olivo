@@ -559,13 +559,30 @@ def calcular_matriz_cobertura_y_reorden(dias_analisis: int = 60) -> dict:
 
     ahora = timezone.now()
     fecha_desde = ahora - timedelta(days=dias_analisis)
+    fecha_hasta = ahora
+
+    # Si no hay salidas recientes respecto a 'ahora' (p. ej. dataset demo en Q1 2026),
+    # anclamos la ventana al último movimiento de consumo registrado para reflejar la tasa real
+    hay_salidas_recientes = MovimientoStock.objects.filter(
+        tipo=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
+        fecha__gte=fecha_desde
+    ).exists()
+
+    if not hay_salidas_recientes:
+        ultimo_mov = MovimientoStock.objects.filter(
+            tipo=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO
+        ).order_by('-fecha').first()
+        if ultimo_mov:
+            fecha_hasta = ultimo_mov.fecha
+            fecha_desde = fecha_hasta - timedelta(days=dias_analisis)
 
     insumos = Insumo.objects.filter(activo=True).select_related('categoria').order_by('nombre')
 
     # Suma de salidas de campo por insumo en el período
     salidas_qs = MovimientoStock.objects.filter(
         tipo=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
-        fecha__gte=fecha_desde
+        fecha__gte=fecha_desde,
+        fecha__lte=fecha_hasta
     ).values('insumo_id').annotate(total_salida=Sum('cantidad'))
 
     salidas_map = {item['insumo_id']: item['total_salida'] for item in salidas_qs}
