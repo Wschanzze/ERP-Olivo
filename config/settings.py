@@ -100,13 +100,17 @@ DATABASE_URL = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
 USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() in ('true', '1')
 
 if DATABASE_URL:
-    is_pgbouncer = '6543' in DATABASE_URL or 'pgbouncer=true' in DATABASE_URL
+    is_pgbouncer = '6543' in DATABASE_URL or 'pgbouncer=true' in DATABASE_URL.lower()
     db_config = dj_database_url.config(
         default=DATABASE_URL,
         conn_max_age=0 if is_pgbouncer else 600,
         conn_health_checks=True,
         ssl_require=True,
     )
+    # dj_database_url incluye parámetros query como opciones de conexión,
+    # pero psycopg rechaza 'pgbouncer' como opción válida de conexión.
+    if 'OPTIONS' in db_config and isinstance(db_config['OPTIONS'], dict):
+        db_config['OPTIONS'].pop('pgbouncer', None)
     if is_pgbouncer:
         db_config['DISABLE_SERVER_SIDE_CURSORS'] = True
     DATABASES = {
