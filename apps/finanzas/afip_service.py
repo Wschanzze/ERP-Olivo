@@ -63,7 +63,22 @@ def get_afip_client():
     """
     Instancia e inicializa el cliente AfipSDK con las credenciales de entorno.
     """
-    from afip import Afip
+    try:
+        from afip import Afip
+    except ImportError:
+        import sys
+        import os
+        venv_site = os.path.join(settings.BASE_DIR, 'venv', 'Lib', 'site-packages')
+        if os.path.isdir(venv_site) and venv_site not in sys.path:
+            sys.path.insert(0, venv_site)
+        try:
+            from afip import Afip
+        except ImportError as exc:
+            raise ValidationError(
+                "No se encontró la librería 'afip.py'. "
+                "Por favor reinicia el servidor Django (Ctrl+C y 'python manage.py runserver') "
+                "con el entorno virtual activo (.\\venv\\Scripts\\activate)."
+            ) from exc
 
     access_token = getattr(settings, 'AFIP_ACCESS_TOKEN', '')
     if not access_token:
