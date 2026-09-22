@@ -1,6 +1,7 @@
 <!-- Modal de Arqueo y Cierre Diario de Caja -->
 <div 
   x-show="modalArqueo" 
+  @cerrar-modal="modalArqueo = false"
   x-cloak
   class="fixed inset-0 z-50 overflow-y-auto"
   role="dialog" 
@@ -42,7 +43,7 @@
               <p class="text-xs text-amber-100">Control de efectivo físico vs. movimientos del sistema</p>
             </div>
           </div>
-          <button type="button" @click="modalArqueo = false" class="text-white/70 hover:text-white p-1 rounded-xl">
+          <button type="button" @click="$dispatch('cerrar-modal'); modalArqueo = false" class="text-white/70 hover:text-white p-1 rounded-xl cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -156,8 +157,8 @@
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
           <button 
             type="button" 
-            @click="modalArqueo = false"
-            class="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+            @click="$dispatch('cerrar-modal'); modalArqueo = false"
+            class="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             Cancelar
           </button>

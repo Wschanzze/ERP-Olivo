@@ -1,6 +1,7 @@
 <!-- Modal: Registrar Imputación de Costo Agrícola / Operativo -->
 <div 
   x-show="modalRegistrarCosto" 
+  @cerrar-modal="modalRegistrarCosto = false"
   x-cloak
   class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
   x-transition:enter="ease-out duration-300"
@@ -54,7 +55,7 @@
           <p class="text-xs text-white/80">Imputación directa a cuadro o indirecta de finca, articulada con el Plan de Cuentas.</p>
         </div>
       </div>
-      <button @click="modalRegistrarCosto = false" type="button" class="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
+      <button @click="$dispatch('cerrar-modal'); modalRegistrarCosto = false" type="button" class="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
     </div>
@@ -275,7 +276,7 @@
       <!-- Botones de Acción -->
       <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
         <button 
-          @click="modalRegistrarCosto = false" 
+          @click="$dispatch('cerrar-modal'); modalRegistrarCosto = false" 
           type="button" 
           class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
         >

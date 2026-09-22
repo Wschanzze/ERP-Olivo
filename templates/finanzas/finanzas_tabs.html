@@ -244,7 +244,7 @@
   </div>
 
   <!-- MODAL: Nuevo Movimiento -->
-  <div x-show="modalMovimiento" x-cloak
+  <div x-show="modalMovimiento" @cerrar-modal="modalMovimiento = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -256,7 +256,7 @@
   </div>
 
   <!-- MODAL: Nueva Transferencia -->
-  <div x-show="modalTransferencia" x-cloak
+  <div x-show="modalTransferencia" @cerrar-modal="modalTransferencia = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -268,7 +268,7 @@
   </div>
 
   <!-- MODAL: Nueva Cuenta -->
-  <div x-show="modalCuenta" x-cloak
+  <div x-show="modalCuenta" @cerrar-modal="modalCuenta = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -280,7 +280,7 @@
   </div>
 
   <!-- MODAL: Nueva Conciliación -->
-  <div x-show="modalConciliacion" x-cloak
+  <div x-show="modalConciliacion" @cerrar-modal="modalConciliacion = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -292,7 +292,7 @@
   </div>
 
   <!-- MODAL: Confirmación Purga Datos de Prueba -->
-  <div x-show="modalLimpiarDemo" x-cloak
+  <div x-show="modalLimpiarDemo" @cerrar-modal="modalLimpiarDemo = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -312,7 +312,7 @@
         <strong>Preservación total:</strong> La estructura base (Empresa, Fincas, Cuadros, Plan de Cuentas, Cuentas Bancarias, Proveedores y Usuarios) quedará completamente intacta.
       </div>
       <div class="mt-6 flex items-center justify-end gap-3">
-        <button @click="modalLimpiarDemo = false" type="button" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+        <button @click="$dispatch('cerrar-modal'); modalLimpiarDemo = false" type="button" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
           Cancelar
         </button>
         <form method="post" action="{% url 'finanzas:demo_limpiar' %}">
@@ -323,8 +323,10 @@
         </form>
       </div>
     </div>
+  </div>
+
   <!-- MODAL: Coeficiente de Tipo de Cambio Mensual -->
-  <div x-show="modalTipoCambio" x-cloak
+  <div x-show="modalTipoCambio" @cerrar-modal="modalTipoCambio = false" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -343,7 +345,7 @@
             <p class="text-xs text-slate-500">Conversión uniforme de Pesos Argentinos (ARS) a Dólares (USD)</p>
           </div>
         </div>
-        <button @click="modalTipoCambio = false" class="text-slate-400 hover:text-slate-600 p-1">
+        <button @click="$dispatch('cerrar-modal'); modalTipoCambio = false" class="text-slate-400 hover:text-slate-600 p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>

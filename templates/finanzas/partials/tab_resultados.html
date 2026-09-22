@@ -1,6 +1,8 @@
 {% load humanize %}
 
-<div class="space-y-6" x-data="{
+<div class="space-y-6" 
+  @cerrar-modal="modalNuevoCuadro = false; modalEditarLinea = false; modalEditarNotas = false"
+  x-data="{
     modalNuevoCuadro: false,
     modalEditarLinea: false,
     modalEditarNotas: false,

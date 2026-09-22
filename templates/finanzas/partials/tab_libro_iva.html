@@ -1,5 +1,7 @@
 <!-- Módulo de Facturación, Cuentas por Pagar/Cobrar & Libro de IVA -->
-<div class="space-y-6" x-data="{
+<div class="space-y-6" 
+  @cerrar-modal="modalComprobante = false; modalPago = false"
+  x-data="{
   tipoLibro: 'COMPRA',
   modalComprobante: false,
   tipoComprobanteOperacion: 'COMPRA',

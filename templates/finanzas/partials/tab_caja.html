@@ -1,5 +1,7 @@
 <!-- Módulo de Caja & Bancos Interactivo -->
-<div class="space-y-6" x-data="{
+<div class="space-y-6" 
+  @cerrar-modal="modalArqueo = false"
+  x-data="{
   filtroCuentaId: 'todas',
   modalArqueo: false,
   seleccionarCuenta(id) {
@@ -195,7 +197,7 @@
   </div>
 
   <!-- Modal de Arqueo de Caja Incrustado -->
-  <div x-show="modalArqueo" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalArqueo" @cerrar-modal="modalArqueo = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalArqueo = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       {% include 'finanzas/partials/arqueo_caja_modal.html' %}

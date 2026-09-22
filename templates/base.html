@@ -153,6 +153,7 @@
     }
   }"
   @resize.window.debounce.100ms="windowWidth = window.innerWidth"
+  @cerrar-modal.window="modalOpen = false"
   @keydown.escape.window="mobileMenuOpen = false; modalOpen = false; spotlightOpen = false;"
   @keydown.window="if (($event.ctrlKey || $event.metaKey) && $event.key === 'k') { $event.preventDefault(); spotlightOpen = true; }"
 >

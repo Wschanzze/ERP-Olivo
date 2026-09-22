@@ -1,6 +1,7 @@
 <!-- MODAL: Editar Notas Gerenciales y Parámetros del Período -->
 <div 
   x-show="modalEditarNotas" 
+  @cerrar-modal="modalEditarNotas = false"
   x-cloak
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
   x-transition:enter="transition ease-out duration-200"
@@ -30,7 +31,7 @@
           <p class="text-[11px] text-slate-500">{{ cuadro_activo.titulo }}</p>
         </div>
       </div>
-      <button @click="modalEditarNotas = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+      <button @click="$dispatch('cerrar-modal'); modalEditarNotas = false" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
     </div>
@@ -93,8 +94,8 @@
       <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:space-x-2 shrink-0">
         <button 
           type="button" 
-          @click="modalEditarNotas = false" 
-          class="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-center"
+          @click="$dispatch('cerrar-modal'); modalEditarNotas = false" 
+          class="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-center cursor-pointer"
         >
           Cancelar
         </button>

@@ -12,7 +12,7 @@
         <p class="text-xs text-slate-500">Registra compras a crédito de proveedores o ventas facturadas a clientes.</p>
       </div>
     </div>
-    <button @click="modalComprobanteCC = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+    <button @click="$dispatch('cerrar-modal'); modalComprobanteCC = false; modalComprobanteVenta = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
     </button>
   </div>
@@ -131,7 +131,7 @@
     <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
       <button 
         type="button" 
-        @click="modalComprobanteCC = false" 
+        @click="$dispatch('cerrar-modal'); modalComprobanteCC = false; modalComprobanteVenta = false" 
         class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
       >
         Cancelar

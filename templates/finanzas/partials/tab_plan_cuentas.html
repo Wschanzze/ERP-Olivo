@@ -497,6 +497,7 @@
   <!-- MODAL: Mapeo de Entidades Operativas -->
   <div 
     x-show="modalMapeo" 
+    @cerrar-modal="modalMapeo = false"
     x-cloak 
     class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4"
     @click.self="modalMapeo = false"
@@ -513,7 +514,7 @@
           <h3 class="text-base font-extrabold text-slate-900">Mapeo de Entidades con el Plan de Cuentas</h3>
           <p class="text-xs text-slate-500">Vincula tus Cajas, Insumos y Centros de Costo con las cuentas contables para asientos automáticos.</p>
         </div>
-        <button @click="modalMapeo = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100">
+        <button @click="$dispatch('cerrar-modal'); modalMapeo = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -675,7 +676,7 @@
       <div class="pt-4 border-t border-slate-100 flex justify-end">
         <button 
           type="button" 
-          @click="modalMapeo = false" 
+          @click="$dispatch('cerrar-modal'); modalMapeo = false" 
           class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
         >
           Cerrar

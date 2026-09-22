@@ -1,5 +1,7 @@
 {% load static %}
-<div class="space-y-4" x-data="{
+<div class="space-y-4" 
+  @cerrar-modal="modalCobroCliente = false; modalNuevoCliente = false; modalComprobanteVenta = false"
+  x-data="{
   searchCli: '',
   modalCobroCliente: false,
   modalNuevoCliente: false,
@@ -133,21 +135,21 @@
   </div>
 
   <!-- Modales incrustados -->
-  <div x-show="modalCobroCliente" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalCobroCliente" @cerrar-modal="modalCobroCliente = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalCobroCliente = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       {% include 'finanzas/partials/cobro_cliente_modal.html' %}
     </div>
   </div>
 
-  <div x-show="modalNuevoCliente" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalNuevoCliente" @cerrar-modal="modalNuevoCliente = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalNuevoCliente = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       {% include 'finanzas/partials/proveedor_cliente_form_modal.html' with tipo_default='CLIENTE' %}
     </div>
   </div>
 
-  <div x-show="modalComprobanteVenta" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalComprobanteVenta" @cerrar-modal="modalComprobanteVenta = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalComprobanteVenta = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       {% include 'finanzas/partials/comprobante_cc_modal.html' %}

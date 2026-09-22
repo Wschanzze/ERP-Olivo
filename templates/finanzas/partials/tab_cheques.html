@@ -1,5 +1,7 @@
 {% load static %}
-<div class="space-y-4" x-data="{
+<div class="space-y-4" 
+  @cerrar-modal="modalNuevoCheque = false; modalAccionCheque = false"
+  x-data="{
   filtroEstado: 'TODOS',
   searchCheque: '',
   modalNuevoCheque: false,
@@ -209,14 +211,14 @@
   </div>
 
   <!-- Modales incrustados -->
-  <div x-show="modalNuevoCheque" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalNuevoCheque" @cerrar-modal="modalNuevoCheque = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalNuevoCheque = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       {% include 'finanzas/partials/cheque_form_modal.html' %}
     </div>
   </div>
 
-  <div x-show="modalAccionCheque" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div x-show="modalAccionCheque" @cerrar-modal="modalAccionCheque = false" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-xs" @click="modalAccionCheque = false"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 z-10 overflow-hidden">
       <div class="p-6 bg-white rounded-3xl">
@@ -230,7 +232,7 @@
               <p class="text-xs text-slate-500" x-text="chequeSelBanco + ' • $' + Number(chequeSelImporte).toLocaleString('es-AR', {minimumFractionDigits: 2})"></p>
             </div>
           </div>
-          <button @click="modalAccionCheque = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+          <button @click="$dispatch('cerrar-modal'); modalAccionCheque = false" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -323,7 +325,7 @@
           <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
             <button 
               type="button" 
-              @click="modalAccionCheque = false" 
+              @click="$dispatch('cerrar-modal'); modalAccionCheque = false" 
               class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancelar

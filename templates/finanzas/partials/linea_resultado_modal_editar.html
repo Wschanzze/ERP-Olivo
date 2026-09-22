@@ -1,6 +1,7 @@
 <!-- MODAL: Editar Importe de Línea Contable -->
 <div 
   x-show="modalEditarLinea" 
+  @cerrar-modal="modalEditarLinea = false"
   x-cloak
   class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
   x-transition:enter="transition ease-out duration-200"
@@ -23,7 +24,7 @@
         <div class="text-[10px] font-mono text-oliva-700 font-bold" x-text="lineaEditando.codigo"></div>
         <h3 class="text-sm font-bold text-slate-900 truncate" x-text="lineaEditando.nombre"></h3>
       </div>
-      <button @click="modalEditarLinea = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+      <button @click="$dispatch('cerrar-modal'); modalEditarLinea = false" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
     </div>
@@ -81,8 +82,8 @@
       <div class="pt-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:space-x-2">
         <button 
           type="button" 
-          @click="modalEditarLinea = false" 
-          class="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-center"
+          @click="$dispatch('cerrar-modal'); modalEditarLinea = false" 
+          class="w-full sm:w-auto px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-center cursor-pointer"
         >
           Cancelar
         </button>
