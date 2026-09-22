@@ -1,9 +1,9 @@
 {% load static %}
 <!-- =========================================================================
      DOBLE SIDEBAR ENTERPRISE (OPCIÓN A)
-     Nivel 1: Rail Maestro Fijo (68px) - 5 Dominios Principales
-     Nivel 2: Panel Secundario Contextual (224px) - Vistas en Texto (Anclable / Flotante)
-     Móvil: Drawer Deslizante Unificado con Selector de Módulo Táctil
+     Columna 1: Rail Maestro Fijo (64px) con 5 Dominios Principales (SIN UÑAS)
+     Columna 2: Panel Secundario Contextual (216px) con Vistas en Texto
+     Móvil: Drawer Deslizante Táctil (< 1024px)
      ========================================================================= -->
 
 <div 
@@ -24,164 +24,137 @@
 >
 
   <!-- =======================================================================
-       1. ESCRITORIO: RAIL 1 (DOCK MAESTRO 68px)
+       1. ESCRITORIO: RAIL 1 (DOCK MAESTRO 64px)
        ======================================================================= -->
   <aside
     id="app-rail1"
-    class="fixed inset-y-0 left-0 z-40 w-[68px] hidden lg:flex flex-col bg-[#141A0D] text-[#E5EBDD] border-r border-[#2D3A1F] select-none justify-between"
+    class="fixed inset-y-0 left-0 z-40 w-16 hidden lg:flex flex-col bg-[#13190C] text-[#E5EBDD] border-r border-[#2C381D] select-none justify-between h-full"
     style="height: 100dvh; max-height: 100dvh;"
   >
-    <!-- Textura olivícola sutil -->
+    <!-- Textura sutil y fondo oscuro de alta gama -->
     <div 
-      class="absolute inset-0 z-0 bg-cover bg-center pointer-events-none opacity-15"
+      class="absolute inset-0 z-0 bg-cover bg-center pointer-events-none opacity-10"
       style="background-image: url('{% static 'img/250.jpg' %}');"
     ></div>
-    <div class="absolute inset-0 z-0 bg-gradient-to-b from-[#141A0D]/98 via-[#182010]/95 to-[#11160B]/98 pointer-events-none"></div>
 
     <!-- Parte Superior: Logo Corporativo -->
-    <div class="relative z-10 flex flex-col items-center pt-3 pb-2 border-b border-[#2D3A1F]/70">
+    <div class="relative z-10 flex flex-col items-center pt-3.5 pb-2.5 border-b border-[#2C381D]/80">
       <a 
         href="{% url 'dashboard:index' %}" 
         title="ERP Olivícola - Inicio"
-        class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 hover:scale-105 active:scale-95 transition-all p-1.5 border border-white/10 group cursor-pointer"
+        class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 transition-all p-1 border border-white/10 group cursor-pointer"
         @click="selectModule('tableros')"
       >
-        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP" class="w-8 h-8 object-contain drop-shadow-md" />
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP" class="w-7 h-7 object-contain drop-shadow" />
       </a>
-      <span class="text-[9px] font-mono font-bold text-[#8FA872] tracking-wider mt-1 scale-90 uppercase">ERP</span>
     </div>
 
-    <!-- Centro: 5 Iconos de Módulos Maestros -->
-    <nav class="relative z-10 flex-1 flex flex-col items-center py-3 space-y-2.5 overflow-y-auto custom-scrollbar">
+    <!-- Centro: 5 Iconos de Módulos Maestros (SIN UÑA PROTRUDENTE) -->
+    <nav class="relative z-10 flex-1 flex flex-col items-center py-4 space-y-3 overflow-y-auto custom-scrollbar">
       
       <!-- 1. Tableros & BI -->
       <button
         type="button"
         @click="selectModule('tableros')"
-        :class="activeModule === 'tableros' ? 'bg-[#3D4A2A] text-white shadow-md border-[#637946]' : 'text-[#B2C69E] hover:bg-white/10 hover:text-white border-transparent'"
-        class="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 border group cursor-pointer"
+        :class="activeModule === 'tableros' ? 'bg-[#3D4A2A] text-white shadow-xs border-[#5A6E3F]' : 'text-[#A4B892] hover:bg-white/10 hover:text-white border-transparent'"
+        class="w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border cursor-pointer group"
         title="Tableros & BI"
       >
-        <div 
-          x-show="activeModule === 'tableros'" 
-          class="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#C29B38] rounded-r-full"
-        ></div>
         <svg class="w-5 h-5 text-[#C29B38] group-hover:text-amber-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
         </svg>
-        <span class="text-[9px] font-medium leading-none mt-1 tracking-tight">BI</span>
+        <span class="text-[8.5px] font-mono leading-none mt-1 tracking-tight">BI</span>
       </button>
 
       <!-- 2. Campo & Operaciones -->
       <button
         type="button"
         @click="selectModule('campo')"
-        :class="activeModule === 'campo' ? 'bg-[#3D4A2A] text-white shadow-md border-[#637946]' : 'text-[#B2C69E] hover:bg-white/10 hover:text-white border-transparent'"
-        class="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 border group cursor-pointer"
+        :class="activeModule === 'campo' ? 'bg-[#3D4A2A] text-white shadow-xs border-[#5A6E3F]' : 'text-[#A4B892] hover:bg-white/10 hover:text-white border-transparent'"
+        class="w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border cursor-pointer group"
         title="Campo & Operaciones"
       >
-        <div 
-          x-show="activeModule === 'campo'" 
-          class="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#C29B38] rounded-r-full"
-        ></div>
         <svg class="w-5 h-5 text-[#9EC675] group-hover:text-emerald-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-        <span class="text-[9px] font-medium leading-none mt-1 tracking-tight">Campo</span>
+        <span class="text-[8.5px] font-mono leading-none mt-1 tracking-tight">Campo</span>
       </button>
 
       <!-- 3. Finanzas & Contabilidad -->
       <button
         type="button"
         @click="selectModule('finanzas')"
-        :class="activeModule === 'finanzas' ? 'bg-[#3D4A2A] text-white shadow-md border-[#637946]' : 'text-[#B2C69E] hover:bg-white/10 hover:text-white border-transparent'"
-        class="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 border group cursor-pointer"
+        :class="activeModule === 'finanzas' ? 'bg-[#3D4A2A] text-white shadow-xs border-[#5A6E3F]' : 'text-[#A4B892] hover:bg-white/10 hover:text-white border-transparent'"
+        class="w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border cursor-pointer group"
         title="Finanzas & Contabilidad"
       >
-        <div 
-          x-show="activeModule === 'finanzas'" 
-          class="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#C29B38] rounded-r-full"
-        ></div>
         <svg class="w-5 h-5 text-emerald-400 group-hover:text-emerald-200 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span class="text-[9px] font-medium leading-none mt-1 tracking-tight">Finanzas</span>
+        <span class="text-[8.5px] font-mono leading-none mt-1 tracking-tight">Finan</span>
       </button>
 
       <!-- 4. Personal & Cuadrillas -->
       <button
         type="button"
         @click="selectModule('personal')"
-        :class="activeModule === 'personal' ? 'bg-[#3D4A2A] text-white shadow-md border-[#637946]' : 'text-[#B2C69E] hover:bg-white/10 hover:text-white border-transparent'"
-        class="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 border group cursor-pointer"
+        :class="activeModule === 'personal' ? 'bg-[#3D4A2A] text-white shadow-xs border-[#5A6E3F]' : 'text-[#A4B892] hover:bg-white/10 hover:text-white border-transparent'"
+        class="w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border cursor-pointer group"
         title="Personal & Nómina"
       >
-        <div 
-          x-show="activeModule === 'personal'" 
-          class="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#C29B38] rounded-r-full"
-        ></div>
         <svg class="w-5 h-5 text-[#9EC675] group-hover:text-emerald-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span class="text-[9px] font-medium leading-none mt-1 tracking-tight">Personal</span>
+        <span class="text-[8.5px] font-mono leading-none mt-1 tracking-tight">Pers</span>
       </button>
 
       <!-- 5. Almazara & Depósitos -->
       <button
         type="button"
         @click="selectModule('almazara')"
-        :class="activeModule === 'almazara' ? 'bg-[#3D4A2A] text-white shadow-md border-[#637946]' : 'text-[#B2C69E] hover:bg-white/10 hover:text-white border-transparent'"
-        class="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-200 border group cursor-pointer"
+        :class="activeModule === 'almazara' ? 'bg-[#3D4A2A] text-white shadow-xs border-[#5A6E3F]' : 'text-[#A4B892] hover:bg-white/10 hover:text-white border-transparent'"
+        class="w-11 h-11 rounded-xl flex flex-col items-center justify-center transition-all duration-150 border cursor-pointer group"
         title="Almazara & Depósitos"
       >
-        <div 
-          x-show="activeModule === 'almazara'" 
-          class="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#C29B38] rounded-r-full"
-        ></div>
         <svg class="w-5 h-5 text-[#C29B38] group-hover:text-amber-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
-        <span class="text-[9px] font-medium leading-none mt-1 tracking-tight">Almazara</span>
+        <span class="text-[8.5px] font-mono leading-none mt-1 tracking-tight">Almaz</span>
       </button>
 
     </nav>
 
     <!-- Parte Inferior: Buscador Universal Spotlight & Estado -->
-    <div class="relative z-10 flex flex-col items-center py-3 space-y-2 border-t border-[#2D3A1F]/70">
+    <div class="relative z-10 flex flex-col items-center py-3 space-y-2.5 border-t border-[#2C381D]/80">
       <!-- Botón Spotlight (Ctrl+K) -->
       <button
         type="button"
         @click="spotlightOpen = true"
-        title="Buscador Universal (Ctrl+K)"
-        class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-[#B2C69E] hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/5"
+        title="Búsqueda Universal (Ctrl+K)"
+        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 text-[#B2C69E] hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/5"
       >
-        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </button>
 
-      <!-- Indicador de Sistema en Línea -->
-      <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50 animate-pulse" title="Sistema ERP Conectado"></div>
+      <!-- Indicador de Sistema Conectado -->
+      <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50 animate-pulse" title="Sistema Conectado"></div>
     </div>
   </aside>
 
 
   <!-- =======================================================================
-       2. ESCRITORIO: RAIL 2 (PANEL SECUNDARIO CONTEXTUAL 224px)
+       2. ESCRITORIO: RAIL 2 (PANEL SECUNDARIO CONTEXTUAL 216px)
        ======================================================================= -->
   <aside
     id="app-rail2"
-    :class="{
-      'translate-x-0 shadow-2xl z-40': !rail2Pinned && rail2FlyoutOpen,
-      '-translate-x-full pointer-events-none opacity-0': !rail2Pinned && !rail2FlyoutOpen,
-      'translate-x-0 border-r border-[#2D3A1F] z-30': rail2Pinned
-    }"
-    class="fixed inset-y-0 left-[68px] w-56 bg-[#1A2312] text-[#E5EBDD] hidden lg:flex flex-col select-none transition-all duration-200 ease-in-out border-r border-[#2D3A1F]"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none opacity-0'"
+    class="fixed inset-y-0 left-16 w-[216px] bg-[#18210F] text-[#E5EBDD] hidden lg:flex flex-col select-none transition-transform duration-200 ease-in-out border-r border-[#2C381D] z-30"
     style="height: 100dvh; max-height: 100dvh;"
-    @click.away="if (!rail2Pinned) rail2FlyoutOpen = false"
   >
-    <!-- Cabecera del Panel: Título del Módulo + Botón Pin -->
-    <div class="flex-shrink-0 h-16 px-3.5 bg-[#141A0D]/90 border-b border-[#2D3A1F] flex items-center justify-between">
+    <!-- Cabecera del Panel: Título del Módulo + Botón Colapso -->
+    <div class="flex-shrink-0 h-16 px-3 bg-[#13190C] border-b border-[#2C381D] flex items-center justify-between">
       <div class="flex flex-col min-w-0 pr-1">
         <span 
           class="text-xs font-bold uppercase tracking-wider text-white truncate"
@@ -193,56 +166,39 @@
             'Almazara & Depósito'
           "
         ></span>
-        <span class="text-[10px] text-[#8FA872] font-mono truncate">Vistas operativas</span>
+        <span class="text-[10px] text-[#8FA872] font-mono truncate">Accesos del módulo</span>
       </div>
 
-      <!-- Botón Fijar/Desanclar (Pin) -->
-      <div class="flex items-center space-x-1 flex-shrink-0">
-        <button
-          type="button"
-          @click="toggleRail2Pin()"
-          :title="rail2Pinned ? 'Desanclar panel (modo flotante)' : 'Fijar panel (modo anclado)'"
-          :class="rail2Pinned ? 'bg-amber-400/20 text-amber-300 border-amber-400/40' : 'text-[#8FA872] hover:text-white hover:bg-white/10 border-transparent'"
-          class="p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center"
-        >
-          <!-- Icono de Pin -->
-          <svg class="w-3.5 h-3.5 transform transition-transform" :class="rail2Pinned ? 'rotate-0' : '-rotate-45'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V5zM12 9v12m-3-3l3 3 3-3" />
-          </svg>
-        </button>
-
-        <!-- Botón cerrar si está flotante -->
-        <button
-          type="button"
-          x-show="!rail2Pinned"
-          @click="rail2FlyoutOpen = false"
-          title="Cerrar panel flotante"
-          class="p-1.5 rounded-lg text-[#8FA872] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <!-- Botón Colapsar Panel Secundario -->
+      <button
+        type="button"
+        @click="toggleSidebar()"
+        title="Ocultar panel secundario"
+        class="p-1 rounded-lg text-[#8FA872] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
     </div>
 
     <!-- Buscador / Filtro Rápido del Panel -->
-    <div class="p-2.5 border-b border-[#2D3A1F]/60">
+    <div class="p-2 border-b border-[#2C381D]/60 bg-[#151D0D]/60">
       <div class="relative flex items-center">
         <input 
           type="text" 
           x-model="panelSearch"
-          placeholder="Filtrar apartados..."
-          class="w-full pl-7 pr-6 py-1 bg-[#12170B]/80 text-xs text-[#E5EBDD] placeholder-[#7E9169] rounded-lg border border-[#2D3A1F] focus:border-[#8FA872] focus:ring-1 focus:ring-[#8FA872] outline-none transition-all"
+          placeholder="Filtrar vistas..."
+          class="w-full pl-6 pr-5 py-1 bg-[#101509] text-xs text-[#E5EBDD] placeholder-[#6E8159] rounded-lg border border-[#2C381D] focus:border-[#8FA872] focus:ring-1 focus:ring-[#8FA872] outline-none transition-all"
         />
-        <svg class="w-3 h-3 text-[#7E9169] absolute left-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg class="w-3 h-3 text-[#6E8159] absolute left-1.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <button 
           type="button" 
           x-show="panelSearch" 
           @click="panelSearch = ''" 
-          class="absolute right-1.5 text-[#8FA872] hover:text-white text-xs cursor-pointer"
+          class="absolute right-1 text-[#8FA872] hover:text-white text-xs cursor-pointer"
         >
           &times;
         </button>
@@ -481,16 +437,16 @@
 
     </nav>
 
-    <!-- Pie del Panel Secundario: Versión y Enlace a Inicio -->
-    <div class="p-2.5 bg-[#141A0D]/95 border-t border-[#2D3A1F] flex items-center justify-between text-[10px] text-[#8FA872]">
-      <span class="font-mono font-semibold">ERP Olivícola v2.5</span>
-      <span class="text-emerald-400">● Listo</span>
+    <!-- Pie del Panel Secundario -->
+    <div class="p-2.5 bg-[#13190C] border-t border-[#2C381D] flex items-center justify-between text-[10.5px] text-[#8FA872]">
+      <span class="font-mono font-medium">ERP Olivícola</span>
+      <span class="text-slate-400 font-mono">v2.5</span>
     </div>
   </aside>
 
 
   <!-- =======================================================================
-       3. MÓVIL: DRAWER DESLIZANTE CON SELECTOR TÁCTIL DE MÓDULOS (< 1024px)
+       3. MÓVIL: DRAWER DESLIZANTE CON SELECTOR TÁCTIL (< 1024px)
        ======================================================================= -->
   <aside
     id="app-mobile-drawer"
@@ -498,13 +454,13 @@
       'translate-x-0 shadow-2xl': mobileMenuOpen,
       '-translate-x-full': !mobileMenuOpen
     }"
-    class="fixed inset-y-0 left-0 z-50 w-80 max-w-[88vw] bg-[#141A0D] text-[#E5EBDD] border-r border-[#2D3A1F] flex flex-col lg:hidden transition-transform duration-300 ease-in-out"
+    class="fixed inset-y-0 left-0 z-50 w-80 max-w-[88vw] bg-[#141A0D] text-[#E5EBDD] border-r border-[#2C381D] flex flex-col lg:hidden transition-transform duration-300 ease-in-out"
     style="height: 100dvh; max-height: 100dvh;"
   >
-    <!-- Cabecera Móvil: Logo + Título + Botón Cerrar -->
-    <div class="flex-shrink-0 h-16 px-4 bg-[#11160B] border-b border-[#2D3A1F] flex items-center justify-between">
+    <!-- Cabecera Móvil -->
+    <div class="flex-shrink-0 h-16 px-4 bg-[#101509] border-b border-[#2C381D] flex items-center justify-between">
       <div class="flex items-center space-x-3 min-w-0">
-        <img src="{% static 'icono.png' %}?v=2" alt="Logo" class="w-9 h-9 object-contain drop-shadow-sm flex-shrink-0" />
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo" class="w-8 h-8 object-contain drop-shadow-sm flex-shrink-0" />
         <div class="flex flex-col min-w-0">
           <span class="font-bold text-sm text-white uppercase tracking-wider truncate">ERP Olivícola</span>
           <span class="text-[9px] text-[#A2B38F] font-mono tracking-wider font-semibold truncate">AGRO &amp; ALMAZARA</span>
@@ -523,10 +479,10 @@
       </button>
     </div>
 
-    <!-- Carrusel Táctil de Módulos (Selector Horizontal) -->
-    <div class="flex-shrink-0 bg-[#17200E] border-b border-[#2D3A1F] px-2 py-2">
-      <div class="text-[10px] font-mono text-[#8FA872] uppercase tracking-wider px-1 pb-1 font-bold">
-        Módulo Activo:
+    <!-- Carrusel Horizontal de Módulos -->
+    <div class="flex-shrink-0 bg-[#161F0E] border-b border-[#2C381D] px-2 py-2">
+      <div class="text-[9.5px] font-mono text-[#8FA872] uppercase tracking-wider px-1 pb-1 font-bold">
+        Módulo:
       </div>
       <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 custom-scrollbar">
         <button
@@ -572,7 +528,7 @@
       </div>
     </div>
 
-    <!-- Lista Deslizable de Vistas del Módulo Seleccionado -->
+    <!-- Lista Deslizable de Vistas Móviles -->
     <nav 
       class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-1.5 pb-24"
       @click="if ($event.target.closest('a')) mobileMenuOpen = false;"
@@ -758,9 +714,9 @@
     </nav>
 
     <!-- Pie Móvil -->
-    <div class="flex-shrink-0 p-3 bg-[#11160B] border-t border-[#2D3A1F] flex items-center justify-between text-xs text-[#8FA872]">
+    <div class="flex-shrink-0 p-3 bg-[#101509] border-t border-[#2C381D] flex items-center justify-between text-xs text-[#8FA872]">
       <span>ERP Olivícola v2.5</span>
-      <span class="text-emerald-400">● En Línea</span>
+      <span class="text-emerald-400">● Conectado</span>
     </div>
   </aside>
 
