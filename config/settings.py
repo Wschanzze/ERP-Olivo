@@ -244,7 +244,7 @@ CELERY_TIMEZONE = TIME_ZONE
 # ──────────────────────────────────────────────────────────────────────────────
 # ARCA (ex AFIP) - AfipSDK Configuration
 # ──────────────────────────────────────────────────────────────────────────────
-AFIP_ACCESS_TOKEN = os.getenv('AFIP_ACCESS_TOKEN', '').strip()
+AFIP_ACCESS_TOKEN = os.getenv('AFIP_ACCESS_TOKEN', 'RicL9nHsAmq04CL8bVBw1IXVwE61tdfVCD6JCZtzMyDB8rjqP7kUASytDTL0kJF9').strip()
 AFIP_CUIT = int(os.getenv('AFIP_CUIT', '20409378472'))
 AFIP_PRODUCTION = os.getenv('AFIP_PRODUCTION', 'False').lower() in ('true', '1')
 AFIP_DEFAULT_PTO_VTA = int(os.getenv('AFIP_DEFAULT_PTO_VTA', '1'))

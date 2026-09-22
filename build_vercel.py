@@ -19,6 +19,18 @@ def main():
         print("[Vercel Build] No se detectó DATABASE_URL en variables de entorno.")
         print("[Vercel Build] El despliegue continuará utilizando la base de datos de respaldo en /tmp.")
 
+    # Asegurar que afip.py esté disponible para la integración con ARCA
+    try:
+        import afip
+        print("[Vercel Build] Módulo 'afip' verificado correctamente.")
+    except ImportError:
+        print("[Vercel Build] Instalando afip.py directamente...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "afip.py>=1.2.0"], check=True)
+            print("[Vercel Build] 'afip.py' instalado con éxito.")
+        except Exception as e:
+            print(f"[Vercel Build] Advertencia al instalar afip.py: {e}")
+
     print("--- [Vercel Build Script] Finalizado con éxito ---")
 
 if __name__ == "__main__":
