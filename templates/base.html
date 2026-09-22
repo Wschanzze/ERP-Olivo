@@ -79,10 +79,10 @@
     /* Estado inicial anti-parpadeo para Doble Sidebar en Desktop (>= 1024px) */
     @media (min-width: 1024px) {
       html.sidebar-expanded #main-layout-container {
-        padding-left: 280px !important;
+        padding-left: 300px !important;
       }
       html.sidebar-collapsed #main-layout-container {
-        padding-left: 64px !important;
+        padding-left: 80px !important;
       }
       html.sidebar-collapsed #app-rail2 {
         transform: translateX(-100%) !important;
@@ -180,8 +180,8 @@
     <!-- Contenedor Principal -->
     <div
       id="main-layout-container"
-      :class="sidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[64px]'"
-      class="pl-0 lg:pl-[280px] flex-1 flex flex-col min-w-0 transition-[padding-left] duration-200 ease-in-out min-h-screen w-full"
+      :class="sidebarOpen ? 'lg:pl-[300px]' : 'lg:pl-[80px]'"
+      class="pl-0 lg:pl-[300px] flex-1 flex flex-col min-w-0 transition-[padding-left] duration-200 ease-in-out min-h-screen w-full"
     >
       <!-- Cabecera Superior -->
       {% include 'components/header.html' %}
