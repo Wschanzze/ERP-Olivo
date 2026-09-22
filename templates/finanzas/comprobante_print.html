@@ -215,19 +215,29 @@
       </div>
     </div>
 
-    <!-- AFIP CAE, Barcode and Authorized Signature Bar -->
+    <!-- AFIP / ARCA CAE, QR Oficial and Authorized Signature Bar -->
     <div class="border-t-2 border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-6">
-      <!-- Barcode simulation -->
       <div class="flex items-center space-x-4">
-        <div class="bg-slate-100 p-2 rounded border border-slate-300 font-mono text-[9px] tracking-widest text-slate-700 select-none">
-          <div class="text-[8px] text-slate-400 font-sans uppercase font-bold mb-0.5">Código de Barras Fiscal</div>
-          ||| | |||| || ||| || |||| | ||||| ||| ||
-          <div class="text-[8px] text-slate-500 font-mono mt-0.5">30714589234{{ cod_afip }}{{ pto_vta }}{{ cae_num }}</div>
-        </div>
+        {% if qr_arca_base64 %}
+          <div class="p-1.5 bg-white border border-slate-300 rounded-lg shadow-xs">
+            <img src="{{ qr_arca_base64 }}" alt="QR Oficial ARCA" class="w-20 h-20 object-contain" />
+          </div>
+        {% else %}
+          <div class="bg-slate-100 p-2 rounded border border-slate-300 font-mono text-[9px] tracking-widest text-slate-700 select-none">
+            <div class="text-[8px] text-slate-400 font-sans uppercase font-bold mb-0.5">Código Fiscal</div>
+            ||| | |||| || ||| || |||| | ||||| ||| ||
+            <div class="text-[8px] text-slate-500 font-mono mt-0.5">30714589234{{ cod_afip }}{{ pto_vta }}{{ cae_num }}</div>
+          </div>
+        {% endif %}
         <div class="text-[10px] text-slate-600 space-y-0.5">
-          <p><span class="font-bold text-slate-800">CAE N°:</span> <span class="font-mono font-bold text-slate-900">{{ cae_num }}</span></p>
-          <p><span class="font-bold text-slate-800">Fecha Vto. CAE:</span> <span class="font-mono">{{ vto_cae|date:"d/m/Y" }}</span></p>
-          <p class="text-[9px] text-slate-400">Comprobante Autorizado Electrónicamente</p>
+          <p class="text-xs font-bold text-slate-900"><span class="text-slate-700 font-bold">CAE N°:</span> <span class="font-mono font-black text-slate-950">{{ cae_num }}</span></p>
+          <p><span class="font-bold text-slate-700">Fecha Vto. CAE:</span> <span class="font-mono font-semibold text-slate-800">{{ vto_cae|date:"d/m/Y"|default:"-" }}</span></p>
+          {% if qr_arca_url %}
+            <a href="{{ qr_arca_url }}" target="_blank" class="inline-block text-[9px] text-oliva-800 hover:text-oliva-950 hover:underline font-bold">
+              Verificar Comprobante en ARCA &rarr;
+            </a>
+          {% endif %}
+          <p class="text-[9px] text-slate-400">Comprobante Autorizado por ARCA (ex AFIP) - RG 4291 / RG 5616</p>
         </div>
       </div>
 

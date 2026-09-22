@@ -41,6 +41,10 @@ urlpatterns = [
     # Facturación, Libro de IVA & Arqueo de Caja
     path('comprobante/crear/', views.ComprobanteFiscalCreateView.as_view(), name='comprobante_create'),
     path('comprobante/pago/', views.ComprobantePagoCobroView.as_view(), name='comprobante_pago'),
+    path('comprobante/<int:pk>/imprimir/', views.ComprobanteFiscalPrintView.as_view(), name='comprobante_fiscal_print'),
+    path('comprobante/<int:pk>/autorizar-arca/', views.ComprobanteAutorizarArcaView.as_view(), name='comprobante_autorizar_arca'),
+    path('comprobante/<int:pk>/pdf-oficial/', views.ComprobantePdfOficialView.as_view(), name='comprobante_pdf_oficial'),
+    path('api/afip/padron/<str:cuit>/', views.AfipPadronLookupView.as_view(), name='afip_padron_lookup'),
     path('arqueo/crear/', views.ArqueoCajaCreateView.as_view(), name='arqueo_create'),
     path('orden-pago/<int:pk>/imprimir/', views.OrdenPagoReciboPrintView.as_view(), name='orden_pago_print'),
     path('libro-iva/exportar/', views.ExportarLibroIVAView.as_view(), name='exportar_libro_iva'),

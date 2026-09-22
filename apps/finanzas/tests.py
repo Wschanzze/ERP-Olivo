@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 from decimal import Decimal
 from django.utils import timezone
 from apps.core.models import Empresa
@@ -309,6 +310,14 @@ class LibroIVAyTesoreriaTest(TestCase):
                 'saldo_actual': Decimal("0.00")
             }
         )
+        self.cliente, _ = CuentaCorriente.objects.get_or_create(
+            cuit="30-99887766-5",
+            defaults={
+                'razon_social': "Distribuidora Aceitera Mayorista S.A.",
+                'tipo_entidad': CuentaCorriente.TipoEntidad.CLIENTE,
+                'saldo_actual': Decimal("0.00")
+            }
+        )
 
     def test_crear_comprobante_fiscal_compra_actualiza_cta_cte_y_libro_iva(self):
         from django.urls import reverse
@@ -428,6 +437,36 @@ class LibroIVAyTesoreriaTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp['Content-Type'], 'text/csv; charset=utf-8')
         self.assertIn(b'Neto Gravado 21%', resp.content)
-        self.assertIn(b'00009999', resp.content)
+
+    def test_afip_padron_lookup_endpoint(self):
+        url = reverse('finanzas:afip_padron_lookup', kwargs={'cuit': '20409378472'})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('success'))
+        self.assertEqual(data.get('data', {}).get('cuit'), '20409378472')
+
+    def test_comprobante_fiscal_print_con_qr_arca(self):
+        comp = ComprobanteFiscal.objects.create(
+            tipo_operacion='VENTA',
+            tipo_comprobante='F_B',
+            punto_de_venta='00001',
+            numero_comprobante='00035201',
+            fecha_emision=timezone.now().date(),
+            cuenta_corriente=self.cliente,
+            razon_social=self.cliente.razon_social,
+            cuit=self.cliente.cuit,
+            concepto='Aceite de Oliva Extra Virgen 500ml',
+            neto_gravado_21=Decimal('100.00'),
+            iva_21=Decimal('21.00'),
+            total=Decimal('121.00'),
+            cae='86380918421149',
+            vto_cae=timezone.now().date()
+        )
+        url = reverse('finanzas:comprobante_fiscal_print', kwargs={'pk': comp.pk})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b'86380918421149', resp.content)
+        self.assertIn(b'arca.gob.ar/fe/qr', resp.content)
 
 

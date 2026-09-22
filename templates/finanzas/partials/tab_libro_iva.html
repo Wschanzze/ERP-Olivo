@@ -219,12 +219,13 @@
             <th class="px-4 py-3">Comprobante</th>
             <th class="px-4 py-3">Cliente / CUIT</th>
             <th class="px-4 py-3">Cond. IVA</th>
+            <th class="px-4 py-3">ARCA / CAE</th>
             <th class="px-4 py-3 text-right">Neto 21%</th>
             <th class="px-4 py-3 text-right">Neto 10.5%</th>
             <th class="px-4 py-3 text-right">Débito Fiscal</th>
             <th class="px-4 py-3 text-right">Total Facturado</th>
             <th class="px-4 py-3 text-center">Estado Cobro</th>
-            <th class="px-4 py-3 text-right">Acción</th>
+            <th class="px-4 py-3 text-right">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 font-mono">
@@ -242,6 +243,28 @@
                 <div class="text-[10px] text-slate-400 font-mono">{{ f.cuit }}</div>
               </td>
               <td class="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">{{ f.get_condicion_iva_display }}</td>
+
+              <!-- ARCA / CAE Badge -->
+              <td class="px-4 py-3 whitespace-nowrap">
+                {% if f.cae %}
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-oliva-100 text-oliva-800 border border-oliva-200 text-[10px] font-mono font-bold" title="Vencimiento CAE: {{ f.vto_cae|date:'d/m/Y' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-oliva-600"></span>
+                    CAE {{ f.cae }}
+                  </div>
+                {% else %}
+                  <form method="post" action="{% url 'finanzas:comprobante_autorizar_arca' f.id %}" class="inline">
+                    {% csrf_token %}
+                    <button 
+                      type="submit" 
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold transition-colors cursor-pointer"
+                      title="Autorizar ante ARCA (ex AFIP) y obtener CAE"
+                    >
+                      ⚡ Emitir ARCA
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+
               <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_21|floatformat:2 }}</td>
               <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_10_5|floatformat:2 }}</td>
               <td class="px-4 py-3 text-right font-mono font-bold text-purple-700">${{ f.total_iva|floatformat:2 }}</td>
@@ -256,24 +279,48 @@
                 {% endif %}
               </td>
 
-              <!-- Botón Cobrar -->
+              <!-- Acciones -->
               <td class="px-4 py-3 text-right whitespace-nowrap">
-                {% if f.estado_pago != 'PAGADA' %}
-                  <button 
-                    type="button" 
-                    @click="abrirPago({id: '{{ f.id }}', numero: '{{ f.numero_completo }}', razon: '{{ f.razon_social }}', saldo: '{{ f.saldo_pendiente }}', cta_id: '{{ f.cuenta_corriente_id }}', es_cobro: true})"
-                    class="px-2.5 py-1 rounded-lg bg-oliva-50 hover:bg-oliva-100 text-oliva-800 border border-oliva-200 text-[11px] font-bold transition-colors cursor-pointer"
+                <div class="flex items-center justify-end gap-1.5">
+                  <!-- Imprimir Comprobante Oficial con QR -->
+                  <a 
+                    href="{% url 'finanzas:comprobante_fiscal_print' f.id %}" 
+                    target="_blank"
+                    class="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Imprimir Factura / Ver QR ARCA"
                   >
-                    Registrar Cobro
-                  </button>
-                {% else %}
-                  <span class="text-[11px] text-slate-400 font-semibold">Percibido</span>
-                {% endif %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                  </a>
+
+                  {% if f.cae %}
+                  <!-- Descargar PDF Oficial AfipSDK -->
+                  <a 
+                    href="{% url 'finanzas:comprobante_pdf_oficial' f.id %}" 
+                    target="_blank"
+                    class="px-1.5 py-0.5 text-oliva-700 hover:text-oliva-900 hover:bg-oliva-50 rounded text-[10px] font-bold border border-oliva-200"
+                    title="Descargar PDF Oficial AfipSDK"
+                  >
+                    PDF
+                  </a>
+                  {% endif %}
+
+                  {% if f.estado_pago != 'PAGADA' %}
+                    <button 
+                      type="button" 
+                      @click="abrirPago({id: '{{ f.id }}', numero: '{{ f.numero_completo }}', razon: '{{ f.razon_social }}', saldo: '{{ f.saldo_pendiente }}', cta_id: '{{ f.cuenta_corriente_id }}', es_cobro: true})"
+                      class="px-2 py-0.5 rounded-lg bg-oliva-50 hover:bg-oliva-100 text-oliva-800 border border-oliva-200 text-[10px] font-bold transition-colors cursor-pointer"
+                    >
+                      Cobrar
+                    </button>
+                  {% else %}
+                    <span class="text-[10px] text-slate-400 font-semibold">Percibido</span>
+                  {% endif %}
+                </div>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="10" class="px-4 py-10 text-center text-slate-400 font-sans text-xs">
+              <td colspan="11" class="px-4 py-10 text-center text-slate-400 font-sans text-xs">
                 No hay facturas de ventas emitidas en este período.
               </td>
             </tr>

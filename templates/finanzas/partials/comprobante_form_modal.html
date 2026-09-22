@@ -89,6 +89,24 @@
             </div>
           </div>
 
+          <!-- Opción de Autorización Electrónica en ARCA para Ventas -->
+          <div x-show="tipoComprobanteOperacion === 'VENTA'" class="p-3.5 bg-oliva-50/90 rounded-2xl border border-oliva-200 flex items-start gap-3 transition-all">
+            <input 
+              type="checkbox" 
+              name="autorizar_arca" 
+              id="autorizar_arca_check" 
+              value="1" 
+              checked
+              class="w-4 h-4 rounded text-oliva-700 focus:ring-oliva-500 border-slate-300 mt-0.5 cursor-pointer"
+            />
+            <label for="autorizar_arca_check" class="cursor-pointer select-none">
+              <span class="font-bold text-oliva-950 block text-xs">⚡ Autorizar electrónicamente en ARCA (ex AFIP)</span>
+              <span class="text-[11px] text-oliva-800 block mt-0.5">
+                Contactará WSFE mediante AfipSDK, obtendrá el <strong>CAE oficial</strong> y asignará el correlativo automático en ARCA.
+              </span>
+            </label>
+          </div>
+
           <!-- Punto de Venta y Número -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

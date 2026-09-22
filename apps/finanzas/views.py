@@ -23,6 +23,10 @@ from .models import (
 from apps.inventario.models import CategoriaInsumo
 from apps.core.models import CentroDeCosto, Empresa
 from .services import registrar_movimiento_financiero, poblar_lineas_cuadro, get_or_create_cuadro_default
+from .afip_service import (
+    consultar_padron_arca, autorizar_comprobante_arca,
+    generar_qr_arca_base64, generar_qr_arca_url, generar_pdf_oficial_afipsdk
+)
 
 
 def get_plan_cuentas_payload():
@@ -1558,6 +1562,22 @@ class ComprobantePrintView(DetailView):
         cae_num = f"74{mov.fecha.strftime('%y%m')}{mov.pk:08d}"[:14]
         vto_cae = mov.fecha + timedelta(days=10)
 
+        # Generar QR para comprobante de tesorería
+        try:
+            import qrcode, io, base64
+            qr = qrcode.QRCode(version=1, box_size=4, border=1)
+            qr_content = f"https://www.arca.gob.ar/fe/qr/?p=mov-{mov.pk}-{cae_num}"
+            qr.add_data(qr_content)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="#1e293b", back_color="white")
+            buffer = io.BytesIO()
+            img.save(buffer, format="PNG")
+            qr_arca_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
+            qr_arca_url = qr_content
+        except Exception:
+            qr_arca_base64 = ""
+            qr_arca_url = ""
+
         ctx.update({
             'letra': letra,
             'cod_afip': cod_afip,
@@ -1573,6 +1593,8 @@ class ComprobantePrintView(DetailView):
             'importe_usd': importe_usd,
             'cae_num': cae_num,
             'vto_cae': vto_cae,
+            'qr_arca_base64': qr_arca_base64,
+            'qr_arca_url': qr_arca_url,
         })
         return ctx
 
@@ -1814,6 +1836,7 @@ class ComprobanteFiscalCreateView(View):
             cuenta_corriente = get_object_or_404(CuentaCorriente, pk=cuenta_corriente_id)
             cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
 
+            condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
             comprobante = ComprobanteFiscal.objects.create(
                 tipo_operacion=tipo_operacion,
                 tipo_comprobante=tipo_comprobante,
@@ -1824,7 +1847,7 @@ class ComprobanteFiscalCreateView(View):
                 cuenta_corriente=cuenta_corriente,
                 razon_social=cuenta_corriente.razon_social,
                 cuit=cuenta_corriente.cuit,
-                condicion_iva=ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+                condicion_iva=condicion_iva,
                 concepto=concepto,
                 neto_gravado_21=neto_21,
                 neto_gravado_10_5=neto_105,
@@ -1844,7 +1867,22 @@ class ComprobanteFiscalCreateView(View):
                 cuenta_corriente.saldo_actual += total  # Aumenta crédito por cobrar a cliente
             cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
 
-            messages.success(request, f"Comprobante {comprobante.numero_completo} ({cuenta_corriente.razon_social}) registrado en Libro de IVA por ${total:,.2f}.")
+            # Autorización inmediata en ARCA si fue solicitada para una Venta
+            autorizar_arca = request.POST.get('autorizar_arca') in ('1', 'true', 'on')
+            if autorizar_arca and tipo_operacion == 'VENTA':
+                try:
+                    res_arca = autorizar_comprobante_arca(comprobante)
+                    messages.success(
+                        request,
+                        f"¡Factura {comprobante.numero_completo} emitida y autorizada en ARCA! CAE: {res_arca['cae']} (Vto: {res_arca['vto_cae'].strftime('%d/%m/%Y')})."
+                    )
+                except Exception as e_arca:
+                    messages.warning(
+                        request,
+                        f"Comprobante {comprobante.numero_completo} registrado en el ERP, pero no se pudo autorizar en ARCA: {str(e_arca)}. Puede autorizarlo desde el Libro de IVA."
+                    )
+            else:
+                messages.success(request, f"Comprobante {comprobante.numero_completo} ({cuenta_corriente.razon_social}) registrado en Libro de IVA por ${total:,.2f}.")
         except Exception as e:
             messages.error(request, f"Error al registrar comprobante fiscal: {str(e)}")
 
@@ -2031,3 +2069,125 @@ class ExportarLibroIVAView(View):
             ])
 
         return response
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# INTEGRACIÓN ARCA (EX AFIP) - AFIPSDK
+# ──────────────────────────────────────────────────────────────────────────────
+
+class AfipPadronLookupView(View):
+    """Endpoint AJAX /finanzas/api/afip/padron/<cuit>/ para consultar datos fiscales en ARCA."""
+    def get(self, request, cuit):
+        try:
+            datos = consultar_padron_arca(cuit)
+            return JsonResponse({"success": True, "data": datos})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+class ComprobanteAutorizarArcaView(View):
+    """Acción para autorizar un ComprobanteFiscal de VENTA ante ARCA (WSFE) y obtener CAE."""
+    def post(self, request, pk):
+        comprobante = get_object_or_404(ComprobanteFiscal, pk=pk)
+        try:
+            res = autorizar_comprobante_arca(comprobante)
+            messages.success(
+                request,
+                f"¡Factura autorizada exitosamente en ARCA! CAE: {res['cae']} (Vto: {res['vto_cae'].strftime('%d/%m/%Y')}). N° {res['numero_completo']}."
+            )
+        except Exception as e:
+            messages.error(request, f"Error al autorizar en ARCA: {str(e)}")
+
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            return redirect(referer)
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+
+class ComprobantePdfOficialView(View):
+    """Genera y redirige al PDF oficial emitido con AfipSDK."""
+    def get(self, request, pk):
+        comprobante = get_object_or_404(ComprobanteFiscal, pk=pk)
+        if not comprobante.cae:
+            messages.error(request, "El comprobante no posee CAE asignado. Debe autorizarlo primero en ARCA.")
+            return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+        try:
+            res_pdf = generar_pdf_oficial_afipsdk(comprobante)
+            file_url = res_pdf.get('file')
+            if file_url:
+                return redirect(file_url)
+            messages.error(request, "No se pudo recuperar la URL del PDF oficial de AfipSDK.")
+        except Exception as e:
+            messages.error(request, f"Error al generar PDF oficial con AfipSDK: {str(e)}")
+
+        return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+
+class ComprobanteFiscalPrintView(DetailView):
+    """Vista de impresión formal homologada para ComprobanteFiscal con QR oficial de ARCA."""
+    model = ComprobanteFiscal
+    template_name = 'finanzas/comprobante_print.html'
+    context_object_name = 'comp'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        comp = self.object
+        empresa = Empresa.objects.first()
+        ctx['empresa'] = empresa
+        ctx['es_comprobante_fiscal'] = True
+
+        tipo = comp.tipo_comprobante
+        if 'F_A' in tipo:
+            ctx['letra'] = 'A'
+            ctx['cod_afip'] = '01'
+            ctx['nombre_doc'] = 'FACTURA "A"'
+            ctx['aplica_iva'] = True
+        elif 'F_B' in tipo:
+            ctx['letra'] = 'B'
+            ctx['cod_afip'] = '06'
+            ctx['nombre_doc'] = 'FACTURA "B"'
+            ctx['aplica_iva'] = True
+        elif 'F_C' in tipo:
+            ctx['letra'] = 'C'
+            ctx['cod_afip'] = '11'
+            ctx['nombre_doc'] = 'FACTURA "C"'
+            ctx['aplica_iva'] = False
+        elif 'NC_A' in tipo:
+            ctx['letra'] = 'A'
+            ctx['cod_afip'] = '03'
+            ctx['nombre_doc'] = 'NOTA DE CRÉDITO "A"'
+            ctx['aplica_iva'] = True
+        elif 'NC_B' in tipo:
+            ctx['letra'] = 'B'
+            ctx['cod_afip'] = '08'
+            ctx['nombre_doc'] = 'NOTA DE CRÉDITO "B"'
+            ctx['aplica_iva'] = True
+        else:
+            ctx['letra'] = 'X'
+            ctx['cod_afip'] = '99'
+            ctx['nombre_doc'] = comp.get_tipo_comprobante_display()
+            ctx['aplica_iva'] = True
+
+        ctx['pto_vta'] = comp.punto_de_venta.zfill(4)
+        ctx['nro_formateado'] = comp.numero_comprobante.zfill(8)
+        ctx['neto_gravado'] = (comp.neto_gravado_21 or Decimal('0')) + (comp.neto_gravado_10_5 or Decimal('0'))
+        ctx['iva_liquidado'] = comp.total_iva
+        ctx['cae_num'] = comp.cae or 'PENDIENTE'
+        ctx['vto_cae'] = comp.vto_cae
+        ctx['mov'] = {
+            'fecha': comp.fecha_emision,
+            'concepto': comp.concepto,
+            'comprobante_tipo': comp.get_tipo_comprobante_display(),
+            'comprobante_nro': comp.numero_completo,
+            'importe': comp.total,
+            'moneda': 'ARS',
+            'cuenta_corriente': comp.cuenta_corriente,
+            'tipo': 'INGRESO' if comp.tipo_operacion == 'VENTA' else 'EGRESO',
+            'pk': comp.pk
+        }
+
+        # Generación de QR oficial de ARCA
+        ctx['qr_arca_url'] = generar_qr_arca_url(comp)
+        ctx['qr_arca_base64'] = generar_qr_arca_base64(comp)
+
+        return ctx

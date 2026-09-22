@@ -1,5 +1,37 @@
 <div class="p-6 bg-white rounded-3xl" x-data="{
-  tipo: '{{ tipo_default|default:'PROVEEDOR' }}'
+  tipo: '{{ tipo_default|default:'PROVEEDOR' }}',
+  cuit: '',
+  razonSocial: '',
+  direccion: '',
+  consultandoArca: false,
+  mensajeArca: '',
+  errorArca: '',
+  async consultarArca() {
+    let clean = (this.cuit || '').replace(/\D/g, '');
+    if (clean.length < 8) {
+      this.errorArca = 'Ingresá un CUIT o DNI válido de 11 u 8 dígitos';
+      this.mensajeArca = '';
+      return;
+    }
+    this.consultandoArca = true;
+    this.errorArca = '';
+    this.mensajeArca = '';
+    try {
+      let res = await fetch('/finanzas/api/afip/padron/' + clean + '/');
+      let data = await res.json();
+      if (data.success && data.data) {
+        if (data.data.razon_social) this.razonSocial = data.data.razon_social;
+        if (data.data.domicilio) this.direccion = data.data.domicilio;
+        this.mensajeArca = '✅ Datos recuperados de ARCA: ' + (data.data.condicion_iva_display || 'Válido');
+      } else {
+        this.errorArca = data.error || 'No se encontraron datos en ARCA';
+      }
+    } catch (e) {
+      this.errorArca = 'Error de conexión con el servicio ARCA';
+    } finally {
+      this.consultandoArca = false;
+    }
+  }
 }">
   <div class="flex items-center justify-between pb-4 border-b border-slate-100">
     <div class="flex items-center space-x-3">
@@ -33,22 +65,51 @@
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">CUIT / Identificación Fiscal</label>
-        <input 
-          type="text" 
-          name="cuit" 
-          required 
-          placeholder="30-12345678-9" 
-          class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
-        >
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-xs font-bold text-slate-700">CUIT / DNI Fiscal *</label>
+          <button 
+            type="button" 
+            @click="consultarArca()"
+            :disabled="consultandoArca"
+            class="text-[10px] font-bold text-oliva-700 hover:text-oliva-900 disabled:opacity-50 cursor-pointer transition-colors"
+          >
+            <span x-show="!consultandoArca">🔍 Consultar ARCA</span>
+            <span x-show="consultandoArca" class="flex items-center gap-1">
+              <svg class="animate-spin w-2.5 h-2.5 text-oliva-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              Buscando...
+            </span>
+          </button>
+        </div>
+        <div class="flex gap-1.5">
+          <input 
+            type="text" 
+            name="cuit" 
+            x-model="cuit"
+            required 
+            placeholder="30-12345678-9" 
+            class="w-full text-xs font-mono rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
+          >
+          <button 
+            type="button" 
+            @click="consultarArca()"
+            :disabled="consultandoArca"
+            class="px-2.5 py-1.5 bg-oliva-700 hover:bg-oliva-800 text-white rounded-xl text-[11px] font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50 shadow-xs"
+            title="Consultar Padrón de ARCA / AFIP"
+          >
+            ARCA
+          </button>
+        </div>
+        <p x-show="mensajeArca" x-text="mensajeArca" class="text-[10px] text-emerald-700 font-semibold mt-1"></p>
+        <p x-show="errorArca" x-text="errorArca" class="text-[10px] text-rose-600 font-semibold mt-1"></p>
       </div>
     </div>
 
     <div>
-      <label class="block text-xs font-bold text-slate-700 mb-1">Razón Social</label>
+      <label class="block text-xs font-bold text-slate-700 mb-1">Razón Social *</label>
       <input 
         type="text" 
         name="razon_social" 
+        x-model="razonSocial"
         required 
         placeholder="Ej. Distribuidora Cuyo S.A. / Aceites y Frutos S.R.L." 
         class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2 font-semibold"
@@ -105,6 +166,7 @@
       <input 
         type="text" 
         name="direccion" 
+        x-model="direccion"
         placeholder="Ruta Provincial 9 Km 45, Aimogasta, La Rioja" 
         class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2"
       >
