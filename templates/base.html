@@ -76,49 +76,43 @@
     }
     [x-cloak] { display: none !important; }
 
-    /* Estado inicial si la sidebar fue colapsada previamente (renderizado instantáneo en desktop >= 1024px) */
+    /* Estado inicial anti-parpadeo para Doble Sidebar en Desktop (>= 1024px) */
     @media (min-width: 1024px) {
-      html.sidebar-collapsed #app-sidebar {
-        width: 5rem !important;
-        max-width: 5rem !important;
+      html.rail2-pinned #main-layout-container {
+        padding-left: 292px !important; /* 68px (Rail 1) + 224px (Rail 2) */
       }
-      html.sidebar-collapsed #main-layout-container {
-        padding-left: 5rem !important;
-      }
-      html.sidebar-collapsed #sidebar-header {
-        justify-content: center !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-      }
-      html.sidebar-collapsed #sidebar-footer {
-        justify-content: center !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-      }
-      html.sidebar-collapsed .sidebar-open-only {
-        display: none !important;
-      }
-      html.sidebar-collapsed .sidebar-item-link {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        justify-content: center !important;
-      }
-      html.sidebar-collapsed .sidebar-item-icon {
-        margin-right: 0 !important;
+      html.rail2-unpinned #main-layout-container {
+        padding-left: 68px !important; /* Solo Rail 1 */
       }
     }
   </style>
 
   <script>
     (function() {
+      // Detección del módulo inicial según la URL actual
+      var p = window.location.pathname;
+      var mod = 'tableros';
+      if (p.startsWith('/finanzas')) {
+        mod = 'finanzas';
+      } else if (p.startsWith('/campos') || p.startsWith('/parte-diario') || p.startsWith('/costos')) {
+        mod = 'campo';
+      } else if (p.startsWith('/personal') || p.startsWith('/liquidacion')) {
+        mod = 'personal';
+      } else if (p.startsWith('/inventario')) {
+        mod = 'almazara';
+      }
+      window.__initialModule = mod;
+
+      // Estado de anclaje de Rail 2 (persistencia en localStorage)
       try {
-        var open = localStorage.getItem('erp_sidebar_open') !== 'false';
-        window.__sidebarInitial = open;
-        if (!open && window.innerWidth >= 1024) {
-          document.documentElement.classList.add('sidebar-collapsed');
+        var pinned = localStorage.getItem('erp_rail2_pinned');
+        var isPinned = (pinned === null || pinned === 'true');
+        window.__rail2PinnedInitial = isPinned;
+        if (window.innerWidth >= 1024) {
+          document.documentElement.classList.add(isPinned ? 'rail2-pinned' : 'rail2-unpinned');
         }
       } catch(e) {
-        window.__sidebarInitial = true;
+        window.__rail2PinnedInitial = true;
       }
     })();
   </script>
@@ -129,24 +123,37 @@
   class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
   x-data="{ 
-    sidebarOpen: window.__sidebarInitial, 
+    activeModule: window.__initialModule || 'tableros',
+    rail2Pinned: window.__rail2PinnedInitial,
+    rail2FlyoutOpen: false,
     mobileMenuOpen: false,
+    spotlightOpen: false,
     windowWidth: window.innerWidth,
     modalOpen: false, 
     modalTitle: '', 
     activeTab: 'caja',
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen;
-      document.documentElement.classList.toggle('sidebar-collapsed', !this.sidebarOpen);
-      try { localStorage.setItem('erp_sidebar_open', this.sidebarOpen); } catch(e) {}
+    toggleRail2Pin() {
+      this.rail2Pinned = !this.rail2Pinned;
+      if (this.rail2Pinned) {
+        this.rail2FlyoutOpen = false;
+      }
+      document.documentElement.classList.toggle('rail2-pinned', this.rail2Pinned);
+      document.documentElement.classList.toggle('rail2-unpinned', !this.rail2Pinned);
+      try { localStorage.setItem('erp_rail2_pinned', this.rail2Pinned); } catch(e) {}
+    },
+    selectModule(mod) {
+      this.activeModule = mod;
+      if (!this.rail2Pinned && window.innerWidth >= 1024) {
+        this.rail2FlyoutOpen = true;
+      }
     },
     closeMobileMenu() {
       this.mobileMenuOpen = false;
     }
   }"
   @resize.window.debounce.100ms="windowWidth = window.innerWidth"
-  @keydown.escape.window="mobileMenuOpen = false; modalOpen = false;"
-  @keydown.window="if (($event.ctrlKey || $event.metaKey) && $event.key === 'k') { $event.preventDefault(); if (window.innerWidth < 1024) { mobileMenuOpen = true; } window.dispatchEvent(new CustomEvent('focus-sidebar-search')); }"
+  @keydown.escape.window="mobileMenuOpen = false; modalOpen = false; rail2FlyoutOpen = false; spotlightOpen = false;"
+  @keydown.window="if (($event.ctrlKey || $event.metaKey) && $event.key === 'k') { $event.preventDefault(); spotlightOpen = true; }"
 >
 
   <!-- Backdrop oscuro móvil para cuando el drawer lateral está abierto -->
@@ -164,16 +171,31 @@
     aria-hidden="true"
   ></div>
 
+  <!-- Backdrop sutil para cuando el Rail 2 está en modo flyout (desanclado) en desktop -->
+  <div
+    x-show="!rail2Pinned && rail2FlyoutOpen && windowWidth >= 1024"
+    x-cloak
+    x-transition:enter="transition-opacity ease-linear duration-150"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition-opacity ease-linear duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click="rail2FlyoutOpen = false"
+    class="fixed inset-0 z-20 bg-slate-950/20 backdrop-blur-[1px] hidden lg:block"
+    aria-hidden="true"
+  ></div>
+
   <div class="min-h-full flex">
     
-    <!-- Barra Lateral Fija / Drawer Móvil -->
+    <!-- Doble Barra Lateral Fija / Drawer Móvil -->
     {% include 'components/sidebar.html' %}
 
-    <!-- Contenedor Principal (ajustable según ancho de sidebar en desktop y 100% fluido en móvil) -->
+    <!-- Contenedor Principal (ajustable según estado de anclaje de la Doble Sidebar) -->
     <div
       id="main-layout-container"
-      :class="sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'"
-      class="pl-0 lg:pl-64 flex-1 flex flex-col min-w-0 transition-[padding-left] duration-300 ease-in-out min-h-screen w-full"
+      :class="rail2Pinned ? 'lg:pl-[292px]' : 'lg:pl-[68px]'"
+      class="pl-0 lg:pl-[292px] flex-1 flex flex-col min-w-0 transition-[padding-left] duration-300 ease-in-out min-h-screen w-full"
     >
       <!-- Cabecera Superior -->
       {% include 'components/header.html' %}

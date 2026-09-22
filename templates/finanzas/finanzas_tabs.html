@@ -179,63 +179,63 @@
 
   <!-- Contenido de Pestañas -->
   <div>
-    <div x-show="currentTab === 'flujo'"
+    <div x-show="currentTab === 'flujo'" {% if active_tab != 'flujo' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_flujo_caja.html' %}
     </div>
 
-    <div x-show="currentTab === 'caja'" x-cloak
+    <div x-show="currentTab === 'caja'" {% if active_tab != 'caja' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_caja.html' %}
     </div>
 
-    <div x-show="currentTab === 'proveedores'" x-cloak
+    <div x-show="currentTab === 'proveedores'" {% if active_tab != 'proveedores' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_proveedores.html' %}
     </div>
 
-    <div x-show="currentTab === 'clientes'" x-cloak
+    <div x-show="currentTab === 'clientes'" {% if active_tab != 'clientes' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_clientes.html' %}
     </div>
 
-    <div x-show="currentTab === 'cheques'" x-cloak
+    <div x-show="currentTab === 'cheques'" {% if active_tab != 'cheques' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_cheques.html' %}
     </div>
 
-    <div x-show="currentTab === 'conciliacion'" x-cloak
+    <div x-show="currentTab === 'conciliacion'" {% if active_tab != 'conciliacion' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_conciliacion.html' %}
     </div>
 
-    <div x-show="currentTab === 'plan_cuentas'" x-cloak
+    <div x-show="currentTab === 'plan_cuentas'" {% if active_tab != 'plan_cuentas' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_plan_cuentas.html' with stats=plan_cuentas_stats cuentas_plan=cuentas_plan %}
     </div>
 
-    <div x-show="currentTab === 'resultados'" x-cloak
+    <div x-show="currentTab === 'resultados'" {% if active_tab != 'resultados' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">
       {% include 'finanzas/partials/tab_resultados.html' %}
     </div>
 
-    <div x-show="currentTab === 'libro_iva'" x-cloak
+    <div x-show="currentTab === 'libro_iva'" {% if active_tab != 'libro_iva' %}x-cloak{% endif %}
       x-transition:enter="transition-opacity duration-150"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100">

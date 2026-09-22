@@ -896,6 +896,11 @@ class CuentasListValoresView(ListView):
     template_name = 'finanzas/partials/tab_caja.html'
     context_object_name = 'cuentas'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get('HX-Request'):
+            return redirect('/finanzas/?tab=caja')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['movimientos'] = MovimientoFinanciero.objects.select_related('cuenta')[:15]
@@ -906,7 +911,9 @@ class CuentaCreateView(CreateView):
     model = Cuenta
     fields = ['nombre', 'tipo', 'moneda', 'banco_nombre', 'numero_cuenta', 'cbu_cvu', 'saldo_actual', 'empresa']
     template_name = 'finanzas/partials/cuenta_form_modal.html'
-    success_url = reverse_lazy('finanzas:dashboard')
+
+    def get_success_url(self):
+        return reverse('finanzas:dashboard') + '?tab=caja'
 
     def form_valid(self, form):
         cuenta = form.save()
@@ -986,6 +993,11 @@ class CuentasCorrientesProveedoresView(ListView):
     template_name = 'finanzas/partials/tab_proveedores.html'
     context_object_name = 'proveedores'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get('HX-Request'):
+            return redirect('/finanzas/?tab=proveedores')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return CuentaCorriente.objects.filter(tipo_entidad='PROVEEDOR', activo=True)
 
@@ -994,6 +1006,11 @@ class CuentasCorrientesClientesView(ListView):
     model = CuentaCorriente
     template_name = 'finanzas/partials/tab_clientes.html'
     context_object_name = 'clientes'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get('HX-Request'):
+            return redirect('/finanzas/?tab=clientes')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return CuentaCorriente.objects.filter(tipo_entidad='CLIENTE', activo=True)
@@ -1004,18 +1021,30 @@ class ChequesListView(ListView):
     template_name = 'finanzas/partials/tab_cheques.html'
     context_object_name = 'cheques'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get('HX-Request'):
+            return redirect('/finanzas/?tab=cheques')
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ChequeCreateView(CreateView):
     model = Cheque
     fields = ['tipo', 'banco_emisor', 'numero', 'emisor_firmante', 'cuit_emisor', 'fecha_emision', 'fecha_cobro', 'importe', 'cuenta_bancaria_origen', 'cuenta_corriente', 'estado', 'observaciones']
     template_name = 'finanzas/partials/cheque_form_modal.html'
-    success_url = reverse_lazy('finanzas:dashboard')
+
+    def get_success_url(self):
+        return reverse('finanzas:dashboard') + '?tab=cheques'
 
 
 class ConciliacionListView(ListView):
     model = ConciliacionBancaria
     template_name = 'finanzas/partials/tab_conciliacion.html'
     context_object_name = 'conciliaciones'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.headers.get('HX-Request'):
+            return redirect('/finanzas/?tab=conciliacion')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return ConciliacionBancaria.objects.select_related('cuenta', 'usuario').order_by('-fecha_extracto')
@@ -1030,7 +1059,9 @@ class ConciliacionCreateView(CreateView):
     model = ConciliacionBancaria
     fields = ['cuenta', 'fecha_extracto', 'saldo_extracto', 'observaciones']
     template_name = 'finanzas/partials/conciliacion_form_modal.html'
-    success_url = reverse_lazy('finanzas:conciliaciones')
+
+    def get_success_url(self):
+        return reverse('finanzas:dashboard') + '?tab=conciliacion'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
