@@ -241,30 +241,31 @@
         <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">P&amp;L</span>
       </a>
 
-      <!-- Tesorería, Cajas & Bancos -->
+      <!-- Plan de Cuentas -->
+      <a 
+        href="{% url 'finanzas:plan_cuentas' %}" 
+        x-show="matches('plan de cuentas contable árbol jerarquía rubros activos pasivos patrimonio')"
+        title="Plan de Cuentas (Árbol Contable)"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Plan de Cuentas</span>
+        <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">Árbol</span>
+      </a>
+
+      <!-- Cajas, Bancos & Arqueo Diario -->
       <a 
         href="{% url 'finanzas:dashboard' %}?tab=caja" 
-        x-show="matches('cajas bancos arqueo efectivo tesorería cuentas bancarias dinero cheques valores flujo conciliación')"
-        title="Tesorería, Cajas, Bancos &amp; Arqueo"
-        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab in 'caja cheques conciliacion flujo' or request.resolver_match.app_name == 'finanzas' and not request.GET.tab %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+        x-show="matches('cajas bancos arqueo efectivo tesorería cuentas bancarias dinero')"
+        title="Cajas, Bancos &amp; Arqueo Diario"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
         <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-        <span class="sidebar-open-only truncate flex-1">Tesorería &amp; Cajas</span>
-      </a>
-
-      <!-- Cuentas Proveedores & Clientes -->
-      <a 
-        href="{% url 'finanzas:dashboard' %}?tab=proveedores" 
-        x-show="matches('proveedores clientes cuentas corrientes cuentas por pagar deudas pagos cobrar cobranzas')"
-        title="Cuentas Corrientes (Proveedores &amp; Clientes)"
-        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab in 'proveedores clientes' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-      >
-        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span class="sidebar-open-only truncate flex-1">Cuentas Corrientes</span>
+        <span class="sidebar-open-only truncate flex-1">Cajas &amp; Bancos (Arqueo)</span>
       </a>
 
       <!-- Libro de IVA & Facturación -->
@@ -281,42 +282,69 @@
         <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">AFIP</span>
       </a>
 
-      <!-- Atajos de Búsqueda Finanzas (Visibles sólo al buscar) -->
+      <!-- Cuentas Proveedores -->
       <a 
-        href="{% url 'finanzas:plan_cuentas' %}" 
-        x-show="searchQuery && matches('plan de cuentas contable árbol jerarquía rubros')"
-        title="Plan de Cuentas (Árbol Contable)"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
+        href="{% url 'finanzas:dashboard' %}?tab=proveedores" 
+        x-show="matches('proveedores cuentas corrientes cuentas por pagar deudas pagos')"
+        title="Cuentas Proveedores (Por Pagar)"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
-        <span class="text-xs mr-2">📑</span>
-        <span class="sidebar-open-only truncate flex-1">Plan de Cuentas (Árbol)</span>
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Cuentas Proveedores</span>
       </a>
+
+      <!-- Cuentas Clientes -->
+      <a 
+        href="{% url 'finanzas:dashboard' %}?tab=clientes" 
+        x-show="matches('clientes cuentas corrientes cuentas por cobrar créditos cobranzas')"
+        title="Cuentas Clientes (Por Cobrar)"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Cuentas Clientes</span>
+      </a>
+
+      <!-- Cheques en Cartera -->
       <a 
         href="{% url 'finanzas:dashboard' %}?tab=cheques" 
-        x-show="searchQuery && matches('cheques en cartera diferidos emitidos valores')"
+        x-show="matches('cheques en cartera diferidos emitidos valores')"
         title="Cheques en Cartera"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
-        <span class="text-xs mr-2">💳</span>
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
         <span class="sidebar-open-only truncate flex-1">Cheques en Cartera</span>
       </a>
+
+      <!-- Conciliaciones Bancarias -->
       <a 
         href="{% url 'finanzas:dashboard' %}?tab=conciliacion" 
-        x-show="searchQuery && matches('conciliaciones bancarias extractos extracto banco')"
+        x-show="matches('conciliaciones bancarias extractos extracto banco')"
         title="Conciliaciones Bancarias"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
-        <span class="text-xs mr-2">⚖</span>
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
         <span class="sidebar-open-only truncate flex-1">Conciliaciones Bancarias</span>
       </a>
+
+      <!-- Tesorería & Flujo -->
       <a 
         href="{% url 'finanzas:dashboard' %}?tab=flujo" 
-        x-show="searchQuery && matches('flujo de fondos cash flow tesorería')"
-        title="Flujo de Fondos (Cash Flow)"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
+        x-show="matches('tesorería flujo de fondos cash flow ingresos egresos')"
+        title="Tesorería &amp; Flujo de Fondos"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' or not request.GET.tab and request.resolver_match.url_name == 'dashboard' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
-        <span class="text-xs mr-2">📈</span>
-        <span class="sidebar-open-only truncate flex-1">Flujo de Fondos (Cash Flow)</span>
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Tesorería &amp; Flujo</span>
       </a>
     </div>
 
@@ -329,17 +357,44 @@
         Personal &amp; Nómina
       </div>
 
-      <!-- Padrón & Asistencia -->
+      <!-- Legajos de Personal -->
       <a 
         href="{% url 'personal:empleados_list' %}" 
-        x-show="matches('personal legajos empleados cuadrillas rrhh trabajadores rurales asistencia presentismo fichaje qr')"
-        title="Padrón de Personal &amp; Asistencia"
-        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'personal' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+        x-show="matches('personal legajos empleados cuadrillas rrhh trabajadores rurales')"
+        title="Legajos de Personal Rural"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
         <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span class="sidebar-open-only truncate flex-1">Padrón &amp; Asistencia</span>
+        <span class="sidebar-open-only truncate flex-1">Legajos de Personal</span>
+      </a>
+
+      <!-- Asistencia Cuadrillas -->
+      <a 
+        href="{% url 'personal:asistencia_diaria' %}" 
+        x-show="matches('asistencia cuadrillas presentismo ausencias marcación diario')"
+        title="Asistencia Cuadrillas"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Asistencia Cuadrillas</span>
+      </a>
+
+      <!-- Fichaje por QR -->
+      <a 
+        href="{% url 'personal:fichaje_qr' %}" 
+        x-show="matches('fichaje qr código escáner celular móvil cuadrilla asistencia')"
+        title="Fichaje por QR Móvil"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'fichaje-qr' in request.path %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#C29B38] group-hover:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Fichaje por QR</span>
+        <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">QR</span>
       </a>
 
       <!-- Liquidación de Haberes UATRE -->
@@ -355,26 +410,6 @@
         <span class="sidebar-open-only truncate flex-1">Liquidación de Haberes</span>
         <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">UATRE</span>
       </a>
-
-      <!-- Atajos de Búsqueda Personal (Visibles sólo al buscar) -->
-      <a 
-        href="{% url 'personal:fichaje_qr' %}" 
-        x-show="searchQuery && matches('fichaje qr código escáner celular móvil')"
-        title="Fichaje por QR Móvil"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-amber-300 bg-white/5 hover:bg-white/10"
-      >
-        <span class="text-xs mr-2">📱</span>
-        <span class="sidebar-open-only truncate flex-1">Fichaje por QR Móvil</span>
-      </a>
-      <a 
-        href="{% url 'personal:asistencia_diaria' %}" 
-        x-show="searchQuery && matches('asistencia cuadrillas marcación jornada diario')"
-        title="Control de Asistencia de Hoy"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
-      >
-        <span class="text-xs mr-2">📋</span>
-        <span class="sidebar-open-only truncate flex-1">Cargar Asistencia Diaria</span>
-      </a>
     </div>
 
     <!-- ── 5. SECCIÓN: ALMAZARA, DEPÓSITOS & LOGÍSTICA ─────────────────────── -->
@@ -389,9 +424,9 @@
       <!-- Stock de Insumos -->
       <a 
         href="{% url 'inventario:insumos_list' %}" 
-        x-show="matches('stock de insumos fitosanitarios fertilizantes depósito existencia mínimo kardex movimientos abc')"
-        title="Stock &amp; Depósitos de Insumos"
-        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name in 'insumos_list insumo_kardex movimientos_list analisis_stock' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+        x-show="matches('stock de insumos fitosanitarios fertilizantes depósito existencia mínimo')"
+        title="Stock de Insumos"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name in 'insumos_list insumo_kardex' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
       >
         <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -413,6 +448,32 @@
         <span class="sidebar-open-only text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">Firma</span>
       </a>
 
+      <!-- Análisis & Control ABC -->
+      <a 
+        href="{% url 'inventario:analisis_stock' %}" 
+        x-show="matches('análisis control abc clasificación rotación valorización')"
+        title="Análisis &amp; Control ABC"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'analisis_stock' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Análisis ABC &amp; Stock</span>
+      </a>
+
+      <!-- Kardex & Movimientos -->
+      <a 
+        href="{% url 'inventario:movimientos_list' %}" 
+        x-show="matches('kardex movimientos entradas salidas transferencias ajustes ppp')"
+        title="Kardex &amp; Movimientos"
+        class="sidebar-item-link flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'movimientos_list' %}bg-gradient-to-r from-[#3D4A2A] to-[#4E5F36] text-white font-bold shadow-xs border border-[#637946]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+      >
+        <svg class="sidebar-item-icon w-4.5 h-4.5 flex-shrink-0 mr-2.5 text-[#B2C69E] group-hover:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        <span class="sidebar-open-only truncate flex-1">Kardex &amp; Movimientos</span>
+      </a>
+
       <!-- Órdenes de Compra -->
       <a 
         href="{% url 'inventario:ordenes_compra_list' %}" 
@@ -424,26 +485,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
         <span class="sidebar-open-only truncate flex-1">Órdenes de Compra</span>
-      </a>
-
-      <!-- Atajos de Búsqueda Inventario (Visibles sólo al buscar) -->
-      <a 
-        href="{% url 'inventario:analisis_stock' %}" 
-        x-show="searchQuery && matches('análisis control abc clasificación rotación')"
-        title="Análisis &amp; Control ABC"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
-      >
-        <span class="text-xs mr-2">📊</span>
-        <span class="sidebar-open-only truncate flex-1">Análisis ABC &amp; Control</span>
-      </a>
-      <a 
-        href="{% url 'inventario:movimientos_list' %}" 
-        x-show="searchQuery && matches('kardex movimientos entradas salidas transferencias ajustes ppp')"
-        title="Kardex &amp; Movimientos"
-        class="sidebar-item-link flex items-center px-2.5 py-1.5 text-xs rounded-xl text-emerald-300 bg-white/5 hover:bg-white/10"
-      >
-        <span class="text-xs mr-2">📋</span>
-        <span class="sidebar-open-only truncate flex-1">Kardex &amp; Movimientos</span>
       </a>
     </div>
 
