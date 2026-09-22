@@ -138,7 +138,7 @@
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
                 {% if ch.estado == 'EN_CARTERA' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-                {% elif ch.estado == 'DEPOSITADO' %}bg-blue-50 text-blue-700 border border-blue-200
+                {% elif ch.estado == 'DEPOSITADO' %}bg-oliva-50 text-oliva-800 border border-oliva-200
                 {% elif ch.estado == 'COBRADO' %}bg-slate-100 text-slate-800 border border-slate-200
                 {% elif ch.estado == 'ENTREGADO_PROVEEDOR' %}bg-amber-50 text-amber-800 border border-amber-200
                 {% elif ch.estado == 'RECHAZADO' %}bg-rose-50 text-rose-700 border border-rose-200
@@ -153,7 +153,7 @@
                   <button 
                     type="button" 
                     @click="abrirAccion('{{ ch.id }}', '{{ ch.numero }}', '{{ ch.banco_emisor }}', '{{ ch.importe }}', 'depositar')"
-                    class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] rounded-lg transition-colors cursor-pointer border border-blue-200"
+                    class="px-2 py-1 bg-oliva-50 hover:bg-oliva-100 text-oliva-800 font-bold text-[10px] rounded-lg transition-colors cursor-pointer border border-oliva-200"
                     title="Depositar en banco"
                   >
                     🏦 Depositar
@@ -244,7 +244,7 @@
               <button 
                 type="button" 
                 @click="accionInicial = 'depositar'" 
-                :class="accionInicial === 'depositar' ? 'bg-blue-600 text-white font-bold border-blue-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
+                :class="accionInicial === 'depositar' ? 'bg-oliva-700 text-white font-bold border-oliva-700' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
                 class="p-2.5 rounded-xl border text-xs text-center transition-colors cursor-pointer"
               >
                 🏦 Depositar

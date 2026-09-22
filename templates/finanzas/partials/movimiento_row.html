@@ -1,8 +1,8 @@
 <tr class="hover:bg-oliva-50/40 transition-colors group">
   <td class="py-3.5 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
   <td class="py-3.5 px-4 whitespace-nowrap">
-    <span class="inline-flex items-center space-x-1.5 text-xs font-semibold {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-700{% else %}text-blue-700{% endif %}">
-      <span class="w-1.5 h-1.5 rounded-full {% if mov.tipo == 'INGRESO' %}bg-emerald-500{% elif mov.tipo == 'EGRESO' %}bg-rose-500{% else %}bg-blue-500{% endif %}"></span>
+    <span class="inline-flex items-center space-x-1.5 text-xs font-semibold {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-700{% else %}text-oliva-700{% endif %}">
+      <span class="w-1.5 h-1.5 rounded-full {% if mov.tipo == 'INGRESO' %}bg-emerald-500{% elif mov.tipo == 'EGRESO' %}bg-rose-500{% else %}bg-oliva-600{% endif %}"></span>
       <span>{{ mov.get_tipo_display }}</span>
     </span>
   </td>
@@ -23,7 +23,7 @@
       <span class="text-slate-300">-</span>
     {% endif %}
   </td>
-  <td class="py-3.5 px-4 text-right font-mono font-bold text-xs whitespace-nowrap tabular-nums tracking-tight {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-slate-900{% else %}text-blue-800{% endif %}">
+  <td class="py-3.5 px-4 text-right font-mono font-bold text-xs whitespace-nowrap tabular-nums tracking-tight {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-slate-900{% else %}text-oliva-800{% endif %}">
     {% if mov.tipo == 'EGRESO' %}-{% elif mov.tipo == 'INGRESO' %}+{% endif %}{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}
   </td>
   <td class="py-3.5 px-4 text-center whitespace-nowrap">

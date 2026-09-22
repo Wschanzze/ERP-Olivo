@@ -78,10 +78,10 @@
 
     <!-- Posición Mensual de IVA (Cuadro Fiscal de Liquidación) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
-      <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80">
-        <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Crédito Fiscal (Compras)</span>
-        <h4 class="text-xl font-black text-blue-950 font-mono mt-1">${{ total_credito_fiscal|floatformat:2 }}</h4>
-        <span class="text-[10px] text-blue-600 mt-0.5 block">Neto Gravado: ${{ total_neto_compras|floatformat:2 }}</span>
+      <div class="p-3.5 rounded-2xl bg-oliva-50/80 border border-oliva-200/90">
+        <span class="text-[10px] font-bold text-oliva-700 uppercase tracking-wider block">Crédito Fiscal (Compras)</span>
+        <h4 class="text-xl font-black text-oliva-950 font-mono mt-1">${{ total_credito_fiscal|floatformat:2 }}</h4>
+        <span class="text-[10px] text-oliva-600 mt-0.5 block">Neto Gravado: ${{ total_neto_compras|floatformat:2 }}</span>
       </div>
 
       <div class="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200/80">
@@ -157,7 +157,7 @@
             <tr class="hover:bg-slate-50/70 transition-colors font-sans">
               <td class="px-4 py-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">{{ f.fecha_emision|date:"d/m/Y" }}</td>
               <td class="px-4 py-3 font-bold text-slate-900 whitespace-nowrap">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black {% if 'A' in f.tipo_comprobante %}bg-blue-100 text-blue-800{% elif 'B' in f.tipo_comprobante %}bg-purple-100 text-purple-800{% else %}bg-slate-100 text-slate-800{% endif %}">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black {% if 'A' in f.tipo_comprobante %}bg-oliva-100 text-oliva-800{% elif 'B' in f.tipo_comprobante %}bg-purple-100 text-purple-800{% else %}bg-slate-100 text-slate-800{% endif %}">
                   {{ f.get_tipo_comprobante_display }}
                 </span>
                 <span class="font-mono text-xs ml-1">{{ f.numero_completo }}</span>
@@ -169,7 +169,7 @@
               <td class="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">{{ f.get_condicion_iva_display }}</td>
               <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_21|floatformat:2 }}</td>
               <td class="px-4 py-3 text-right font-mono text-slate-700">${{ f.neto_gravado_10_5|floatformat:2 }}</td>
-              <td class="px-4 py-3 text-right font-mono font-bold text-blue-700">${{ f.total_iva|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-oliva-800">${{ f.total_iva|floatformat:2 }}</td>
               <td class="px-4 py-3 text-right font-mono text-amber-700">${{ f.percepcion_iibb|floatformat:2 }}</td>
               <td class="px-4 py-3 text-right font-mono font-black text-slate-900">${{ f.total|floatformat:2 }}</td>
               

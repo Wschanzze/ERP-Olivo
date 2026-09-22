@@ -391,8 +391,8 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'subtotal_usd': total_ventas_usd,
         'presup_ars': total_ventas_presup,
         'pct_ventas': 100.0,
-        'bg_header': 'bg-blue-50/70',
-        'text_header': 'text-blue-900',
+        'bg_header': 'bg-oliva-50',
+        'text_header': 'text-oliva-900',
     })
 
     # 2. Costos Agrícolas
@@ -543,7 +543,7 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'monto_ars': ebit_ars,
         'monto_usd': ebit_usd,
         'pct_ventas': pct_ebit,
-        'badge_bg': 'bg-blue-100 text-blue-950 font-bold border border-blue-200',
+        'badge_bg': 'bg-oliva-100 text-oliva-950 font-bold border border-oliva-300',
     })
 
     # 7. Resultados Financieros

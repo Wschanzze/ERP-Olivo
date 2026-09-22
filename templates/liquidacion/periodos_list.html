@@ -196,7 +196,7 @@
                 ${{ liq.neto_a_cobrar_ars|floatformat:2 }}
               </td>
               <td class="py-3 px-4 text-center">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold {% if liq.estado == 'PAGADO' %}bg-emerald-100 text-emerald-800{% elif liq.estado == 'APROBADO' %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold {% if liq.estado == 'PAGADO' %}bg-emerald-100 text-emerald-800{% elif liq.estado == 'APROBADO' %}bg-oliva-100 text-oliva-800 border border-oliva-200{% else %}bg-amber-100 text-amber-800{% endif %}">
                   {{ liq.get_estado_display }}
                 </span>
               </td>

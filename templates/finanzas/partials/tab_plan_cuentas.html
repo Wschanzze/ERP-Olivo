@@ -114,12 +114,12 @@
     </div>
 
     <!-- Enlaces con el ERP -->
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:border-blue-200 transition-colors">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs hover:border-oliva-300 transition-colors">
       <div class="flex items-center justify-between">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-700">Entidades Enlazadas</p>
-        <span class="text-blue-600 text-sm">🔗</span>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-oliva-700">Entidades Enlazadas</p>
+        <span class="text-oliva-600 text-sm">🔗</span>
       </div>
-      <p class="text-2xl font-extrabold font-mono text-blue-800 mt-2 tabular-nums">{{ stats.vinculadas|default:"9" }} <span class="text-xs font-normal text-slate-400">activas</span></p>
+      <p class="text-2xl font-extrabold font-mono text-oliva-900 mt-2 tabular-nums">{{ stats.vinculadas|default:"9" }} <span class="text-xs font-normal text-slate-400">activas</span></p>
       <p class="text-[11px] text-slate-500 mt-1">Cajas, Insumos y Centros de Costo</p>
     </div>
   </div>
@@ -266,7 +266,7 @@
 
       <button 
         @click="filterClass = 'exportacion'; onlyImputable = false" 
-        :class="filterClass === 'exportacion' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
+        :class="filterClass === 'exportacion' ? 'bg-oliva-700 text-white shadow-xs font-bold' : 'bg-oliva-50 text-oliva-800 hover:bg-oliva-100'"
         class="px-2.5 py-1 text-[11px] rounded-lg transition-colors font-medium cursor-pointer"
       >
         🚢 Exportación (USD)
@@ -418,7 +418,7 @@
         <!-- Columna 3: Saldo Habitual -->
         <div class="col-span-2 hidden md:block text-center">
           {% if acc.saldo_habitual %}
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-semibold {% if acc.saldo_habitual == 'DEUDOR' %}text-emerald-700 bg-emerald-50 border border-emerald-200/50{% else %}text-blue-700 bg-blue-50 border border-blue-200/50{% endif %}">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-semibold {% if acc.saldo_habitual == 'DEUDOR' %}text-emerald-700 bg-emerald-50 border border-emerald-200/50{% else %}text-oliva-800 bg-oliva-50 border border-oliva-200/50{% endif %}">
               {{ acc.get_saldo_habitual_display }}
             </span>
           {% else %}
@@ -455,7 +455,7 @@
           <!-- Vínculos activos en el ERP -->
           {% if acc.vinculos_count %}
           <span 
-            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-800"
+            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-oliva-100 text-oliva-800"
             title="Entidades del ERP enlazadas: {{ acc.c_cajas }} cajas/bancos, {{ acc.c_act }} insumos stock, {{ acc.c_gas }} insumos consumo, {{ acc.c_cc }} centros de costo"
           >
             🔗

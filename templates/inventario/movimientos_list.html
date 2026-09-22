@@ -148,7 +148,7 @@
                   Consumo Campo
                 </span>
               {% elif mov.tipo == 'TRANSFERENCIA' %}
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-oliva-50 text-oliva-800 border border-oliva-200">
                   Transferencia
                 </span>
               {% elif mov.tipo == 'AJUSTE_POSITIVO' %}
@@ -172,7 +172,7 @@
                 <div class="flex items-center gap-1 text-[11px]">
                   <span class="font-medium text-slate-700">{{ mov.deposito.nombre }}</span>
                   <span class="text-slate-400">→</span>
-                  <span class="font-medium text-sky-800">{{ mov.deposito_destino.nombre|default:"Destino" }}</span>
+                  <span class="font-medium text-oliva-800">{{ mov.deposito_destino.nombre|default:"Destino" }}</span>
                 </div>
               {% else %}
                 <span class="font-medium text-slate-800 text-[11px]">{{ mov.deposito.nombre }}</span>
@@ -180,7 +180,7 @@
             </td>
 
             <!-- Cantidad -->
-            <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap tabular-nums {% if mov.tipo in 'ENTRADA_COMPRA AJUSTE_POSITIVO' %}text-emerald-700{% elif mov.tipo in 'SALIDA_PARTE_DIARIO SALIDA_MERMA AJUSTE_NEGATIVO' %}text-rose-700{% else %}text-sky-700{% endif %}">
+            <td class="py-3 px-4 text-right font-mono font-bold whitespace-nowrap tabular-nums {% if mov.tipo in 'ENTRADA_COMPRA AJUSTE_POSITIVO' %}text-emerald-700{% elif mov.tipo in 'SALIDA_PARTE_DIARIO SALIDA_MERMA AJUSTE_NEGATIVO' %}text-rose-700{% else %}text-oliva-800{% endif %}">
               {% if mov.tipo in 'ENTRADA_COMPRA AJUSTE_POSITIVO' %}+{% elif mov.tipo in 'SALIDA_PARTE_DIARIO SALIDA_MERMA AJUSTE_NEGATIVO' %}-{% endif %}{{ mov.cantidad|floatformat:2 }}
               <span class="text-[10px] text-slate-400 font-normal">{{ mov.insumo.unidad_medida }}</span>
             </td>

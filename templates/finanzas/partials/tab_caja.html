@@ -154,7 +154,7 @@
             >
               <td class="py-3 px-4 font-mono text-slate-500 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
               <td class="py-3 px-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-oliva-50 text-oliva-800 border border-oliva-200{% endif %}">
                   {{ mov.get_tipo_display }}
                 </span>
               </td>
@@ -173,7 +173,7 @@
               <td class="py-3 px-4 font-mono text-slate-500">
                 {{ mov.comprobante_tipo|default:"-" }} {{ mov.comprobante_nro }}
               </td>
-              <td class="py-3 px-4 text-right font-mono font-bold {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-600{% else %}text-blue-700{% endif %}">
+              <td class="py-3 px-4 text-right font-mono font-bold {% if mov.tipo == 'INGRESO' %}text-emerald-700{% elif mov.tipo == 'EGRESO' %}text-rose-600{% else %}text-oliva-800{% endif %}">
                 {% if mov.tipo == 'INGRESO' %}+{% elif mov.tipo == 'EGRESO' %}-{% endif %}${{ mov.importe|floatformat:2 }}
               </td>
               <td class="py-3 px-4 text-center">

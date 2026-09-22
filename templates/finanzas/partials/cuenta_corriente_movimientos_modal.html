@@ -46,7 +46,7 @@
           <tr class="hover:bg-slate-50/80 transition-colors">
             <td class="py-2.5 px-3 font-mono text-slate-500 whitespace-nowrap">{{ mov.fecha|date:"d/m/Y" }}</td>
             <td class="py-2.5 px-3 whitespace-nowrap">
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {% if mov.tipo == 'INGRESO' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif mov.tipo == 'EGRESO' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-oliva-50 text-oliva-800 border border-oliva-200{% endif %}">
                 {{ mov.get_tipo_display }}
               </span>
             </td>
