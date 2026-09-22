@@ -158,6 +158,13 @@ python manage.py test
 Salida esperada:
 ```text
 Creating test database for alias 'default'...
-Ran 8 tests in 2.208s
+Ran 17 tests in 2.208s
 OK
 ```
+
+---
+
+## 🏛️ Facturación Electrónica ARCA y Automatizaciones n8n
+
+* **ARCA (ex AFIP):** Integración nativa con Web Services (WSFE y Padrón A5/A13) mediante AfipSDK para emisión de Facturas A, B, C con CAE y código QR oficial (RG 4291 / RG 5616).
+* **Manual de Automatización con n8n:** Ver [docs/MANUAL_INTEGRACION_N8N.md](docs/MANUAL_INTEGRACION_N8N.md) para la configuración paso a paso de envío de facturas por WhatsApp/Email, lectura de comprobantes de proveedores y recordatorios de cobranza.
