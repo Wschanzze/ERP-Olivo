@@ -23,7 +23,7 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard:index')
 
-    next_url = request.GET.get('next') or request.POST.get('next') or reverse('dashboard:index')
+    next_url = reverse('dashboard:index')
     error_msg = None
 
     if request.method == 'POST':

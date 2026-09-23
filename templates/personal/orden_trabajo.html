@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Órdenes de Trabajo | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="ordenTrabajo()">
+
+  <!-- Encabezado con Tabs -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Órdenes de Trabajo</h1>
+      <p class="text-sm text-slate-500 mt-1">Planificación y asignación semanal de tareas agrícolas.</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <a href="{% url 'personal:asistencia_diaria' %}" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-colors shadow-2xs">
+        <svg class="w-4 h-4 text-oliva-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        Ver Partes Diarios
+      </a>
+    </div>
+  </div>
+
+  <!-- Formulario: Armar la orden de trabajo -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+    <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50">
+      <h3 class="text-base font-bold text-slate-800">Armar la orden de trabajo de la semana</h3>
+      <p class="text-xs text-slate-500 mt-1">Elegí la semana y cargá cada tarea: en qué cuadro, qué actividad, cuánto y con cuánta gente. Después, el control de qué se cumplió sale solo de los partes diarios de esa semana.</p>
+    </div>
+
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Semana (cualquier día de esa semana)</label>
+          <input type="date" x-model="semana" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 shadow-2xs">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Campo</label>
+          <select x-model="finca" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 shadow-2xs">
+            <option value="">— todos los campos —</option>
+            {% for f in fincas %}
+              <option value="{{ f.id }}">{{ f.nombre }}</option>
+            {% endendfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Observaciones</label>
+          <input type="text" x-model="observaciones" placeholder="Ej: prioridad al riego del cuadro 3 por la ola de calor" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 shadow-2xs">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+        <h4 class="text-sm font-bold text-slate-800">Tareas de la semana</h4>
+        <button type="button" @click="agregarTarea()" class="inline-flex items-center px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors shadow-2xs">
+          + Agregar tarea
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <template x-for="(tarea, index) in tareas" :key="tarea.id">
+          <div class="p-4 bg-slate-50/50 rounded-xl border border-slate-200/60 relative group">
+            
+            <div class="grid grid-cols-1 md:grid-cols-7 gap-3 mb-3">
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Campo</label>
+                <select x-model="tarea.finca" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                  <option value="">— campo —</option>
+                  {% for f in fincas %}
+                    <option value="{{ f.id }}">{{ f.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cuadro</label>
+                <select x-model="tarea.cuadro" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                  <option value="">— cuadro —</option>
+                  <template x-for="c in getCuadrosForFinca(tarea.finca)" :key="c.id">
+                    <option :value="c.id" x-text="c.codigo"></option>
+                  </template>
+                </select>
+              </div>
+
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actividad</label>
+                <select x-model="tarea.actividad" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                  <option value="">— actividad —</option>
+                  <option value="Riego">Riego</option>
+                  <option value="Poda">Poda</option>
+                  <option value="Cosecha">Cosecha</option>
+                  <option value="Fitosanitario">Aplicación Fitosanitaria</option>
+                  <option value="Fertilización">Fertilización</option>
+                  <option value="Mantenimiento">Mantenimiento</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cantidad (0 = sin meta)</label>
+                <div class="flex gap-2">
+                  <input type="number" x-model="tarea.cantidad" class="w-1/2 text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                  <input type="text" x-model="tarea.unidad" placeholder="hileras" class="w-1/2 text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                </div>
+              </div>
+
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Gente</label>
+                <input type="number" x-model="tarea.gente" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+              </div>
+
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Días</label>
+                <input type="number" x-model="tarea.dias" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prioridad</label>
+                <select x-model="tarea.prioridad" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+                  <option value="BAJA">Baja</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="ALTA">Alta</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Línea de producto</label>
+                <input type="text" x-model="tarea.linea_producto" placeholder="— línea —" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notas</label>
+                <input type="text" x-model="tarea.notas" class="w-full text-xs border-slate-200 rounded-lg focus:border-oliva-500 shadow-2xs">
+              </div>
+
+              <div class="md:col-span-1 flex justify-end">
+                <button type="button" @click="quitarTarea(tarea.id)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-slate-200/50 bg-white shadow-2xs" title="Eliminar Tarea">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            
+          </div>
+        </template>
+        <p x-show="tareas.length === 0" class="text-sm text-slate-400 text-center py-4">No hay tareas agregadas. Hacé clic en "+ Agregar tarea".</p>
+      </div>
+
+      <div class="mt-6 flex justify-end pt-4 border-t border-slate-100">
+        <button type="button" @click="guardarOrden()" :disabled="cargando" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4F7336] hover:bg-[#3D4A2A] text-white text-sm font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50">
+          <span x-show="!cargando">Guardar orden</span>
+          <span x-show="cargando">Guardando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Órdenes Anteriores -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+    <h3 class="text-base font-bold text-slate-800 mb-4">Órdenes de las últimas semanas</h3>
+    {% if ordenes %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
+              <th class="py-3 px-4">Semana</th>
+              <th class="py-3 px-4">Campo</th>
+              <th class="py-3 px-4">Observaciones</th>
+              <th class="py-3 px-4 text-center">Tareas</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for o in ordenes %}
+            <tr class="hover:bg-slate-50/70 transition-colors">
+              <td class="py-3 px-4 font-bold text-slate-800">{{ o.semana_inicio|date:"d/m/Y" }}</td>
+              <td class="py-3 px-4 text-slate-600">{{ o.finca.nombre|default:"Todos" }}</td>
+              <td class="py-3 px-4 text-slate-500 text-xs">{{ o.observaciones|truncatechars:50 }}</td>
+              <td class="py-3 px-4 text-center text-xs font-bold text-oliva-700">{{ o.tareas.count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-400 italic text-center py-4">Todavía no hay órdenes. Armá la primera arriba: la semana que viene, qué se hace en cada cuadro y con cuánta gente.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('ordenTrabajo', () => ({
+    semana: '',
+    finca: '',
+    observaciones: '',
+    cuadros: JSON.parse('{{ cuadros_json|escapejs }}'),
+    tareas: [
+      { id: Date.now(), finca: '', cuadro: '', actividad: '', cantidad: 0, unidad: '', gente: '', dias: '', prioridad: 'NORMAL', linea_producto: '', notas: '' }
+    ],
+    cargando: false,
+
+    agregarTarea() {
+      this.tareas.push({ id: Date.now(), finca: '', cuadro: '', actividad: '', cantidad: 0, unidad: '', gente: '', dias: '', prioridad: 'NORMAL', linea_producto: '', notas: '' });
+    },
+    quitarTarea(id) {
+      this.tareas = this.tareas.filter(t => t.id !== id);
+    },
+    getCuadrosForFinca(finca_id) {
+      if (!finca_id) return this.cuadros;
+      return this.cuadros.filter(c => String(c.finca_id) === String(finca_id));
+    },
+    guardarOrden() {
+      if (!this.semana) {
+        alert('Por favor elegí la semana de la orden.');
+        return;
+      }
+      this.cargando = true;
+
+      fetch('{% url "personal:orden_trabajo_guardar" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          semana: this.semana,
+          finca: this.finca,
+          observaciones: this.observaciones,
+          tareas: this.tareas
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'ok') {
+          window.location.reload();
+        } else {
+          alert('Ocurrió un error al guardar la orden.');
+          this.cargando = false;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error de conexión.');
+        this.cargando = false;
+      });
+    }
+  }))
+})
+</script>
+{% endblock %}

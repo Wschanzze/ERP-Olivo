@@ -24,6 +24,15 @@
 
     <div class="flex items-center gap-2 flex-wrap">
       <button 
+        @click="modalCuenta = true" 
+        type="button" 
+        class="inline-flex items-center px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer"
+      >
+        <span class="mr-1.5">🏦</span>
+        <span>Nueva Cuenta</span>
+      </button>
+
+      <button 
         @click="modalArqueo = true" 
         type="button" 
         class="inline-flex items-center px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer"

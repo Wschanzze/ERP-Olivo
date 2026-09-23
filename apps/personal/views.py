@@ -161,3 +161,55 @@ class FichajeQRView(View):
             'creada': creada,
             'asistencia': asistencia,
         })
+
+from .models import OrdenTrabajo, TareaOrdenTrabajo
+from apps.campos.models import Cuadro
+import json
+from django.views import View
+
+class OrdenTrabajoView(ListView):
+    """Vista para gestionar Órdenes de Trabajo Semanales."""
+    model = OrdenTrabajo
+    template_name = 'personal/orden_trabajo.html'
+    context_object_name = 'ordenes'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['fincas'] = Finca.objects.filter(activa=True)
+        ctx['cuadros'] = Cuadro.objects.filter(activo=True).select_related('finca')
+        
+        # Pasar cuadros como JSON para el selector dinámico
+        cuadros_list = [{'id': c.id, 'finca_id': c.finca_id, 'codigo': c.codigo} for c in ctx['cuadros']]
+        ctx['cuadros_json'] = json.dumps(cuadros_list)
+        return ctx
+
+class OrdenTrabajoGuardarView(View):
+    """Guarda la orden de trabajo con sus tareas vía POST."""
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        
+        # 1. Crear Orden
+        orden = OrdenTrabajo.objects.create(
+            semana_inicio=data.get('semana'),
+            finca_id=data.get('finca') or None,
+            observaciones=data.get('observaciones', '')
+        )
+        
+        # 2. Crear Tareas
+        tareas = data.get('tareas', [])
+        for t in tareas:
+            TareaOrdenTrabajo.objects.create(
+                orden=orden,
+                finca_id=t.get('finca') or None,
+                cuadro_id=t.get('cuadro') or None,
+                actividad=t.get('actividad', ''),
+                cantidad=t.get('cantidad') or 0,
+                unidad=t.get('unidad', ''),
+                gente=t.get('gente') or None,
+                dias=t.get('dias') or None,
+                prioridad=t.get('prioridad', 'NORMAL'),
+                linea_producto=t.get('linea_producto', ''),
+                notas=t.get('notas', '')
+            )
+        
+        return HttpResponse(json.dumps({'status': 'ok', 'orden_id': orden.id}), content_type='application/json')

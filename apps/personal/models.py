@@ -173,3 +173,49 @@ class Inscripcion(TimeStampedModel):
 
     def __str__(self):
         return f"{self.apellido}, {self.nombre} ({self.get_estado_display()})"
+
+class OrdenTrabajo(TimeStampedModel):
+    """Orden de Trabajo semanal."""
+    semana_inicio = models.DateField(verbose_name=_("Semana (Inicio)"))
+    finca = models.ForeignKey(
+        Finca, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='ordenes_trabajo', 
+        verbose_name=_("Campo")
+    )
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+
+    class Meta:
+        verbose_name = _("Orden de Trabajo")
+        verbose_name_plural = _("Órdenes de Trabajo")
+        ordering = ['-semana_inicio']
+
+    def __str__(self):
+        return f"Orden {self.semana_inicio} - {self.finca.nombre if self.finca else 'Todos los campos'}"
+
+
+class TareaOrdenTrabajo(TimeStampedModel):
+    """Tarea específica dentro de una Orden de Trabajo."""
+    class Prioridad(models.TextChoices):
+        BAJA = 'BAJA', _('Baja')
+        NORMAL = 'NORMAL', _('Normal')
+        ALTA = 'ALTA', _('Alta')
+
+    orden = models.ForeignKey(OrdenTrabajo, on_delete=models.CASCADE, related_name='tareas')
+    finca = models.ForeignKey(Finca, on_delete=models.CASCADE, null=True, blank=True)
+    cuadro = models.ForeignKey('campos.Cuadro', on_delete=models.CASCADE, null=True, blank=True)
+    actividad = models.CharField(max_length=100)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, help_text="0 = sin meta")
+    unidad = models.CharField(max_length=50, blank=True)
+    gente = models.PositiveIntegerField(null=True, blank=True)
+    dias = models.PositiveIntegerField(null=True, blank=True)
+    prioridad = models.CharField(max_length=20, choices=Prioridad.choices, default=Prioridad.NORMAL)
+    linea_producto = models.CharField(max_length=100, blank=True)
+    notas = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Tarea de Orden")
+        verbose_name_plural = _("Tareas de Orden")
+        ordering = ['created_at']
