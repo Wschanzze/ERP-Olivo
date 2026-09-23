@@ -45,7 +45,7 @@ class ParteDiarioView(TemplateView):
         ctx['ordenes_activas'] = ordenes_activas
         ctx['ordenes_json'] = json.dumps(ordenes_json)
         ctx['partes'] = partes_qs
-        ctx['fincas'] = Finca.objects.filter(activo=True)
+        ctx['fincas'] = Finca.objects.filter(activa=True)
         return ctx
 
 class ParteDiarioGuardarView(View):
