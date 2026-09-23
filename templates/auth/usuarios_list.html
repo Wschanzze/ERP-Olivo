@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios y Roles | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="space-y-6 pb-12">
+  
+  <!-- Encabezado de Sección con Acciones -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+    <div>
+      <div class="flex items-center space-x-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-[#EAEFE3] text-[#3D4A2A] flex items-center justify-center font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Gestión de Usuarios y Roles</h1>
+          <p class="text-xs text-slate-500 font-medium">Control de identidades con Supabase Auth y permisos de acceso por módulo (RBAC).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón Crear Usuario (Abre Modal HTMX) -->
+    <div>
+      <button 
+        type="button" 
+        hx-get="{% url 'core:usuario_crear_modal' %}" 
+        hx-target="#modal-body" 
+        @click="modalOpen = true; modalTitle = 'Dar de Alta Nuevo Usuario'"
+        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3D4A2A] hover:bg-[#2A331D] active:scale-[0.98] text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        <span>+ Nuevo Usuario</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Métricas Rápidas de Cuentas -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Usuarios</span>
+      <div class="text-2xl font-black text-slate-900 mt-1">{{ stats.total }}</div>
+      <span class="text-[10px] text-emerald-600 font-semibold">{{ stats.activos }} activos en el sistema</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Administradores</span>
+      <div class="text-2xl font-black text-amber-700 mt-1">{{ stats.admins }}</div>
+      <span class="text-[10px] text-slate-500 font-medium">Acceso irrestricto total</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Campo & Agronomía</span>
+      <div class="text-2xl font-black text-emerald-800 mt-1">{{ stats.campo }}</div>
+      <span class="text-[10px] text-slate-500 font-medium">Fincas, labores y riego</span>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <span class="text-[11px] font-bold text-[#3D4A2A] uppercase tracking-wider">Finanzas & Costos</span>
+      <div class="text-2xl font-black text-[#3D4A2A] mt-1">{{ stats.finanzas }}</div>
+      <span class="text-[10px] text-slate-500 font-medium">Cuentas, ARCA y compras</span>
+    </div>
+  </div>
+
+  <!-- Tabla de Usuarios Registrados -->
+  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-sm font-bold text-slate-800">Cuentas y Permisos Asignados</h3>
+      <span class="text-xs text-slate-400 font-mono">Total: {{ usuarios|length }}</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-50/75 border-b border-slate-200/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
+            <th class="py-3 px-4">Usuario</th>
+            <th class="py-3 px-4">Identidad Supabase</th>
+            <th class="py-3 px-4">Rol en el ERP</th>
+            <th class="py-3 px-4">Finca Asignada</th>
+            <th class="py-3 px-4 text-center">Estado</th>
+            <th class="py-3 px-4 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          {% for u in usuarios %}
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <!-- Usuario y Correo -->
+              <td class="py-3.5 px-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 rounded-full bg-[#3D4A2A] text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    {{ u.iniciales }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="font-bold text-slate-900 truncate">
+                      {{ u.get_full_name|default:u.username }}
+                      {% if u == request.user %}
+                        <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#EAEFE3] text-[#3D4A2A]">Tú</span>
+                      {% endif %}
+                    </div>
+                    <div class="text-[11px] text-slate-500 font-mono truncate">{{ u.email|default:"Sin correo" }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Supabase Status -->
+              <td class="py-3.5 px-4">
+                {% if u.supabase_uid %}
+                  <div class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span title="{{ u.supabase_uid }}">Supabase: {{ u.supabase_uid|slice:":8" }}...</span>
+                  </div>
+                {% else %}
+                  <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium">
+                    <span>Local Django</span>
+                  </div>
+                {% endif %}
+              </td>
+
+              <!-- Rol con Formulario Rápido de Cambio -->
+              <td class="py-3.5 px-4">
+                <form method="POST" action="{% url 'core:usuario_editar_rol' u.pk %}" class="flex items-center space-x-2">
+                  {% csrf_token %}
+                  <select 
+                    name="rol" 
+                    onchange="this.form.submit()"
+                    class="text-xs font-semibold rounded-lg border border-slate-200 bg-white py-1 px-2 focus:ring-1 focus:ring-[#3D4A2A] focus:border-[#3D4A2A] cursor-pointer"
+                  >
+                    {% for val, label in roles %}
+                      <option value="{{ val }}" {% if u.rol == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </td>
+
+              <!-- Finca -->
+              <td class="py-3.5 px-4 font-medium text-slate-600">
+                {{ u.finca_predeterminada.nombre|default:"Todas las fincas" }}
+              </td>
+
+              <!-- Estado Activo/Inactivo -->
+              <td class="py-3.5 px-4 text-center">
+                {% if u.is_active %}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    Activo
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                    Inactivo
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Botón Toggle Activo -->
+              <td class="py-3.5 px-4 text-right">
+                {% if u != request.user %}
+                  <form method="POST" action="{% url 'core:usuario_toggle_activo' u.pk %}" class="inline-block" onsubmit="return confirm('¿Confirmas cambiar el estado de este usuario?');">
+                    {% csrf_token %}
+                    <button 
+                      type="submit" 
+                      class="px-2.5 py-1 text-[11px] font-semibold rounded-lg border {% if u.is_active %}border-rose-200 text-rose-700 hover:bg-rose-50{% else %}border-emerald-200 text-emerald-700 hover:bg-emerald-50{% endif %} transition-colors cursor-pointer"
+                    >
+                      {% if u.is_active %}Desactivar{% else %}Activar{% endif %}
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="text-[10px] text-slate-400 italic">Sesión actual</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

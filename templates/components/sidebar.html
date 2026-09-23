@@ -77,6 +77,7 @@
       </button>
 
       <!-- 2. Campo & Operaciones -->
+      {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_campo %}
       <button
         type="button"
         @click="selectModule('campo')"
@@ -99,8 +100,10 @@
           :class="activeModule === 'campo' ? 'text-white font-semibold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'"
         >Campo</span>
       </button>
+      {% endif %}
 
       <!-- 3. Finanzas & Contabilidad -->
+      {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_finanzas %}
       <button
         type="button"
         @click="selectModule('finanzas')"
@@ -123,8 +126,10 @@
           :class="activeModule === 'finanzas' ? 'text-white font-semibold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'"
         >Finanzas</span>
       </button>
+      {% endif %}
 
       <!-- 4. Personal & Cuadrillas -->
+      {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_personal %}
       <button
         type="button"
         @click="selectModule('personal')"
@@ -147,8 +152,10 @@
           :class="activeModule === 'personal' ? 'text-white font-semibold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'"
         >Personal</span>
       </button>
+      {% endif %}
 
       <!-- 5. Almazara & Depósitos -->
+      {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_almazara %}
       <button
         type="button"
         @click="selectModule('almazara')"
@@ -171,11 +178,25 @@
           :class="activeModule === 'almazara' ? 'text-white font-semibold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'"
         >Almazara</span>
       </button>
+      {% endif %}
 
     </nav>
 
-    <!-- Parte Inferior: Buscador Universal Spotlight & Estado -->
+    <!-- Parte Inferior: Buscador Universal Spotlight, Usuarios & Estado -->
     <div class="relative z-10 flex flex-col items-center py-3 space-y-2.5 border-t border-[#2C381D]/80">
+      {% if user.is_authenticated and user.is_admin_general %}
+      <!-- Botón Rápido Gestión de Usuarios (Exclusivo Admin) -->
+      <a
+        href="{% url 'core:usuarios_list' %}"
+        title="Gestión de Usuarios y Roles (Supabase)"
+        class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 text-[#B2C69E] hover:text-[#E5B842] flex items-center justify-center transition-colors cursor-pointer border border-white/5"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </a>
+      {% endif %}
+
       <!-- Botón Spotlight (Ctrl+K) -->
       <button
         type="button"

@@ -130,6 +130,13 @@ class Usuario(AbstractUser):
         related_name='usuarios_asignados', 
         verbose_name=_("Finca Predeterminada")
     )
+    supabase_uid = models.CharField(
+        max_length=64, 
+        blank=True, 
+        null=True, 
+        unique=True, 
+        verbose_name=_("UID Supabase")
+    )
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name=_("Avatar"))
 
     class Meta:
@@ -156,3 +163,76 @@ class Usuario(AbstractUser):
     @property
     def is_encargado_campo(self):
         return self.rol in (self.Rol.ENCARGADO_CAMPO, self.Rol.RESPONSABLE_FINCA, self.Rol.ADMIN_GENERAL) or self.is_superuser
+
+    @property
+    def is_rrhh(self):
+        return self.rol in (self.Rol.RRHH, self.Rol.ADMIN_GENERAL) or self.is_superuser
+
+    def puede_acceder_modulo(self, modulo: str) -> bool:
+        """Determina si el usuario tiene permiso para acceder a un módulo específico del ERP."""
+        if not self.is_active:
+            return False
+        if self.is_superuser or self.rol == self.Rol.ADMIN_GENERAL:
+            return True
+
+        modulo_key = (modulo or '').lower().strip()
+        PERMISOS_MODULOS = {
+            'tableros': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.INGENIERO_AGRONOMO, self.Rol.CONTABLE,
+                self.Rol.RRHH, self.Rol.OPERARIO
+            ],
+            'campo': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.INGENIERO_AGRONOMO, self.Rol.OPERARIO
+            ],
+            'campos': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.INGENIERO_AGRONOMO, self.Rol.OPERARIO
+            ],
+            'parte-diario': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.INGENIERO_AGRONOMO, self.Rol.OPERARIO
+            ],
+            'finanzas': [self.Rol.CONTABLE],
+            'costos': [self.Rol.CONTABLE, self.Rol.RESPONSABLE_FINCA],
+            'personal': [self.Rol.RRHH, self.Rol.CONTABLE],
+            'liquidacion': [self.Rol.RRHH, self.Rol.CONTABLE],
+            'inventario': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.CONTABLE, self.Rol.OPERARIO
+            ],
+            'almazara': [
+                self.Rol.RESPONSABLE_FINCA, self.Rol.ENCARGADO_CAMPO,
+                self.Rol.CONTABLE, self.Rol.OPERARIO
+            ],
+            'usuarios': [],  # Sólo Administrador General
+        }
+        permitidos = PERMISOS_MODULOS.get(modulo_key, [])
+        return self.rol in permitidos
+
+    @property
+    def puede_ver_tableros(self):
+        return self.puede_acceder_modulo('tableros')
+
+    @property
+    def puede_ver_campo(self):
+        return self.puede_acceder_modulo('campo')
+
+    @property
+    def puede_ver_finanzas(self):
+        return self.puede_acceder_modulo('finanzas')
+
+    @property
+    def puede_ver_costos(self):
+        return self.puede_acceder_modulo('costos')
+
+    @property
+    def puede_ver_personal(self):
+        return self.puede_acceder_modulo('personal')
+
+    @property
+    def puede_ver_almazara(self):
+        return self.puede_acceder_modulo('inventario')
+
+

@@ -39,7 +39,7 @@
     <!-- Form -->
     <form 
       method="POST" 
-      action="{% url 'finanzas:cuadro_resultado_notas' cuadro_activo.id %}" 
+      action="{% if cuadro_activo %}{% url 'finanzas:cuadro_resultado_notas' cuadro_activo.id %}{% endif %}" 
       class="p-6 space-y-4 text-xs overflow-y-auto flex-1"
     >
       {% csrf_token %}

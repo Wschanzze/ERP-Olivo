@@ -1,0 +1,208 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-[#13190C]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión | ERP Olivícola</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icono.png' %}?v=2">
+  
+  <!-- Tipografía Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            oliva: {
+              50: '#F5F7F2',
+              100: '#EAEFE3',
+              200: '#D5DFC9',
+              300: '#B6C7A2',
+              400: '#8FA872',
+              500: '#6B894B',
+              600: '#4E5F36',
+              700: '#3D4A2A',
+              800: '#2A331D',
+              900: '#1B2312',
+              950: '#13190C',
+            },
+            harvest: {
+              400: '#DFBA56',
+              500: '#C29B38',
+              600: '#9E7C28',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 bg-[#0E1308] flex items-center justify-center min-h-screen p-4 sm:p-6 relative overflow-x-hidden selection:bg-[#4E5F36] selection:text-white" x-data="{ showPass: false, loading: false }">
+
+  <!-- Fondos decorativos con textura sutil y halos de luz -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-[#3D4A2A]/25 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-[#C29B38]/15 rounded-full blur-3xl"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-5 mix-blend-overlay" style="background-image: url('{% static 'img/250.jpg' %}');"></div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-md">
+    
+    <!-- Tarjeta Principal de Login -->
+    <div class="bg-white/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-8 relative overflow-hidden ring-1 ring-black/5">
+      
+      <!-- Barra decorativa superior en degradado oliva a cosecha -->
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#3D4A2A] via-[#6B894B] to-[#C29B38]"></div>
+
+      <!-- Cabecera / Identidad Corporativa -->
+      <div class="text-center mb-6 pt-2">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1B2312] border border-[#2C381D] shadow-md p-2.5 mb-3 group transition-transform hover:scale-105">
+          <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP Olivícola" class="w-full h-full object-contain drop-shadow" />
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">ERP Olivícola</h1>
+        <p class="text-xs text-slate-500 font-medium mt-1">Sistema Integral de Gestión Agroindustrial</p>
+        
+        <div class="inline-flex items-center space-x-1.5 mt-2.5 px-2.5 py-0.5 rounded-full bg-[#F5F7F2] border border-[#D5DFC9] text-[11px] font-semibold text-[#3D4A2A]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Autenticación Segura • Supabase</span>
+        </div>
+      </div>
+
+      <!-- Alertas de Error / Mensajes -->
+      {% if error_msg %}
+        <div class="mb-5 p-3.5 rounded-2xl bg-red-50/90 border border-red-200/80 text-red-800 text-xs flex items-start space-x-2.5 shadow-xs">
+          <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div class="flex-1 font-medium leading-relaxed">{{ error_msg }}</div>
+        </div>
+      {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="mb-5 p-3 rounded-2xl {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-sky-50 text-sky-800 border border-sky-200{% endif %} text-xs flex items-center space-x-2">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Formulario de Inicio de Sesión -->
+      <form method="POST" action="{% url 'core:login' %}" @submit="loading = true" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <!-- Correo / Usuario -->
+        <div>
+          <label for="identifier" class="block text-xs font-semibold text-slate-700 mb-1.5">
+            Correo Electrónico o Usuario
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              name="identifier" 
+              id="identifier" 
+              required 
+              autocomplete="email"
+              placeholder="admin@olivaresdelvalle.com.ar"
+              class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 hover:bg-white focus:bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm rounded-xl border border-slate-200 focus:border-[#3D4A2A] focus:ring-2 focus:ring-[#3D4A2A]/20 transition-all outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="password" class="block text-xs font-semibold text-slate-700">
+              Contraseña
+            </label>
+          </div>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <input 
+              :type="showPass ? 'text' : 'password'" 
+              name="password" 
+              id="password" 
+              required 
+              autocomplete="current-password"
+              placeholder="••••••••••••"
+              class="w-full pl-10 pr-10 py-2.5 bg-slate-50 hover:bg-white focus:bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm rounded-xl border border-slate-200 focus:border-[#3D4A2A] focus:ring-2 focus:ring-[#3D4A2A]/20 transition-all outline-none"
+            />
+            <button 
+              type="button" 
+              @click="showPass = !showPass" 
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+              title="Mostrar / ocultar contraseña"
+            >
+              <svg x-show="!showPass" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <svg x-show="showPass" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón de Ingreso -->
+        <div class="pt-2">
+          <button 
+            type="submit" 
+            :disabled="loading"
+            class="w-full flex items-center justify-center py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#3D4A2A] hover:bg-[#2A331D] active:scale-[0.99] transition-all shadow-md hover:shadow-lg disabled:opacity-75 cursor-pointer"
+          >
+            <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span x-text="loading ? 'Validando credenciales...' : 'Ingresar al Sistema'">Ingresar al Sistema</span>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Pie de Seguridad e Información -->
+      <div class="mt-6 pt-5 border-t border-slate-100 flex flex-col items-center justify-center text-center space-y-1 text-[11px] text-slate-400">
+        <div class="flex items-center space-x-1">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span class="font-medium text-slate-600">Acceso Restringido y Monitoreado</span>
+        </div>
+        <p>Las cuentas son gestionadas por el Administrador General.</p>
+      </div>
+
+    </div>
+
+    <!-- Copyright del Sistema -->
+    <div class="mt-6 text-center text-xs text-white/40 font-mono">
+      &copy; 2026 ERP Olivícola • Olivares del Valle S.A.
+    </div>
+
+  </div>
+
+</body>
+</html>

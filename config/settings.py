@@ -71,6 +71,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'apps.core.middleware.ERPAuthMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -249,3 +250,17 @@ AFIP_CUIT = int(os.getenv('AFIP_CUIT', '20409378472'))
 AFIP_PRODUCTION = os.getenv('AFIP_PRODUCTION', 'False').lower() in ('true', '1')
 AFIP_DEFAULT_PTO_VTA = int(os.getenv('AFIP_DEFAULT_PTO_VTA', '1'))
 N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', '').strip()
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Supabase Auth & Cloud Configuration
+# ──────────────────────────────────────────────────────────────────────────────
+SUPABASE_URL = os.getenv('SUPABASE_URL', '').strip()
+SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '').strip()
+SUPABASE_SECRET_KEY = os.getenv('SUPABASE_SECRET_KEY', '').strip()
+SUPABASE_PUBLISHABLE_KEY = os.getenv('SUPABASE_PUBLISHABLE_KEY', '').strip()
+SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL', '').strip()
+
+# Rutas de Autenticación y Redirección
+LOGIN_URL = 'core:login'
+LOGIN_REDIRECT_URL = 'dashboard:index'
+LOGOUT_REDIRECT_URL = 'core:login'

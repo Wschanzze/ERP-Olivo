@@ -6,6 +6,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+    # Autenticación y Cuentas (Login, Logout, Usuarios)
+    path('', include('apps.core.urls', namespace='core')),
+    
     # Módulos del ERP
     path('', include('apps.dashboard.urls', namespace='dashboard')),
     path('campos/', include('apps.campos.urls', namespace='campos')),
