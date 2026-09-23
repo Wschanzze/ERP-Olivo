@@ -270,13 +270,26 @@ class OrdenTrabajoCambiarEstadoView(View):
             tarea.estado = nuevo_estado
             tarea.save()
             
-            # Si todas las tareas están completadas, autocompletar la orden
+            # Recalcular el estado de la orden
             orden = tarea.orden
             todas_completadas = not orden.tareas.exclude(estado='COMPLETADA').exists()
-            if todas_completadas and orden.estado != 'COMPLETADA':
-                orden.estado = 'COMPLETADA'
+            hay_completadas = orden.tareas.filter(estado='COMPLETADA').exists()
+            
+            if todas_completadas:
+                nuevo_estado_orden = 'COMPLETADA'
+            elif hay_completadas:
+                nuevo_estado_orden = 'EN_CURSO'
+            else:
+                nuevo_estado_orden = 'PLANIFICADA'
+                
+            if orden.estado != nuevo_estado_orden:
+                orden.estado = nuevo_estado_orden
                 orden.save()
                 
-            return HttpResponse(json.dumps({'status': 'ok', 'orden_completada': todas_completadas}), content_type='application/json')
+            return HttpResponse(json.dumps({
+                'status': 'ok', 
+                'orden_estado_raw': orden.estado,
+                'orden_estado_display': orden.get_estado_display()
+            }), content_type='application/json')
             
         return HttpResponse(json.dumps({'status': 'error'}), status=400, content_type='application/json')
