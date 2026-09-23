@@ -18,27 +18,16 @@
       </svg>
     </button>
     
-    <!-- Workspace / Finca Switcher (Estilo Vercel/GitHub Organization) -->
-    <div class="flex items-center space-x-2 bg-[#F4F7F1] hover:bg-[#EAEFE3] transition-all px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#D5DFC9] shadow-2xs group shrink-0">
+    <!-- Identificador de Empresa Global -->
+    <div class="flex items-center space-x-2 bg-[#F4F7F1] transition-all px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#D5DFC9] shadow-2xs shrink-0 cursor-default">
       <div class="w-5 h-5 rounded-md bg-[#3D4A2A] flex items-center justify-center p-0.5 flex-shrink-0">
-        <img src="{% static 'img/olive_12006613.png' %}" alt="Finca" class="w-3.5 h-3.5 object-contain" />
+        <img src="{% static 'img/olive_12006613.png' %}" alt="Empresa" class="w-3.5 h-3.5 object-contain" />
       </div>
       <div class="flex flex-col min-w-0">
-        <span class="text-[9px] font-bold text-[#4E5F36] uppercase tracking-widest leading-none hidden sm:inline">Finca Activa</span>
-        <select 
-          name="finca" 
-          class="bg-transparent text-xs font-bold text-slate-800 border-none focus:ring-0 cursor-pointer pr-4 sm:pr-6 py-0 pl-0 font-sans leading-tight mt-0.5 max-w-[125px] sm:max-w-[200px] truncate"
-          hx-get="{{ request.path }}" 
-          hx-trigger="change" 
-          hx-target="#main-content"
-          hx-push-url="true"
-        >
-          {% for f in fincas_disponibles %}
-            <option value="{{ f.id }}" {% if finca_activa and finca_activa.id == f.id %}selected{% endif %}>
-              {{ f.nombre }} ({{ f.superficie_total_ha|floatformat:0 }} ha)
-            </option>
-          {% endfor %}
-        </select>
+        <span class="text-[9px] font-bold text-[#4E5F36] uppercase tracking-widest leading-none hidden sm:inline">Empresa</span>
+        <span class="text-xs font-bold text-slate-800 leading-tight mt-0.5 truncate max-w-[125px] sm:max-w-[200px]">
+          {{ empresa_actual.nombre_fantasia|default:empresa_actual.razon_social|default:"Olivar del Valle" }}
+        </span>
       </div>
     </div>
 
