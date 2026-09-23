@@ -18,27 +18,11 @@
       </svg>
     </button>
     
-    <!-- Identificador de Empresa Global -->
-    <div class="flex items-center space-x-2 bg-[#F4F7F1] transition-all px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#D5DFC9] shadow-2xs shrink-0 cursor-default">
-      <div class="w-5 h-5 rounded-md bg-[#3D4A2A] flex items-center justify-center p-0.5 flex-shrink-0">
-        <img src="{% static 'img/olive_12006613.png' %}" alt="Empresa" class="w-3.5 h-3.5 object-contain" />
-      </div>
-      <div class="flex flex-col min-w-0">
-        <span class="text-[9px] font-bold text-[#4E5F36] uppercase tracking-widest leading-none hidden sm:inline">Empresa</span>
-        <span class="text-xs font-bold text-slate-800 leading-tight mt-0.5 truncate max-w-[125px] sm:max-w-[200px]">
-          {{ empresa_actual.nombre_fantasia|default:empresa_actual.razon_social|default:"Olivar del Valle" }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Separador sutil -->
-    <div class="hidden sm:block h-5 w-px bg-slate-200"></div>
-
     <!-- Breadcrumb de Navegación -->
-    <div class="hidden md:flex items-center space-x-2 text-xs text-slate-400">
-      <span class="hover:text-slate-600 transition-colors">ERP</span>
+    <div class="flex items-center space-x-2 text-xs text-slate-400">
+      <span class="hover:text-slate-600 transition-colors font-medium">ERP</span>
       <span class="text-slate-300">›</span>
-      <span class="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] tracking-wide uppercase">
+      <span class="font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md text-[11px] tracking-wide uppercase">
         {{ request.resolver_match.app_name|default:"Inicio" }}
       </span>
     </div>
