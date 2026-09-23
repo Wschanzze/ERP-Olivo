@@ -325,16 +325,40 @@ class DashboardView(TemplateView):
                 'tipo_archivo': 'Gestión de Compras'
             },
             {
+                'id': 'parque_maquinaria',
+                'titulo': 'Parque de Maquinarias y Servicios',
+                'categoria': 'campo',
+                'categoria_nombre': 'Campo & Olivos',
+                'url': '/inventario/maquinas/',
+                'icono': 'truck',
+                'color': 'oliva',
+                'badge': 'Mantenimiento Preventivo',
+                'descripcion': 'Gestión de tractores, cosechadoras, y mantenimientos mecánicos.',
+                'tipo_archivo': 'Parque Automotor'
+            },
+            {
                 'id': 'analisis_abc',
                 'titulo': 'Análisis y Matriz de Rotación ABC',
                 'categoria': 'almazara',
                 'categoria_nombre': 'Almazara & Depósitos',
-                'url': '/inventario/analisis-stock/',
+                'url': '/inventario/analisis/',
                 'icono': 'chart_bar',
                 'color': 'slate',
                 'badge': 'Pareto 80/20',
                 'descripcion': 'Clasificación de stock por valor monetario y criticidad para la cosecha.',
                 'tipo_archivo': 'Analítica de Inventario'
+            },
+            {
+                'id': 'movimientos_stock',
+                'titulo': 'Kardex y Movimientos de Stock',
+                'categoria': 'almazara',
+                'categoria_nombre': 'Almazara & Depósitos',
+                'url': '/inventario/movimientos/',
+                'icono': 'arrows_right_left',
+                'color': 'amber',
+                'badge': 'Trazabilidad',
+                'descripcion': 'Registro histórico de entradas, salidas, transferencias y ajustes de inventario.',
+                'tipo_archivo': 'Auditoría de Stock'
             },
         ]
 
