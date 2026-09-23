@@ -1,14 +1,15 @@
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 
 import json
 from django.views import View
 from apps.personal.models import OrdenTrabajo, TareaOrdenTrabajo
 from apps.campos.models import Cuadro
-from .models import Cuadro, LoteDeCosecha, RegistroFenologico, EventoCuadro
+from apps.core.models import Finca
+from .models import LoteDeCosecha, RegistroFenologico, EventoCuadro
 
 class CuadrosListView(ListView):
     model = Cuadro
