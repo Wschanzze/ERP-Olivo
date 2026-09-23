@@ -56,8 +56,9 @@
   </td>
   <td class="py-3 px-4 text-center whitespace-nowrap">
     <button 
+      @click="modalOpen = true"
       hx-get="{% url 'campos:fenologia_create' %}?cuadro={{ cuadro.pk }}"
-      hx-target="#modal-container"
+      hx-target="#modal-body"
       hx-swap="innerHTML"
       class="text-[11px] font-semibold text-[#3D4A2A] hover:text-[#252E19] hover:underline px-2.5 py-1 rounded-lg bg-[#EAEFE3]/80 hover:bg-[#EAEFE3] border border-[#D5DFC9]/60 transition-colors"
       title="Registrar estado fenológico"
