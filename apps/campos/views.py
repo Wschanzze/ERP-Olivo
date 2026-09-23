@@ -72,10 +72,13 @@ class RegistroFenologicoCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.responsable = self.request.user if self.request.user.is_authenticated else None
-        response = super().form_valid(form)
+        super().form_valid(form)
         if self.request.headers.get('HX-Request'):
-            return render(self.request, 'campos/partials/fenologia_badge.html', {'registro': self.object})
-        return response
+            from django.http import HttpResponse
+            response = HttpResponse('')
+            response['HX-Trigger'] = 'refreshCuadros'
+            return response
+        return super().form_valid(form)
 
 
 class EventoCuadroCreateView(CreateView):

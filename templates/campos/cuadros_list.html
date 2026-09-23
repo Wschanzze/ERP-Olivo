@@ -119,7 +119,7 @@
   </div>
 
   <!-- Contenedor de la Tabla con HTMX Target -->
-  <div id="cuadros-table-container">
+  <div id="cuadros-table-container" hx-get="{% url 'campos:cuadros_list' %}" hx-trigger="refreshCuadros from:body">
     {% include 'campos/partials/cuadros_table.html' %}
   </div>
 
