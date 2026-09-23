@@ -114,64 +114,67 @@
       </div>
 
       <!-- Gráfico de Barras con HTML/CSS Nativo (Sin errores de namespace SVG) -->
-      <div class="relative pt-6 pb-2">
-        <!-- Ticks y Líneas de Fondo Guía -->
-        <div class="absolute inset-x-0 top-6 bottom-16 flex flex-col justify-between pointer-events-none opacity-40">
-          {% for tick in grafico_ticks %}
-            <div class="border-b border-dashed border-slate-300 w-full relative">
-              <span class="absolute -top-2.5 right-0 text-[9px] font-mono font-medium text-slate-400 bg-white px-1">
-                {{ tick.label }}
-              </span>
-            </div>
-          {% endfor %}
-        </div>
-
-        <!-- Columnas de Barras por Mes -->
-        <div class="relative z-10 flex items-end justify-around h-52 px-2 sm:px-6">
-          {% for d in grafico_data %}
-            <div class="flex-1 flex flex-col items-center justify-end h-full max-w-[120px] px-1 group">
-              
-              <!-- Contenedor de las dos barras (Ingresos y Egresos) -->
-              <div class="flex items-end justify-center space-x-2 sm:space-x-3 w-full h-36">
-                <!-- Barra Ingresos (Verde Oliva / Esmeralda) -->
-                <div class="relative flex flex-col items-center flex-1 max-w-[42px] h-full justify-end group/bar">
-                  <span class="text-[10px] font-black font-mono text-emerald-700 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap">
-                    ${{ d.ingresos_m }}M
-                  </span>
-                  <div 
-                    style="height: max({{ d.pct_ingresos_css }}%, 8px);" 
-                    class="w-full rounded-t-lg bg-gradient-to-t from-[#3D4A2A] via-[#556939] to-[#7B9A55] shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
-                    title="{{ d.mes }} - Ingresos: ${{ d.ingresos|floatformat:0 }}"
-                  >
-                    <div class="absolute inset-0 bg-white/15 rounded-t-lg opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
-                  </div>
-                </div>
-
-                <!-- Barra Egresos (Rojo / Coral) -->
-                <div class="relative flex flex-col items-center flex-1 max-w-[42px] h-full justify-end group/bar">
-                  <span class="text-[10px] font-black font-mono text-rose-600 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap">
-                    ${{ d.egresos_m }}M
-                  </span>
-                  <div 
-                    style="height: max({{ d.pct_egresos_css }}%, 8px);" 
-                    class="w-full rounded-t-lg bg-gradient-to-t from-rose-700 via-rose-500 to-rose-400 shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
-                    title="{{ d.mes }} - Egresos: ${{ d.egresos|floatformat:0 }}"
-                  >
-                    <div class="absolute inset-0 bg-white/15 rounded-t-lg opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Línea Base y Etiqueta de Mes -->
-              <div class="w-full border-t-2 border-slate-200 mt-2 pt-2 text-center">
-                <span class="text-xs font-black text-slate-800 uppercase tracking-wider block">{{ d.mes }}</span>
-                <span class="inline-block mt-0.5 px-2 py-0.5 text-[10px] font-mono font-bold rounded-md {% if d.neto >= 0 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
-                  {% if d.neto >= 0 %}+{% endif %}${{ d.neto_m }}M
+      <div class="relative pt-6 pb-2 w-full overflow-x-auto custom-scrollbar">
+        <!-- Wrapper interno para garantizar ancho mínimo en pantallas chicas y evitar amontonamiento -->
+        <div class="min-w-[650px] relative">
+          <!-- Ticks y Líneas de Fondo Guía -->
+          <div class="absolute inset-x-0 top-6 bottom-16 flex flex-col justify-between pointer-events-none opacity-40">
+            {% for tick in grafico_ticks %}
+              <div class="border-b border-dashed border-slate-300 w-full relative">
+                <span class="absolute -top-2.5 right-0 text-[9px] font-mono font-medium text-slate-400 bg-white px-1">
+                  {{ tick.label }}
                 </span>
               </div>
+            {% endfor %}
+          </div>
 
-            </div>
-          {% endfor %}
+          <!-- Columnas de Barras por Mes -->
+          <div class="relative z-10 flex items-end justify-around h-52 px-2 sm:px-4 gap-1">
+            {% for d in grafico_data %}
+              <div class="flex-1 flex flex-col items-center justify-end h-full max-w-[120px] group">
+                
+                <!-- Contenedor de las dos barras (Ingresos y Egresos) -->
+                <div class="flex items-end justify-center space-x-1 sm:space-x-1.5 w-full h-36">
+                  <!-- Barra Ingresos (Verde Oliva / Esmeralda) -->
+                  <div class="relative flex flex-col items-center flex-1 max-w-[32px] h-full justify-end group/bar">
+                    <span class="text-[9px] font-black font-mono text-emerald-700 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap transform -rotate-45 sm:rotate-0 origin-bottom sm:origin-center translate-y-1 sm:translate-y-0">
+                      ${{ d.ingresos_m }}M
+                    </span>
+                    <div 
+                      style="height: max({{ d.pct_ingresos_css }}%, 8px);" 
+                      class="w-full rounded-t-sm bg-gradient-to-t from-[#3D4A2A] via-[#556939] to-[#7B9A55] shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
+                      title="{{ d.mes }} - Ingresos: ${{ d.ingresos|floatformat:0 }}"
+                    >
+                      <div class="absolute inset-0 bg-white/15 rounded-t-sm opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
+                    </div>
+                  </div>
+
+                  <!-- Barra Egresos (Rojo / Coral) -->
+                  <div class="relative flex flex-col items-center flex-1 max-w-[32px] h-full justify-end group/bar">
+                    <span class="text-[9px] font-black font-mono text-rose-600 mb-1 opacity-80 group-hover/bar:opacity-100 transition-all whitespace-nowrap transform -rotate-45 sm:rotate-0 origin-bottom sm:origin-center translate-y-1 sm:translate-y-0">
+                      ${{ d.egresos_m }}M
+                    </span>
+                    <div 
+                      style="height: max({{ d.pct_egresos_css }}%, 8px);" 
+                      class="w-full rounded-t-sm bg-gradient-to-t from-rose-700 via-rose-500 to-rose-400 shadow-xs hover:brightness-110 transition-all cursor-pointer relative"
+                      title="{{ d.mes }} - Egresos: ${{ d.egresos|floatformat:0 }}"
+                    >
+                      <div class="absolute inset-0 bg-white/15 rounded-t-sm opacity-0 group-hover/bar:opacity-100 transition-opacity"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Línea Base y Etiqueta de Mes -->
+                <div class="w-full border-t-2 border-slate-200 mt-2 pt-2 text-center">
+                  <span class="text-[10px] sm:text-xs font-black text-slate-800 uppercase tracking-wider block truncate" title="{{ d.mes }}">{{ d.mes|slice:":3" }}</span>
+                  <span class="inline-block mt-0.5 px-1 sm:px-1.5 py-0.5 text-[9px] font-mono font-bold rounded-md whitespace-nowrap {% if d.neto >= 0 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+                    {% if d.neto >= 0 %}+{% endif %}${{ d.neto_m }}M
+                  </span>
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
         </div>
 
         <!-- Leyenda de valores consolidados abajo del gráfico -->
