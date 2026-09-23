@@ -304,6 +304,13 @@
       <!-- ── CAMPO & OPERACIONES ── -->
       <template x-if="activeModule === 'campo'">
         <div class="space-y-1">
+            <a
+              href="{% url 'campos:orden_trabajo' %}"
+              x-show="matchesSearch('Órdenes de Trabajo', 'orden tarea planificacion asignacion')"
+              class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            >
+              <span class="truncate flex-1">Órdenes de Trabajo</span>
+            </a>
           <a
             href="{% url 'campos:cuadros_list' %}"
             x-show="matchesSearch('Campos y Cuadros', 'catastro fincas hectareas olivos variedades')"
@@ -438,14 +445,6 @@
             class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
           >
             <span class="truncate flex-1">Asistencia Cuadrillas</span>
-          </a>
-
-          <a
-            href="{% url 'campos:orden_trabajo' %}"
-            x-show="matchesSearch('Órdenes de Trabajo', 'orden tarea planificacion asignacion')"
-            class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
-          >
-            <span class="truncate flex-1">Órdenes de Trabajo</span>
           </a>
 
           <a
@@ -635,6 +634,12 @@
       <!-- Vistas Campo -->
       <template x-if="activeModule === 'campo'">
         <div class="space-y-1.5">
+            <a
+              href="{% url 'campos:orden_trabajo' %}"
+              class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
+            >
+              <span>📋 Órdenes de Trabajo</span>
+            </a>
           <a
             href="{% url 'campos:cuadros_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -735,12 +740,6 @@
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'asistencia_diaria' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
             <span>⏱️ Asistencia Cuadrillas</span>
-          </a>
-          <a
-            href="{% url 'campos:orden_trabajo' %}"
-            class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
-          >
-            <span>📋 Órdenes de Trabajo</span>
           </a>
           <a
             href="{% url 'personal:fichaje_qr' %}"
