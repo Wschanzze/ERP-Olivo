@@ -260,6 +260,8 @@ SUPABASE_SECRET_KEY = os.getenv('SUPABASE_SECRET_KEY', '').strip()
 SUPABASE_PUBLISHABLE_KEY = os.getenv('SUPABASE_PUBLISHABLE_KEY', '').strip()
 SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL', '').strip()
 
+
+
 # Rutas de Autenticación y Redirección
 LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'

@@ -31,6 +31,13 @@ def main():
         except Exception as e:
             print(f"[Vercel Build] Advertencia al instalar afip.py: {e}")
 
+    # Asegurar cuenta de Administrador activa
+    try:
+        subprocess.run([sys.executable, "manage.py", "crear_admin"], check=False)
+        print("[Vercel Build] Cuenta de Administrador asegurada y habilitada.")
+    except Exception as e:
+        print(f"[Vercel Build] Advertencia al verificar administrador: {e}")
+
     print("--- [Vercel Build Script] Finalizado con éxito ---")
 
 if __name__ == "__main__":
