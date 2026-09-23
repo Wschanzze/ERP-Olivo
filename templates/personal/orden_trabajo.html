@@ -211,6 +211,7 @@
                 <th class="py-3.5 px-6 font-semibold">Semana</th>
                 <th class="py-3.5 px-6 font-semibold">Campo Principal</th>
                 <th class="py-3.5 px-6 font-semibold">Observaciones</th>
+                <th class="py-3.5 px-6 font-semibold text-center">Estado</th>
                 <th class="py-3.5 px-6 font-semibold text-center">Volumen</th>
                 <th class="py-3.5 px-6 font-semibold text-right">Acciones</th>
               </tr>
@@ -231,6 +232,17 @@
                 </td>
                 <td class="py-4 px-6 text-slate-600 text-xs max-w-xs truncate" title="{{ o.observaciones }}">
                   {{ o.observaciones|default:"-" }}
+                </td>
+                <td class="py-4 px-6 text-center">
+                  {% if o.estado == 'PLANIFICADA' %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">Planificada</span>
+                  {% elif o.estado == 'EN_CURSO' %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-sky-50 text-sky-700 text-xs font-bold border border-sky-200">En Curso</span>
+                  {% elif o.estado == 'COMPLETADA' %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">Completada</span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">Cancelada</span>
+                  {% endif %}
                 </td>
                 <td class="py-4 px-6 text-center">
                   <span class="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full bg-oliva-50 text-oliva-700 font-bold text-xs border border-oliva-100">
@@ -280,7 +292,16 @@
             <svg class="w-5 h-5 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
             Detalle de la Orden
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5 font-medium" x-text="'Semana del: ' + (ordenActiva?.semana_inicio || '')"></p>
+          <div class="flex items-center gap-3 mt-1">
+            <p class="text-xs text-slate-500 font-medium" x-text="'Semana del: ' + (ordenActiva?.semana_inicio || '')"></p>
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border"
+                  :class="{
+                    'bg-slate-100 text-slate-600 border-slate-200': ordenActiva?.estado_raw === 'PLANIFICADA',
+                    'bg-sky-50 text-sky-700 border-sky-200': ordenActiva?.estado_raw === 'EN_CURSO',
+                    'bg-emerald-50 text-emerald-700 border-emerald-200': ordenActiva?.estado_raw === 'COMPLETADA',
+                    'bg-rose-50 text-rose-700 border-rose-200': ordenActiva?.estado_raw === 'CANCELADA'
+                  }" x-text="ordenActiva?.estado"></span>
+          </div>
         </div>
         <button type="button" @click="cerrarDetalle()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -318,9 +339,16 @@
                     
                     <div class="pl-2">
                       <div class="flex justify-between items-start mb-2">
-                        <span class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                          <span x-text="t.actividad || 'Tarea genérica'"></span>
-                        </span>
+                        <div class="flex items-center gap-2">
+                          <button type="button" @click="cambiarEstadoTarea(t)" class="w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-2xs"
+                                  :class="t.estado_raw === 'COMPLETADA' ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-white border-slate-300 text-transparent hover:border-emerald-400 hover:text-emerald-100'"
+                                  :title="t.estado_raw === 'COMPLETADA' ? 'Marcar como pendiente' : 'Marcar como completada'">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                          </button>
+                          <span class="text-sm font-extrabold text-slate-800" :class="t.estado_raw === 'COMPLETADA' ? 'line-through opacity-60' : ''">
+                            <span x-text="t.actividad || 'Tarea genérica'"></span>
+                          </span>
+                        </div>
                         <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md"
                               :class="{
                                 'bg-slate-100 text-slate-600': t.prioridad === 'Baja',
@@ -397,6 +425,45 @@ document.addEventListener('alpine:init', () => {
       return this.cuadros.filter(c => String(c.finca_id) === String(finca_id));
     },
     
+    // Funciones de Estado
+    cambiarEstadoTarea(tarea) {
+      const nuevoEstado = (tarea.estado_raw === 'COMPLETADA') ? 'PENDIENTE' : 'COMPLETADA';
+      const backupEstado = tarea.estado_raw;
+      tarea.estado_raw = nuevoEstado; // Optimistic UI
+      tarea.estado = (nuevoEstado === 'COMPLETADA') ? 'Completada' : 'Pendiente';
+
+      fetch('{% url "personal:orden_trabajo_estado" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          tipo: 'tarea',
+          id: tarea.id,
+          estado: nuevoEstado
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.status === 'ok') {
+          if (data.orden_completada && this.ordenActiva) {
+            this.ordenActiva.estado_raw = 'COMPLETADA';
+            this.ordenActiva.estado = 'Completada';
+          } else if (nuevoEstado === 'PENDIENTE' && this.ordenActiva && this.ordenActiva.estado_raw === 'COMPLETADA') {
+            this.ordenActiva.estado_raw = 'EN_CURSO';
+            this.ordenActiva.estado = 'En Curso';
+          }
+        } else {
+          tarea.estado_raw = backupEstado;
+          alert('Error al actualizar el estado de la tarea.');
+        }
+      }).catch(err => {
+        tarea.estado_raw = backupEstado;
+        console.error(err);
+      });
+    },
+
     // Acciones de Historial
     abrirDetalle(id) {
       this.ordenActiva = this.historialOrdenes.find(o => o.id === id);

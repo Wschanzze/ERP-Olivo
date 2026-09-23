@@ -17,4 +17,5 @@ urlpatterns = [
     # Órdenes de Trabajo
     path('asistencia/orden-trabajo/', views.OrdenTrabajoView.as_view(), name='orden_trabajo'),
     path('asistencia/orden-trabajo/guardar/', views.OrdenTrabajoGuardarView.as_view(), name='orden_trabajo_guardar'),
+    path('asistencia/orden-trabajo/estado/', views.OrdenTrabajoCambiarEstadoView.as_view(), name='orden_trabajo_estado'),
 ]

@@ -176,7 +176,14 @@ class Inscripcion(TimeStampedModel):
 
 class OrdenTrabajo(TimeStampedModel):
     """Orden de Trabajo semanal."""
+    class Estado(models.TextChoices):
+        PLANIFICADA = 'PLANIFICADA', _('Planificada')
+        EN_CURSO = 'EN_CURSO', _('En Curso')
+        COMPLETADA = 'COMPLETADA', _('Completada')
+        CANCELADA = 'CANCELADA', _('Cancelada')
+
     semana_inicio = models.DateField(verbose_name=_("Semana (Inicio)"))
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PLANIFICADA, verbose_name=_("Estado"))
     finca = models.ForeignKey(
         Finca, 
         on_delete=models.CASCADE, 
@@ -203,7 +210,15 @@ class TareaOrdenTrabajo(TimeStampedModel):
         NORMAL = 'NORMAL', _('Normal')
         ALTA = 'ALTA', _('Alta')
 
+    class Estado(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', _('Pendiente')
+        EN_PROGRESO = 'EN_PROGRESO', _('En Progreso')
+        COMPLETADA = 'COMPLETADA', _('Completada')
+        CANCELADA = 'CANCELADA', _('Cancelada')
+
     orden = models.ForeignKey(OrdenTrabajo, on_delete=models.CASCADE, related_name='tareas')
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PENDIENTE, verbose_name=_("Estado"))
+    cantidad_completada = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, verbose_name=_("Cantidad Completada"))
     finca = models.ForeignKey(Finca, on_delete=models.CASCADE, null=True, blank=True)
     cuadro = models.ForeignKey('campos.Cuadro', on_delete=models.CASCADE, null=True, blank=True)
     actividad = models.CharField(max_length=100)
