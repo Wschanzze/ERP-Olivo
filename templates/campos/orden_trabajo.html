@@ -448,7 +448,7 @@ document.addEventListener('alpine:init', () => {
       tarea.estado_raw = nuevoEstado; // Optimistic UI
       tarea.estado = (nuevoEstado === 'COMPLETADA') ? 'Completada' : 'Pendiente';
 
-      fetch('{% url "personal:orden_trabajo_estado" %}', {
+      fetch('{% url "campos:orden_trabajo_estado" %}', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -499,7 +499,7 @@ document.addEventListener('alpine:init', () => {
       }
       this.cargando = true;
 
-      fetch('{% url "personal:orden_trabajo_guardar" %}', {
+      fetch('{% url "campos:orden_trabajo_guardar" %}', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

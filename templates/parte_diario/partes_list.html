@@ -1,86 +1,307 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Partes Diarios de Campo | ERP Olivícola{% endblock %}
+{% block title %}Partes Diarios | ERP Olivícola{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-  
+<div class="space-y-6" x-data="parteDiarioApp()">
+
+  <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Partes Diarios de Labor y Cosecha</h1>
-        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
-          Imputación Automática
-        </span>
-      </div>
-      <p class="text-sm text-slate-500 mt-1">Registro operativo de labores agrícolas, insumos consumidos y jornales devengados.</p>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Partes Diarios</h1>
+      <p class="text-sm text-slate-500 mt-1">Registro de avances diarios basados en las órdenes de trabajo semanales.</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        type="button"
+        @click="modalNuevo = true"
+        class="inline-flex items-center gap-1.5 bg-oliva-700 hover:bg-oliva-800 active:bg-oliva-900 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all cursor-pointer"
+      >
+        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <span>Nuevo Parte Diario</span>
+      </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-sm min-w-[700px]">
-        <thead>
-          <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
-            <th class="py-3.5 px-4">Parte #</th>
-            <th class="py-3.5 px-4">Fecha</th>
-            <th class="py-3.5 px-4">Finca / Cuadro</th>
-            <th class="py-3.5 px-4">Supervisor</th>
-            <th class="py-3.5 px-4">Insumos & Personal</th>
-            <th class="py-3.5 px-4 text-center">Estado</th>
-            <th class="py-3.5 px-4 text-right">Acción</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for p in partes %}
-          <tr class="hover:bg-slate-50/70 transition-colors">
-            <td class="py-3 px-4 font-mono font-bold text-xs text-[#3D4A2A] whitespace-nowrap">
-              <span class="bg-[#F3F6F0] border border-[#D5DFC9] px-2 py-0.5 rounded-md">#{{ p.id }}</span>
-            </td>
-            <td class="py-3 px-4 font-mono text-xs text-slate-600 whitespace-nowrap tabular-nums">{{ p.fecha|date:"d/m/Y" }}</td>
-            <td class="py-3 px-4 whitespace-nowrap">
-              <span class="font-semibold text-slate-900 text-sm">{{ p.cuadro.codigo }}</span>
-              <span class="block text-xs text-slate-400">{{ p.finca.nombre }}</span>
-            </td>
-            <td class="py-3 px-4 text-xs text-slate-700 whitespace-nowrap">{{ p.supervisor.get_full_name|default:p.supervisor.username }}</td>
-            <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
-              <div class="font-medium text-slate-700">{{ p.insumos_utilizados.count }} insumos descargados</div>
-              <div class="text-slate-400">{{ p.personal_asignado.count }} personas en cuadrilla</div>
-            </td>
-            <td class="py-3 px-4 text-center whitespace-nowrap">
-              {% if p.estado == 'CONFIRMADO_CERRADO' %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Confirmado & Cerrado
-                </span>
-              {% else %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/70 shadow-2xs">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                  {{ p.get_estado_display }}
-                </span>
-              {% endif %}
-            </td>
-            <td class="py-3 px-4 text-right whitespace-nowrap">
-              <a href="{% url 'parte_diario:parte_detail' p.id %}" class="inline-flex items-center text-xs font-semibold text-[#3D4A2A] hover:text-[#252E19] bg-[#F4F7F1] hover:bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-1 rounded-lg transition-colors">
-                Ver Detalle &rarr;
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <img src="{% static 'img/quality-control_12006595.png' %}" alt="Sin partes" class="w-10 h-10 opacity-30 grayscale" />
-                <p class="font-medium text-slate-500 text-xs">No hay partes diarios registrados.</p>
+  <!-- Historial de Partes Diarios -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div class="px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-bold text-slate-800">Partes Recientes</h3>
+      </div>
+    </div>
+    
+    <div class="p-0">
+      {% if partes %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50/70 border-b border-slate-200/80 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <th class="py-3.5 px-6 font-semibold">Fecha</th>
+                <th class="py-3.5 px-6 font-semibold">Finca</th>
+                <th class="py-3.5 px-6 font-semibold">Orden Ref.</th>
+                <th class="py-3.5 px-6 font-semibold">Avances Reportados</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+              {% for p in partes %}
+              <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="py-4 px-6 font-bold text-slate-800">{{ p.fecha|date:"d/m/Y" }}</td>
+                <td class="py-4 px-6 text-slate-700 font-medium">{{ p.finca.nombre|default:"N/A" }}</td>
+                <td class="py-4 px-6 text-slate-600">
+                  {% if p.orden_trabajo %}
+                    <a href="{% url 'campos:orden_trabajo' %}" class="text-oliva-600 hover:underline">
+                      Semana {{ p.orden_trabajo.semana_inicio|date:"d/m/Y" }}
+                    </a>
+                  {% else %}
+                    <span class="italic text-slate-400">Sin Orden</span>
+                  {% endif %}
+                </td>
+                <td class="py-4 px-6">
+                  <div class="flex flex-col gap-1">
+                    {% for avance in p.avances_tareas.all %}
+                      <div class="text-xs text-slate-600">
+                        <span class="font-bold">{{ avance.tarea.actividad }}:</span> +{{ avance.cantidad_avanzada }} {{ avance.tarea.unidad }}
+                      </div>
+                    {% empty %}
+                      <span class="text-xs text-slate-400 italic">No se reportaron avances</span>
+                    {% endfor %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="py-12 px-6 flex flex-col items-center justify-center text-center">
+          <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
+          <h4 class="text-sm font-bold text-slate-800 mb-1">Sin partes diarios</h4>
+          <p class="text-xs text-slate-500 max-w-sm">No hay reportes diarios cargados. Creá uno nuevo seleccionando una Orden de Trabajo vigente.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Modal Nuevo Parte Diario -->
+  <div x-show="modalNuevo" 
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+       style="display: none;">
+    
+    <div x-show="modalNuevo" 
+         x-transition.opacity
+         @click="modalNuevo = false"
+         class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    
+    <div x-show="modalNuevo"
+         x-transition.scale.origin.bottom
+         class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] border border-slate-200">
+         
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-oliva-100 text-oliva-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Cargar Parte Diario</h2>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">Reportar avance de labores</p>
+          </div>
+        </div>
+        <button @click="modalNuevo = false" class="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
+        
+        <!-- Contexto del Parte -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Orden de Trabajo -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Orden de Trabajo (Plan)</label>
+            <select x-model="orden_id" @change="cargarOrden" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 bg-slate-50 py-2.5">
+              <option value="">— Seleccionar Orden Activa —</option>
+              {% for o in ordenes_activas %}
+                <option value="{{ o.id }}">Semana {{ o.semana_inicio|date:"d/m" }} - {{ o.finca.nombre|default:"Multi-Finca" }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Finca -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Finca Trabajada</label>
+            <select x-model="finca_id" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 bg-slate-50 py-2.5">
+              <option value="">— Seleccionar Finca —</option>
+              {% for f in fincas %}
+                <option value="{{ f.id }}">{{ f.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Fecha -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fecha</label>
+            <input type="date" x-model="fecha" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 bg-slate-50 py-2.5">
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- Tareas a Reportar -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center justify-between">
+            <span>Avance de Tareas Planificadas</span>
+            <span x-show="tareas.length > 0" class="text-xs font-normal text-slate-500" x-text="tareas.length + ' tareas encontradas'"></span>
+          </h3>
+
+          <div x-show="tareas.length === 0" class="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center border-dashed">
+            <p class="text-sm text-slate-500">Seleccioná una Orden de Trabajo arriba para cargar los avances en sus tareas.</p>
+          </div>
+
+          <div x-show="tareas.length > 0" class="space-y-3">
+            <template x-for="t in tareas" :key="t.id">
+              <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs hover:border-oliva-200 transition-colors">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex-1">
+                    <h4 class="text-sm font-bold text-slate-800" x-text="t.actividad"></h4>
+                    <p class="text-xs text-slate-500 mt-1">
+                      <span class="font-medium text-slate-600" x-text="'📍 ' + t.campo + ' - ' + t.cuadro"></span>
+                      <span class="mx-2 text-slate-300">|</span>
+                      <span>Meta original: <strong class="text-slate-700" x-text="t.meta > 0 ? t.meta + ' ' + t.unidad : 'Sin meta'"></strong></span>
+                      <span class="mx-2 text-slate-300">|</span>
+                      <span class="text-emerald-600 font-medium" x-text="'Ya completado: ' + t.completada"></span>
+                    </p>
+                  </div>
+                  <div class="w-full sm:w-48 shrink-0">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 text-right">Avance de hoy (+)</label>
+                    <div class="flex items-center gap-2">
+                      <input type="number" x-model="t.avance_hoy" step="0.01" min="0" placeholder="0.00" class="w-full text-right text-sm border-slate-200 rounded-lg focus:border-oliva-500 focus:ring-oliva-500">
+                      <span class="text-xs font-semibold text-slate-500 w-12" x-text="t.unidad || 'u.'"></span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </template>
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- Novedades -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Novedades / Observaciones del día</label>
+          <textarea x-model="observaciones" rows="2" class="w-full text-sm border-slate-200 rounded-xl focus:border-oliva-500 focus:ring-oliva-500 bg-slate-50 p-3" placeholder="Comentarios generales sobre la jornada..."></textarea>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-end shrink-0">
+        <button type="button" @click="guardarParte()" :disabled="cargando" class="inline-flex items-center gap-2 px-6 py-2.5 bg-oliva-700 hover:bg-oliva-800 text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+          <span x-show="!cargando">Guardar y Confirmar</span>
+          <span x-show="cargando">Procesando...</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('parteDiarioApp', () => ({
+    modalNuevo: false,
+    cargando: false,
+    
+    // Form Data
+    fecha: new Date().toISOString().split('T')[0],
+    finca_id: '',
+    orden_id: '',
+    observaciones: '',
+    tareas: [], // Las tareas de la orden seleccionada, inyectando `avance_hoy`
+    
+    // DB Context
+    ordenesContext: JSON.parse('{{ ordenes_json|escapejs }}'),
+
+    cargarOrden() {
+      if (!this.orden_id) {
+        this.tareas = [];
+        this.finca_id = '';
+        return;
+      }
+      
+      const orden = this.ordenesContext.find(o => String(o.id) === String(this.orden_id));
+      if (orden) {
+        // Asignar finca automáticamente si la orden tiene finca
+        if (orden.finca_id) {
+          this.finca_id = String(orden.finca_id);
+        }
+        
+        // Cargar tareas
+        this.tareas = orden.tareas.map(t => ({
+          ...t,
+          avance_hoy: ''
+        }));
+      }
+    },
+
+    guardarParte() {
+      if (!this.orden_id || !this.finca_id || !this.fecha) {
+        alert("Completá Orden, Finca y Fecha para continuar.");
+        return;
+      }
+      
+      this.cargando = true;
+      
+      const avancesPayload = this.tareas
+        .filter(t => t.avance_hoy && parseFloat(t.avance_hoy) > 0)
+        .map(t => ({
+          tarea_id: t.id,
+          cantidad: parseFloat(t.avance_hoy)
+        }));
+        
+      fetch('{% url "parte_diario:parte_guardar" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          fecha: this.fecha,
+          orden_trabajo_id: this.orden_id,
+          finca_id: this.finca_id,
+          observaciones: this.observaciones,
+          avances: avancesPayload
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          window.location.reload();
+        } else {
+          alert('Error: ' + data.message);
+          this.cargando = false;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        this.cargando = false;
+        alert('Ocurrió un error de red.');
+      });
+    }
+  }));
+});
+</script>
+<style>
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+</style>
 {% endblock %}

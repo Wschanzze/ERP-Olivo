@@ -10,4 +10,9 @@ urlpatterns = [
     path('cosechas/crear/', views.CosechaCreateView.as_view(), name='cosecha_create'),
     path('fenologia/crear/', views.RegistroFenologicoCreateView.as_view(), name='fenologia_create'),
     path('eventos/crear/', views.EventoCuadroCreateView.as_view(), name='evento_create'),
+    
+    # Órdenes de Trabajo
+    path('orden-trabajo/', views.OrdenTrabajoView.as_view(), name='orden_trabajo'),
+    path('orden-trabajo/guardar/', views.OrdenTrabajoGuardarView.as_view(), name='orden_trabajo_guardar'),
+    path('orden-trabajo/estado/', views.OrdenTrabajoCambiarEstadoView.as_view(), name='orden_trabajo_estado'),
 ]

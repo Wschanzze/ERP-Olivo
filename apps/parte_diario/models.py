@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from apps.core.models import TimeStampedModel, Finca
 from apps.campos.models import Cuadro
-from apps.personal.models import Empleado
+from apps.personal.models import Empleado, OrdenTrabajo, TareaOrdenTrabajo
 from apps.inventario.models import Insumo, Deposito, MovimientoStock
 
 class OrdenDeTrabajo(TimeStampedModel):
@@ -59,16 +59,16 @@ class ParteDiario(TimeStampedModel):
         BORRADOR = 'BORRADOR', _('Borrador (En Carga)')
         CONFIRMADO_CERRADO = 'CONFIRMADO_CERRADO', _('Confirmado y Cerrado')
 
-    orden_de_trabajo = models.ForeignKey(
-        OrdenDeTrabajo, 
+    orden_trabajo = models.ForeignKey(
+        OrdenTrabajo, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
         related_name='partes_diarios', 
-        verbose_name=_("Orden de Trabajo (opcional)")
+        verbose_name=_("Orden de Trabajo Semanal")
     )
     finca = models.ForeignKey(Finca, on_delete=models.CASCADE, related_name='partes_diarios', verbose_name=_("Finca"))
-    cuadro = models.ForeignKey(Cuadro, on_delete=models.CASCADE, related_name='partes_diarios', verbose_name=_("Cuadro / Cuartel"))
+    cuadro = models.ForeignKey(Cuadro, on_delete=models.SET_NULL, null=True, blank=True, related_name='partes_diarios', verbose_name=_("Cuadro / Cuartel"))
     fecha = models.DateField(verbose_name=_("Fecha de Ejecución"))
     supervisor = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -86,7 +86,8 @@ class ParteDiario(TimeStampedModel):
         ordering = ['-fecha', '-created_at']
 
     def __str__(self):
-        return f"Parte #{self.id} - {self.fecha} - {self.cuadro.codigo} ({self.get_estado_display()})"
+        cuadro_str = self.cuadro.codigo if self.cuadro else "Multi-Cuadro"
+        return f"Parte #{self.id} - {self.fecha} - {cuadro_str} ({self.get_estado_display()})"
 
     @property
     def total_costo_insumos_ars(self):
@@ -211,3 +212,18 @@ class ParteDiarioRiego(TimeStampedModel):
         if ha > 0:
             return round(self.total_m3_aplicados / ha, 2)
         return 0
+
+
+class AvanceTarea(TimeStampedModel):
+    """Registro de cuánto se avanzó en una tarea planificada de una Orden de Trabajo."""
+    parte_diario = models.ForeignKey(ParteDiario, on_delete=models.CASCADE, related_name='avances_tareas')
+    tarea = models.ForeignKey(TareaOrdenTrabajo, on_delete=models.CASCADE, related_name='avances')
+    cantidad_avanzada = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    observaciones = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Avance de Tarea")
+        verbose_name_plural = _("Avances de Tareas")
+
+    def __str__(self):
+        return f"{self.tarea.actividad}: +{self.cantidad_avanzada} en Parte #{self.parte_diario.id}"

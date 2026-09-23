@@ -1,4 +1,6 @@
+import re
 
+views_content = """
 import json
 from django.views.generic import View, TemplateView
 from django.urls import reverse
@@ -106,3 +108,23 @@ class ParteDiarioGuardarView(View):
             
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+"""
+
+with open('apps/parte_diario/views.py', 'w', encoding='utf-8') as f:
+    f.write(views_content)
+
+urls_content = """from django.urls import path
+from . import views
+
+app_name = 'parte_diario'
+
+urlpatterns = [
+    path('', views.ParteDiarioView.as_view(), name='partes_list'),
+    path('guardar/', views.ParteDiarioGuardarView.as_view(), name='parte_guardar'),
+]
+"""
+
+with open('apps/parte_diario/urls.py', 'w', encoding='utf-8') as f:
+    f.write(urls_content)
+
+print("Views and URLs updated!")

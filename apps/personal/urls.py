@@ -13,9 +13,4 @@ urlpatterns = [
     # QR Fichaje
     path('<int:pk>/qr/imagen/', views.EmpleadoQRView.as_view(), name='empleado_qr_imagen'),
     path('<int:pk>/qr/', views.EmpleadoQRPageView.as_view(), name='empleado_qr_page'),
-    path('fichaje-qr/', views.FichajeQRView.as_view(), name='fichaje_qr'),
-    # Órdenes de Trabajo
-    path('asistencia/orden-trabajo/', views.OrdenTrabajoView.as_view(), name='orden_trabajo'),
-    path('asistencia/orden-trabajo/guardar/', views.OrdenTrabajoGuardarView.as_view(), name='orden_trabajo_guardar'),
-    path('asistencia/orden-trabajo/estado/', views.OrdenTrabajoCambiarEstadoView.as_view(), name='orden_trabajo_estado'),
-]
+    path('fichaje-qr/', views.FichajeQRView.as_view(), name='fichaje_qr'),]

@@ -4,11 +4,6 @@ from . import views
 app_name = 'parte_diario'
 
 urlpatterns = [
-    path('', views.PartesDiariosListView.as_view(), name='partes_list'),
-    path('crear/', views.ParteDiarioCreateView.as_view(), name='parte_create'),
-    path('<int:pk>/', views.ParteDiarioDetailView.as_view(), name='parte_detail'),
-    path('<int:pk>/cerrar/', views.cerrar_parte_htmx, name='parte_cerrar'),
-    path('ordenes/', views.OrdenesTrabajoListView.as_view(), name='ordenes_list'),
-    path('ordenes/crear/', views.OrdenTrabajoCreateView.as_view(), name='orden_create'),
-    path('<int:parte_id>/riego/', views.RiegoCreateView.as_view(), name='riego_create'),
+    path('', views.ParteDiarioView.as_view(), name='partes_list'),
+    path('guardar/', views.ParteDiarioGuardarView.as_view(), name='parte_guardar'),
 ]

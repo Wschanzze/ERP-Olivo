@@ -997,34 +997,34 @@
         <a 
           href="{% url 'personal:empleados_list' %}" 
           x-show="matchesSpotlight({title: 'Legajos de Personal', module: 'Personal', tags: 'empleados cuadrillas rrhh trabajadores'})"
-          @click="spotlightOpen = false; selectModule('personal')"
+          @click="spotlightOpen = false; selectModule('campo')"
           class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
         >
           <span>Legajos de Personal Rural</span>
-          <span class="text-[10px] text-[#8FA872] font-mono">Personal</span>
+          <span class="text-[10px] text-[#8FA872] font-mono">Campo</span>
         </a>
         <a 
           href="{% url 'personal:asistencia_diaria' %}" 
           x-show="matchesSpotlight({title: 'Asistencia Cuadrillas', module: 'Personal', tags: 'presentismo ausencias marcacion diario'})"
-          @click="spotlightOpen = false; selectModule('personal')"
+          @click="spotlightOpen = false; selectModule('campo')"
           class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
         >
           <span>Asistencia Cuadrillas</span>
-          <span class="text-[10px] text-[#8FA872] font-mono">Personal</span>
+          <span class="text-[10px] text-[#8FA872] font-mono">Campo</span>
         </a>
         <a 
           href="{% url 'personal:orden_trabajo' %}" 
-          x-show="matchesSpotlight({title: 'Órdenes de Trabajo', module: 'Personal', tags: 'tareas planificacion ordenes'})"
-          @click="spotlightOpen = false; selectModule('personal')"
+          x-show="matchesSpotlight({title: 'Órdenes de Trabajo', module: 'Campo', tags: 'tareas planificacion ordenes'})"
+          @click="spotlightOpen = false; selectModule('campo')"
           class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
         >
           <span>Órdenes de Trabajo</span>
-          <span class="text-[10px] text-[#8FA872] font-mono">Personal</span>
+          <span class="text-[10px] text-[#8FA872] font-mono">Campo</span>
         </a>
         <a 
           href="{% url 'personal:fichaje_qr' %}" 
           x-show="matchesSpotlight({title: 'Fichaje por QR Móvil', module: 'Personal', tags: 'escaner codigo celular cuadrilla'})"
-          @click="spotlightOpen = false; selectModule('personal')"
+          @click="spotlightOpen = false; selectModule('campo')"
           class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
         >
           <span>Fichaje por QR Móvil</span>
@@ -1033,7 +1033,7 @@
         <a 
           href="{% url 'liquidacion:periodos_list' %}" 
           x-show="matchesSpotlight({title: 'Liquidación de Haberes UATRE', module: 'Personal', tags: 'sueldos jornales recibos quincena'})"
-          @click="spotlightOpen = false; selectModule('personal')"
+          @click="spotlightOpen = false; selectModule('campo')"
           class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
         >
           <span>Liquidación de Haberes</span>
