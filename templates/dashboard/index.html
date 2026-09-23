@@ -101,19 +101,7 @@
 
         <div class="flex items-center gap-3">
 
-          {% if kpis_resumen.kg_cosechados_campana %}
-          <div class="hidden md:flex items-center gap-1.5 bg-[#EAEFE3] text-[#3D4A2A] px-2.5 py-1 rounded-xl border border-[#D5DFC9] text-xs font-semibold">
-            <span>🫒 Cosecha:</span>
-            <span class="font-mono font-bold">{{ kpis_resumen.kg_cosechados_campana|floatformat:0 }} kg</span>
-          </div>
-          {% endif %}
 
-          {% if kpis_resumen.costo_por_kg %}
-          <div class="hidden md:flex items-center gap-1.5 bg-[#FDF9EB] text-[#9E7C28] px-2.5 py-1 rounded-xl border border-[#DFBA56]/50 text-xs font-semibold">
-            <span>Costo/kg:</span>
-            <span class="font-mono font-bold">${{ kpis_resumen.costo_por_kg|floatformat:2 }}</span>
-          </div>
-          {% endif %}
 
           <div class="hidden sm:flex items-center gap-2 bg-white/70 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/80 shadow-2xs select-none">
             <div class="w-5 h-5 rounded-lg bg-[#3D4A2A] flex items-center justify-center p-0.5 shadow-xs">
@@ -143,7 +131,7 @@
             </div>
             <h3 class="text-xs font-bold text-slate-900 group-hover:text-[#3D4A2A] transition-colors truncate mt-0.5">Campo & Olivos</h3>
             <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-              {{ kpis_resumen.cuadros_count }} cuadros ({{ kpis_resumen.ha_totales|floatformat:0 }} ha)
+              Gestión Agrícola y Riego
             </p>
           </div>
         </div>
@@ -164,7 +152,7 @@
             </div>
             <h3 class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate mt-0.5">Finanzas & Control</h3>
             <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-              ${{ kpis_resumen.cajas_total|floatformat:0 }} ARS en Caja
+              Tesorería y Proveedores
             </p>
           </div>
         </div>
@@ -185,7 +173,7 @@
             </div>
             <h3 class="text-xs font-bold text-slate-900 group-hover:text-sky-700 transition-colors truncate mt-0.5">Personal & Nómina</h3>
             <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-              {{ kpis_resumen.asistencia_hoy_count }}/{{ kpis_resumen.empleados_count }} presentes hoy
+              Nómina, Asistencia y Fichaje
             </p>
           </div>
         </div>
@@ -206,7 +194,7 @@
             </div>
             <h3 class="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors truncate mt-0.5">Almazara & Depósitos</h3>
             <p class="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-              {% if kpis_resumen.insumos_criticos %}{{ kpis_resumen.insumos_criticos }} alertas de stock{% else %}{{ kpis_resumen.insumos_count }} insumos activos{% endif %}
+              Logística, Compras e Inventario
             </p>
           </div>
         </div>

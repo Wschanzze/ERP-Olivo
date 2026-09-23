@@ -39,65 +39,7 @@ class DashboardView(TemplateView):
         except Exception:
             context['campanas_disponibles'] = [campana_activa]
 
-        # Métricas consolidadas en consultas agrupadas
-        try:
-            cuadros_agg = Cuadro.objects.filter(activo=True).aggregate(
-                c=Count('id'),
-                ha=Sum('hectareas_netas')
-            )
-            cuadros_count = cuadros_agg['c'] or 0
-            ha_totales = cuadros_agg['ha'] or 0
-        except Exception:
-            cuadros_count, ha_totales = 0, 0
 
-        try:
-            insumos_agg = Insumo.objects.filter(activo=True).aggregate(
-                total=Count('id'),
-                criticos=Count('id', filter=Q(stock_actual__lte=F('stock_minimo')))
-            )
-            insumos_count = insumos_agg['total'] or 0
-            insumos_criticos = insumos_agg['criticos'] or 0
-        except Exception:
-            insumos_count, insumos_criticos = 0, 0
-
-        try:
-            empleados_count = Empleado.objects.filter(activo=True).count()
-            asistencia_hoy_count = RegistroAsistencia.objects.filter(fecha=timezone.now().date()).count()
-        except Exception:
-            empleados_count, asistencia_hoy_count = 0, 0
-
-        try:
-            partes_count = ParteDiario.objects.count()
-        except Exception:
-            partes_count = 0
-
-        try:
-            costos_total = CostoPorCentro.objects.filter(prorrateo_realizado=False).aggregate(t=Sum('importe_ars'))['t'] or 0
-        except Exception:
-            costos_total = 0
-
-        # Cosecha y Costo por Kg de la campaña activa
-        try:
-            lotes_campana = LoteDeCosecha.objects.filter(campana=campana_activa)
-            kg_cosechados_campana = lotes_campana.aggregate(t=Sum('kg_cosechados'))['t'] or 0
-            if kg_cosechados_campana and kg_cosechados_campana > 0 and costos_total > 0:
-                costo_por_kg = round(float(costos_total) / float(kg_cosechados_campana), 2)
-            else:
-                costo_por_kg = None
-        except Exception:
-            kg_cosechados_campana, costo_por_kg = 0, None
-
-        try:
-            cajas_total = Cuenta.objects.filter(activa=True, moneda='ARS').aggregate(t=Sum('saldo_actual'))['t'] or 0
-            cheques_count = Cheque.objects.filter(estado='EN_CARTERA').count()
-            cc_agg = CuentaCorriente.objects.aggregate(
-                prov=Count('id', filter=Q(tipo_entidad='PROVEEDOR')),
-                cli=Count('id', filter=Q(tipo_entidad='CLIENTE'))
-            )
-            proveedores_count = cc_agg['prov'] or 0
-            clientes_count = cc_agg['cli'] or 0
-        except Exception:
-            cajas_total, cheques_count, proveedores_count, clientes_count = 0, 0, 0, 0
 
         # Catálogo de Accesos Directos y Carpetas del Hub Operativo
         accesos = [
@@ -110,7 +52,7 @@ class DashboardView(TemplateView):
                 'url': '/campos/',
                 'icono': 'tree',
                 'color': 'oliva',
-                'badge': f"{cuadros_count} cuadros ({ha_totales:.0f} ha)",
+                'badge': 'Superficies y Plantación',
                 'descripcion': 'Superficies netas, densidades, marcos de plantación y riego por goteo.',
                 'tipo_archivo': 'Catastro Agrícola'
             },
@@ -122,7 +64,7 @@ class DashboardView(TemplateView):
                 'url': '/parte-diario/',
                 'icono': 'clipboard',
                 'color': 'oliva',
-                'badge': f"{partes_count} partes emitidos",
+                'badge': 'Registro Diario',
                 'descripcion': 'Descarga de labores de campo, aplicación fitosanitaria y riego.',
                 'tipo_archivo': 'Operaciones Agrícolas'
             },
@@ -134,7 +76,7 @@ class DashboardView(TemplateView):
                 'url': '/costos/',
                 'icono': 'chart_pie',
                 'color': 'emerald',
-                'badge': f"${costos_total:,.0f} ARS",
+                'badge': 'Análisis de Costos',
                 'descripcion': 'Imputación ABC de jornales, insumos fitosanitarios y labores por cuadro.',
                 'tipo_archivo': 'Consulta de Costos'
             },
@@ -146,7 +88,7 @@ class DashboardView(TemplateView):
                 'url': '/campos/?variedad=ARAUCO',
                 'icono': 'filter',
                 'color': 'oliva',
-                'badge': f"{kg_cosechados_campana:,.0f} kg en {campana_activa}",
+                'badge': 'Productividad',
                 'descripcion': 'Comportamiento productivo y fechas óptimas de cosecha por variedad.',
                 'tipo_archivo': 'Análisis Varietal'
             },
@@ -172,7 +114,7 @@ class DashboardView(TemplateView):
                 'url': '/finanzas/?tab=caja',
                 'icono': 'building_library',
                 'color': 'emerald',
-                'badge': f"${cajas_total:,.0f} ARS",
+                'badge': 'Saldos Disponibles',
                 'descripcion': 'Arqueo de tesorería diaria en efectivo, bancos y billeteras virtuales.',
                 'tipo_archivo': 'Tesorería'
             },
@@ -184,7 +126,7 @@ class DashboardView(TemplateView):
                 'url': '/finanzas/?tab=proveedores',
                 'icono': 'document_arrow_down',
                 'color': 'amber',
-                'badge': f"{proveedores_count} proveedores",
+                'badge': 'Cuentas a Pagar',
                 'descripcion': 'Vencimientos de proveedores de insumos, servicios de cosecha y fletes.',
                 'tipo_archivo': 'Cuentas por Pagar'
             },
@@ -196,7 +138,7 @@ class DashboardView(TemplateView):
                 'url': '/finanzas/?tab=clientes',
                 'icono': 'document_arrow_up',
                 'color': 'emerald',
-                'badge': f"{clientes_count} clientes",
+                'badge': 'Cuentas a Cobrar',
                 'descripcion': 'Cobranzas de venta de aceite de oliva a granel y aceitunas de mesa.',
                 'tipo_archivo': 'Cuentas por Cobrar'
             },
@@ -220,7 +162,7 @@ class DashboardView(TemplateView):
                 'url': '/finanzas/?tab=cheques',
                 'icono': 'credit_card',
                 'color': 'amber',
-                'badge': f"{cheques_count} en cartera",
+                'badge': 'Valores en Cartera',
                 'descripcion': 'Control de cheques diferidos propios y de clientes listos para depositar o endosar.',
                 'tipo_archivo': 'Valores a Depositar'
             },
@@ -232,7 +174,7 @@ class DashboardView(TemplateView):
                 'url': '/finanzas/plan-cuentas/',
                 'icono': 'folder_tree',
                 'color': 'oliva',
-                'badge': '56 Cuentas',
+                'badge': 'Árbol Jerárquico',
                 'descripcion': 'Nomenclador contable con cuentas de activo biológico, almazara y egresos.',
                 'tipo_archivo': 'Estructura Contable'
             },
@@ -246,7 +188,7 @@ class DashboardView(TemplateView):
                 'url': '/personal/',
                 'icono': 'users',
                 'color': 'sky',
-                'badge': f"{empleados_count} legajos activos",
+                'badge': 'Legajos Activos',
                 'descripcion': 'Nómina, categorías laborales y jornales base homologados UATRE.',
                 'tipo_archivo': 'Legajos y RRHH'
             },
@@ -258,7 +200,7 @@ class DashboardView(TemplateView):
                 'url': '/personal/asistencia/',
                 'icono': 'user_check',
                 'color': 'sky',
-                'badge': f"{asistencia_hoy_count}/{empleados_count} presentes hoy",
+                'badge': 'Control de Presentismo',
                 'descripcion': 'Marcación de presentismo, ausencias justificadas y suspensiones.',
                 'tipo_archivo': 'Carga Operativa'
             },
@@ -296,7 +238,7 @@ class DashboardView(TemplateView):
                 'url': '/inventario/',
                 'icono': 'cube',
                 'color': 'amber',
-                'badge': f"{insumos_criticos} bajo mínimo" if insumos_criticos > 0 else f"{insumos_count} artículos",
+                'badge': 'Gestión de Inventario',
                 'descripcion': 'Fitosanitarios, fertilizantes y lubricantes con control de punto de reposición.',
                 'tipo_archivo': 'Control de Inventario'
             },
@@ -370,16 +312,5 @@ class DashboardView(TemplateView):
 
         context['accesos_directos'] = accesos
         context['accesos_directos_json'] = json.dumps(accesos)
-        context['kpis_resumen'] = {
-            'cuadros_count': cuadros_count,
-            'ha_totales': ha_totales,
-            'insumos_count': insumos_count,
-            'insumos_criticos': insumos_criticos,
-            'empleados_count': empleados_count,
-            'asistencia_hoy_count': asistencia_hoy_count,
-            'costos_total': costos_total,
-            'cajas_total': cajas_total,
-            'kg_cosechados_campana': kg_cosechados_campana,
-            'costo_por_kg': costo_por_kg,
-        }
+        context['kpis_resumen'] = {}
         return context
