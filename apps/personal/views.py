@@ -173,6 +173,11 @@ class OrdenTrabajoView(ListView):
     template_name = 'personal/orden_trabajo.html'
     context_object_name = 'ordenes'
 
+    def get_queryset(self):
+        return OrdenTrabajo.objects.select_related('finca').prefetch_related(
+            'tareas', 'tareas__finca', 'tareas__cuadro'
+        ).order_by('-semana_inicio')
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['fincas'] = Finca.objects.filter(activa=True)
@@ -181,6 +186,33 @@ class OrdenTrabajoView(ListView):
         # Pasar cuadros como JSON para el selector dinámico
         cuadros_list = [{'id': c.id, 'finca_id': c.finca_id, 'codigo': c.codigo} for c in ctx['cuadros']]
         ctx['cuadros_json'] = json.dumps(cuadros_list)
+        
+        # Historial de Órdenes en JSON para el Modal de Detalles
+        ordenes_json = []
+        for o in ctx['ordenes']:
+            tareas = []
+            for t in o.tareas.all():
+                tareas.append({
+                    'actividad': t.actividad,
+                    'campo': t.finca.nombre if t.finca else 'N/A',
+                    'cuadro': t.cuadro.codigo if t.cuadro else 'N/A',
+                    'cantidad': float(t.cantidad),
+                    'unidad': t.unidad,
+                    'gente': t.gente,
+                    'dias': t.dias,
+                    'prioridad': t.get_prioridad_display(),
+                    'linea_producto': t.linea_producto,
+                    'notas': t.notas
+                })
+            ordenes_json.append({
+                'id': o.id,
+                'semana_inicio': o.semana_inicio.strftime('%d/%m/%Y'),
+                'campo': o.finca.nombre if o.finca else 'Todos los campos',
+                'observaciones': o.observaciones,
+                'tareas': tareas
+            })
+        ctx['ordenes_json'] = json.dumps(ordenes_json)
+        
         return ctx
 
 class OrdenTrabajoGuardarView(View):
