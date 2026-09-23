@@ -23,6 +23,9 @@ urlpatterns = [
     # Órdenes de Compra
     path('ordenes-compra/', views.OrdenesCompraListView.as_view(), name='ordenes_compra_list'),
     path('ordenes-compra/crear/', views.OrdenCompraCreateView.as_view(), name='oc_create'),
+    path('ordenes-compra/<int:pk>/', views.OrdenCompraDetailView.as_view(), name='oc_detalle'),
+    path('ordenes-compra/<int:pk>/imprimir/', views.OrdenCompraPrintView.as_view(), name='oc_imprimir'),
+    path('ordenes-compra/<int:pk>/aprobar/', views.aprobar_oc_htmx, name='oc_aprobar'),
     path('recepciones/crear/', views.RecepcionCreateView.as_view(), name='recepcion_create'),
     path('recepciones/<int:pk>/confirmar/', views.ConfirmarRecepcionView.as_view(), name='recepcion_confirmar'),
 ]

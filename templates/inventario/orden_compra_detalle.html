@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}OC {{ orden.numero }} | Detalle | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  
+  <!-- Breadcrumb y Acciones Superiores -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-2 text-sm">
+      <a href="{% url 'inventario:ordenes_compra_list' %}" class="text-slate-500 hover:text-slate-800 transition-colors">Órdenes de Compra</a>
+      <span class="text-slate-300">/</span>
+      <span class="font-bold text-slate-800">OC {{ orden.numero }}</span>
+      
+      <!-- Badge de Estado -->
+      {% if orden.estado == 'BORRADOR' %}
+        <span class="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Borrador</span>
+      {% elif orden.estado == 'APROBADA' %}
+        <span class="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-oliva-100 text-oliva-800 border border-oliva-200">Aprobada</span>
+      {% elif orden.estado == 'RECIBIDA' %}
+        <span class="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Recibida Total</span>
+      {% elif orden.estado == 'RECIBIDA_PARCIAL' %}
+        <span class="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Recibida Parcial</span>
+      {% elif orden.estado == 'ANULADA' %}
+        <span class="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Anulada</span>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Botón Imprimir -->
+      <a href="{% url 'inventario:oc_imprimir' orden.pk %}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-2xs">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        Imprimir
+      </a>
+      
+      <!-- Acciones de Cambio de Estado -->
+      {% if orden.estado == 'BORRADOR' %}
+        <form hx-post="{% url 'inventario:oc_aprobar' orden.pk %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3D4A2A] text-white text-xs font-bold rounded-xl hover:bg-[#2A331D] transition-colors shadow-2xs cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Aprobar Orden
+          </button>
+        </form>
+      {% elif orden.estado == 'APROBADA' or orden.estado == 'RECIBIDA_PARCIAL' %}
+        <a href="{% url 'inventario:recepcion_create' %}?orden={{ orden.pk }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-2xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          Registrar Recepción
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Cabecera de Documento -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+    <div class="p-6">
+      <h2 class="text-xl font-bold text-slate-900 mb-6 border-b border-slate-100 pb-4">Orden de Compra <span class="font-mono text-[#3D4A2A]">{{ orden.numero }}</span></h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+        <!-- Columna Izquierda -->
+        <div class="space-y-4">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Proveedor</p>
+            <p class="text-sm font-semibold text-slate-900">{{ orden.proveedor.razon_social }}</p>
+            <p class="text-xs text-slate-500">CUIT: {{ orden.proveedor.cuit|default:"—" }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Fechas</p>
+            <p class="text-sm text-slate-700"><span class="font-medium text-slate-900">Emisión:</span> {{ orden.fecha_emision }}</p>
+            <p class="text-sm text-slate-700"><span class="font-medium text-slate-900">Entrega Estimada:</span> {{ orden.fecha_entrega_estimada|default:"—" }}</p>
+          </div>
+        </div>
+        
+        <!-- Columna Derecha -->
+        <div class="space-y-4">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Lugar de Entrega</p>
+            <p class="text-sm font-semibold text-slate-900">{{ orden.finca_destino.nombre }}</p>
+            <p class="text-xs text-slate-500">{{ orden.finca_destino.ubicacion|default:"—" }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Condición Contable</p>
+            <p class="text-xs font-medium text-slate-700">
+              {% if orden.registrar_deuda_al_aprobar %}
+                <span class="text-[#3D4A2A]">Deuda registrada al aprobar la OC</span>
+              {% else %}
+                <span class="text-slate-500">Deuda se registra contra recepción/factura</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {% if orden.observaciones %}
+      <div class="mt-6 pt-4 border-t border-slate-100">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Observaciones</p>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ orden.observaciones }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Detalle de Ítems -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      <h3 class="text-sm font-bold text-slate-900">Detalle de Insumos Solicitados</h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-slate-200/80 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <th class="py-3 px-6">Código</th>
+            <th class="py-3 px-6">Insumo</th>
+            <th class="py-3 px-6 text-right">Cant. Solicitada</th>
+            <th class="py-3 px-6 text-right">Precio Est.</th>
+            <th class="py-3 px-6 text-right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for item in orden.items.all %}
+          <tr class="hover:bg-slate-50/70">
+            <td class="py-3 px-6 font-mono text-xs text-slate-500">{{ item.insumo.codigo }}</td>
+            <td class="py-3 px-6 font-semibold text-slate-800">{{ item.insumo.nombre }}</td>
+            <td class="py-3 px-6 text-right font-mono font-bold text-slate-700">{{ item.cantidad_solicitada }} {{ item.insumo.unidad_medida }}</td>
+            <td class="py-3 px-6 text-right font-mono text-slate-600">${{ item.precio_unitario_estimado_ars|floatformat:2 }}</td>
+            <td class="py-3 px-6 text-right font-mono font-bold text-[#3D4A2A]">${{ item.subtotal_ars|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-400 text-sm">No hay ítems registrados en esta OC.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="bg-slate-50">
+          <tr>
+            <td colspan="4" class="py-4 px-6 text-right font-bold text-slate-900">Total Estimado de la Orden:</td>
+            <td class="py-4 px-6 text-right font-mono font-extrabold text-lg text-[#3D4A2A]">${{ orden.total_estimado_ars|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recepciones Asociadas -->
+  {% if orden.recepciones.exists %}
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden mt-6">
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      <h3 class="text-sm font-bold text-slate-900">Recepciones de Mercadería</h3>
+    </div>
+    <div class="p-6">
+      <ul class="space-y-3">
+        {% for recepcion in orden.recepciones.all %}
+        <li class="flex items-center justify-between p-3 border border-slate-200 rounded-xl">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">Recepción {{ recepcion.fecha_recepcion }}</p>
+            <p class="text-xs text-slate-500">
+              Remito Prov: {{ recepcion.numero_remito_proveedor|default:"—" }} | 
+              Destino: {{ recepcion.deposito_destino.nombre }}
+            </p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide
+            {% if recepcion.estado == 'CONFIRMADA' %}bg-emerald-100 text-emerald-800
+            {% elif recepcion.estado == 'ANULADA' %}bg-rose-100 text-rose-800
+            {% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ recepcion.get_estado_display }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

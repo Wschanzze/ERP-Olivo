@@ -594,6 +594,40 @@ class OrdenCompraCreateView(CreateView):
         return super().form_valid(form)
 
 
+class OrdenCompraDetailView(DetailView):
+    model = OrdenDeCompra
+    template_name = 'inventario/orden_compra_detalle.html'
+    context_object_name = 'orden'
+
+    def get_queryset(self):
+        return OrdenDeCompra.objects.select_related('proveedor', 'finca_destino').prefetch_related('items__insumo', 'recepciones')
+
+class OrdenCompraPrintView(DetailView):
+    model = OrdenDeCompra
+    template_name = 'inventario/orden_compra_imprimir.html'
+    context_object_name = 'orden'
+
+    def get_queryset(self):
+        return OrdenDeCompra.objects.select_related('proveedor', 'finca_destino').prefetch_related('items__insumo')
+
+def aprobar_oc_htmx(request, pk):
+    if request.method == 'POST':
+        orden = get_object_or_404(OrdenDeCompra, pk=pk)
+        if orden.estado == OrdenDeCompra.Estado.BORRADOR:
+            orden.estado = OrdenDeCompra.Estado.APROBADA
+            orden.save(update_fields=['estado'])
+            messages.success(request, f"La Orden de Compra {orden.numero} ha sido aprobada exitosamente.")
+        else:
+            messages.error(request, "Solo se pueden aprobar órdenes en estado Borrador.")
+        
+        # Redirigir a la misma vista de detalle
+        from django.http import HttpResponse
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('inventario:oc_detalle', args=[orden.pk])
+        return response
+    return HttpResponse(status=405)
+
+
 class RecepcionCreateView(CreateView):
     model = RecepcionMercaderia
     fields = ['orden', 'deposito_destino', 'fecha_recepcion', 'numero_remito_proveedor', 'numero_factura_proveedor', 'registrar_deuda_al_confirmar', 'observaciones']
@@ -613,6 +647,12 @@ class RecepcionCreateView(CreateView):
         form.instance.responsable = self.request.user if self.request.user.is_authenticated else None
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        orden_id = self.request.GET.get('orden')
+        if orden_id:
+            ctx['orden_vinculada'] = get_object_or_404(OrdenDeCompra, pk=orden_id)
+        return ctx
 
 class ConfirmarRecepcionView(View):
     def post(self, request, pk):
