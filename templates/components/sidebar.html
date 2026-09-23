@@ -38,14 +38,14 @@
     ></div>
 
     <!-- Parte Superior: Logo Corporativo -->
-    <div class="relative z-10 flex flex-col items-center pt-3.5 pb-2.5 border-b border-[#2C381D]/80">
+    <div class="relative z-10 flex flex-col items-center pt-3 pb-2.5 border-b border-[#2C381D]/80">
       <a 
         href="{% url 'dashboard:index' %}" 
         title="ERP Olivícola - Inicio"
-        class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 active:scale-95 transition-all p-1.5 border border-white/10 group cursor-pointer"
+        class="flex items-center justify-center active:scale-95 transition-transform group cursor-pointer"
         @click="selectModule('tableros')"
       >
-        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP" class="w-8 h-8 object-contain drop-shadow" />
+        <img src="{% static 'icono.png' %}?v=2" alt="Logo ERP" class="w-12 h-12 object-contain drop-shadow hover:scale-105 transition-transform" />
       </a>
     </div>
 
