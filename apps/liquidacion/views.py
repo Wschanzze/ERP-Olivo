@@ -51,6 +51,21 @@ class PeriodoCreateView(CreateView):
     template_name = 'liquidacion/partials/periodo_form_modal.html'
     success_url = reverse_lazy('liquidacion:periodos_list')
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            from django.http import HttpResponse
+            resp = HttpResponse(status=204)
+            resp['HX-Redirect'] = str(self.success_url)
+            return resp
+        messages.success(self.request, f"Período '{self.object}' creado exitosamente.")
+        return response
+
+    def form_invalid(self, form):
+        if self.request.headers.get('HX-Request'):
+            return render(self.request, 'liquidacion/partials/periodo_form_modal.html', {'form': form})
+        return super().form_invalid(form)
+
 
 def lanzar_calculo_liquidacion_htmx(request, pk):
     """Dispara el cálculo asíncrono en Celery (o síncrono de respaldo en local)."""

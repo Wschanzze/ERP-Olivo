@@ -1,0 +1,98 @@
+{% load static %}
+<div class="p-6 space-y-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-base font-bold text-slate-900">Nuevo Período de Liquidación</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Configurá el período quincenal o mensual para liquidar haberes UATRE.</p>
+    </div>
+    <button type="button" @click="$dispatch('cerrar-modal')" class="text-slate-400 hover:text-slate-600 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  {% if form.errors %}
+  <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-700 space-y-1">
+    {% for field in form %}
+      {% for error in field.errors %}
+        <p>• <strong>{{ field.label }}:</strong> {{ error }}</p>
+      {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+      <p>• {{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form hx-post="{% url 'liquidacion:periodo_create' %}" hx-target="#modal-body" hx-swap="innerHTML" class="space-y-4">
+    {% csrf_token %}
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Período <span class="text-rose-500">*</span></label>
+        <select name="tipo" required
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]">
+          {% for value, label in form.fields.tipo.choices %}
+            <option value="{{ value }}" {% if form.tipo.value == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Mes <span class="text-rose-500">*</span></label>
+        <select name="mes" required
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]">
+          <option value="">— Seleccionar —</option>
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Año <span class="text-rose-500">*</span></label>
+        <input type="number" name="ano" value="{{ form.ano.value|default:'2026' }}" min="2020" max="2040" required
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]"
+          placeholder="2026">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha de Inicio <span class="text-rose-500">*</span></label>
+        <input type="date" name="fecha_inicio" value="{{ form.fecha_inicio.value|default:'' }}" required
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha de Cierre <span class="text-rose-500">*</span></label>
+        <input type="date" name="fecha_fin" value="{{ form.fecha_fin.value|default:'' }}" required
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]">
+      </div>
+      <div class="col-span-2">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Observaciones</label>
+        <input type="text" name="observaciones" value="{{ form.observaciones.value|default:'' }}" maxlength="200"
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs focus:border-[#3D4A2A] focus:outline-none focus:ring-1 focus:ring-[#3D4A2A]"
+          placeholder="Ej. Temporada alta de cosecha, incluye domingos trabajados...">
+      </div>
+    </div>
+
+    <div class="bg-[#F3F6F0] border border-[#D5DFC9] rounded-xl p-3 text-xs text-[#3D4A2A]">
+      <p class="font-semibold mb-1">ℹ️ ¿Cómo funciona?</p>
+      <p class="text-slate-600">Al crear el período, quedará en estado <strong>Abierto</strong>. Luego podés hacer clic en <strong>Calcular</strong> para que el sistema tome las asistencias del parte diario y genere los recibos de cada empleado automáticamente.</p>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2 border-t border-slate-100">
+      <button type="button" @click="$dispatch('cerrar-modal')"
+        class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+        Cancelar
+      </button>
+      <button type="submit"
+        class="inline-flex items-center gap-2 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Crear Período
+      </button>
+    </div>
+  </form>
+</div>

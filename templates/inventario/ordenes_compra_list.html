@@ -15,8 +15,9 @@
     </div>
     <button
       hx-get="{% url 'inventario:oc_create' %}"
-      hx-target="#modal-container"
+      hx-target="#modal-body"
       hx-swap="innerHTML"
+      hx-on::after-request="modalOpen = true"
       class="inline-flex items-center gap-2 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#2A331D] transition-colors self-start sm:self-auto">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       Nueva OC

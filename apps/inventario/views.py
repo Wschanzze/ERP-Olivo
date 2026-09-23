@@ -555,7 +555,11 @@ class OrdenCompraCreateView(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         if self.request.headers.get('HX-Request'):
-            return render(self.request, 'inventario/partials/oc_row.html', {'orden': self.object})
+            from django.http import HttpResponse
+            redirect_url = reverse('inventario:ordenes_compra_list')
+            response = HttpResponse(status=204)
+            response['HX-Redirect'] = redirect_url
+            return response
         return response
 
 
