@@ -552,15 +552,46 @@ class OrdenCompraCreateView(CreateView):
     template_name = 'inventario/partials/oc_form_modal.html'
     success_url = reverse_lazy('inventario:ordenes_compra_list')
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['insumos'] = Insumo.objects.filter(activo=True).order_by('nombre')
+        return ctx
+
     def form_valid(self, form):
-        response = super().form_valid(form)
+        # Primero guardamos la cabecera (OrdenDeCompra)
+        self.object = form.save()
+
+        # Obtenemos los arrays de ítems enviados desde el form dinámico
+        insumos = self.request.POST.getlist('insumo_id')
+        cantidades = self.request.POST.getlist('cantidad')
+        precios = self.request.POST.getlist('precio')
+
+        # Procesamos y guardamos cada ítem
+        for insumo_id, cantidad, precio in zip(insumos, cantidades, precios):
+            if insumo_id and cantidad:
+                try:
+                    cant = Decimal(cantidad)
+                    prec = Decimal(precio) if precio else Decimal('0.00')
+                    if cant > 0:
+                        ItemOrdenDeCompra.objects.create(
+                            orden=self.object,
+                            insumo_id=insumo_id,
+                            cantidad_solicitada=cant,
+                            precio_unitario_estimado_ars=prec
+                        )
+                except Exception:
+                    pass
+
+        # Recalculamos el total de la orden en base a los ítems guardados
+        self.object.recalcular_total()
+
         if self.request.headers.get('HX-Request'):
             from django.http import HttpResponse
             redirect_url = reverse('inventario:ordenes_compra_list')
             response = HttpResponse(status=204)
             response['HX-Redirect'] = redirect_url
             return response
-        return response
+        return super().form_valid(form)
 
 
 class RecepcionCreateView(CreateView):
