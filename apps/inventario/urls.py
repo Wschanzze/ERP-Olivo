@@ -28,4 +28,9 @@ urlpatterns = [
     path('ordenes-compra/<int:pk>/aprobar/', views.aprobar_oc_htmx, name='oc_aprobar'),
     path('recepciones/crear/', views.RecepcionCreateView.as_view(), name='recepcion_create'),
     path('recepciones/<int:pk>/confirmar/', views.ConfirmarRecepcionView.as_view(), name='recepcion_confirmar'),
+    # Exportaciones Excel
+    path('insumos/exportar/', views.ExportarInsumosExcelView.as_view(), name='exportar_insumos'),
+    path('movimientos/exportar/', views.ExportarMovimientosExcelView.as_view(), name='exportar_movimientos'),
+    path('remitos/exportar/', views.ExportarRemitosExcelView.as_view(), name='exportar_remitos'),
+    path('ordenes-compra/exportar/', views.ExportarOrdenesExcelView.as_view(), name='exportar_ordenes_compra'),
 ]
