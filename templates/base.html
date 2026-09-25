@@ -74,6 +74,18 @@
       background: rgba(61, 74, 42, 0.3);
       border-radius: 4px;
     }
+    
+    /* Spinner animation */
+    .htmx-indicator {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 200ms ease-in, visibility 200ms;
+    }
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator {
+      opacity: 1;
+      visibility: visible;
+    }
     [x-cloak] { display: none !important; }
 
     /* Estado inicial anti-parpadeo para Doble Sidebar en Desktop (>= 1024px) */
@@ -124,6 +136,7 @@
 <body 
   class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+  hx-indicator="#global-spinner"
   x-data="{ 
     activeModule: window.__initialModule || 'tableros',
     sidebarOpen: window.__sidebarDoubleInitial,
@@ -230,9 +243,53 @@
     </div>
   </div>
 
+  
+  <!-- Spinner Global HTMX -->
+  <div id="global-spinner" class="htmx-indicator fixed inset-0 z-[9999] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center space-y-4 border border-oliva-100">
+      <div class="relative w-16 h-16 flex items-center justify-center">
+        <!-- Logo estático en el centro -->
+        <img src="{% static 'icono.png' %}?v=2" alt="Cargando" class="w-10 h-10 object-contain animate-pulse relative z-10" />
+        <!-- Spinner svg girando alrededor -->
+        <svg class="absolute inset-0 w-16 h-16 text-oliva-500 animate-spin z-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <div class="text-sm font-semibold text-slate-700 tracking-wide text-center">
+        Cargando datos...<br>
+        <span class="text-[11px] text-slate-400 font-normal mt-1 block">Aguarde un momento</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Notificaciones Toasts -->
   {% include 'components/messages.html' %}
 
   {% block extra_js %}{% endblock %}
+
+  <!-- Interceptar botones de exportación y navegaciones pesadas para mostrar spinner temporal -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link && link.href && (link.href.includes('exportar') || link.href.includes('?tab='))) {
+          // Si es una peticion HTMX, no interferimos con el script manual porque htmx ya lo maneja
+          if (link.hasAttribute('hx-get')) return;
+          
+          const spinner = document.getElementById('global-spinner');
+          if (spinner) {
+            spinner.style.opacity = '1';
+            spinner.style.visibility = 'visible';
+            // Ocultar después de 4 segundos asumiendo que ya comenzó la descarga
+            setTimeout(() => {
+              spinner.style.opacity = '0';
+              spinner.style.visibility = 'hidden';
+            }, 4000);
+          }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
