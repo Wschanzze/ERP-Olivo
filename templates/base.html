@@ -86,16 +86,13 @@
       border-radius: 4px;
     }
     
-    /* Spinner animation */
+    /* Spinner animation seguro */
     .htmx-indicator {
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 200ms ease-in, visibility 200ms;
+      display: none !important;
     }
     .htmx-request .htmx-indicator,
     .htmx-request.htmx-indicator {
-      opacity: 1;
-      visibility: visible;
+      display: flex !important;
     }
     [x-cloak] { display: none !important; }
 
@@ -147,8 +144,6 @@
 <body 
   class="h-full font-sans antialiased text-slate-800 bg-[#F8FAF6] overflow-x-hidden"
   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-  hx-boost="true"
-  hx-indicator="#global-spinner"
   x-data="{ 
     activeModule: window.__initialModule || 'tableros',
     sidebarOpen: window.__sidebarDoubleInitial,
@@ -238,7 +233,8 @@
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
     class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
-    @click.self="modalOpen = false"
+    @click.self="modalOpen = false; const mb = document.getElementById('modal-body'); if(mb) mb.innerHTML = '';"
+    @keydown.escape.window="modalOpen = false"
   >
     <div 
       x-show="modalOpen"
@@ -249,15 +245,25 @@
       x-transition:leave-start="opacity-100 scale-100 translate-y-0"
       x-transition:leave-end="opacity-0 scale-95 -translate-y-2"
       class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/80 max-w-2xl w-full p-4 sm:p-7 relative overflow-hidden max-h-[92vh] overflow-y-auto my-auto"
-      id="modal-body"
     >
-      <!-- Se inyecta contenido HTMX aquí -->
+      <!-- Botón Cerrar Modal -->
+      <button 
+        type="button" 
+        @click="modalOpen = false; const mb = document.getElementById('modal-body'); if(mb) mb.innerHTML = '';" 
+        class="absolute top-4 right-4 z-20 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+        title="Cerrar ventana"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+
+      <div id="modal-body">
+        <!-- Se inyecta contenido HTMX aquí -->
+      </div>
     </div>
   </div>
 
-  
-  <!-- Spinner Global HTMX -->
-  <div id="global-spinner" class="htmx-indicator fixed inset-0 z-[9999] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center">
+  <!-- Spinner Global HTMX (Oculto por defecto mediante display: none) -->
+  <div id="global-spinner" class="htmx-indicator fixed inset-0 z-[9999] bg-slate-950/40 backdrop-blur-sm items-center justify-center" style="display: none;">
     <div class="bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center space-y-4 border border-oliva-100">
       <div class="relative w-16 h-16 flex items-center justify-center">
         <!-- Logo estático en el centro -->
@@ -280,64 +286,35 @@
 
   {% block extra_js %}{% endblock %}
 
-  
-
-  <!-- Compatibilidad SPA y Spinner Global -->
+  <!-- Control de Spinners y Modales -->
   <script>
-    if (!window.__spaInitialized) {
-      window.__spaInitialized = true;
-
-      // 1. Ocultar spinner al cargar por caché del navegador (bfcache)
+    (function() {
+      // 1. Ocultar spinner ante restauración de caché o navegación normal
       window.addEventListener('pageshow', () => {
         const spinner = document.getElementById('global-spinner');
-        if (spinner) {
-          spinner.style.opacity = '0';
-          spinner.style.visibility = 'hidden';
-        }
+        if (spinner) spinner.style.display = 'none';
       });
 
-      // 2. Manejo de botones de exportación (evitar hx-boost y mostrar spinner temporal)
+      // 2. Feedback visual en descarga de Excels
       document.addEventListener('click', (e) => {
         const link = e.target.closest('a');
-        if (!link || !link.href) return;
-        
-        if (link.href.includes('exportar')) {
-          // Desactivar hx-boost en enlaces de exportación dinámicamente
-          link.setAttribute('hx-boost', 'false');
-          
+        if (link && link.href && link.href.includes('exportar')) {
           const spinner = document.getElementById('global-spinner');
           if (spinner) {
-            spinner.style.opacity = '1';
-            spinner.style.visibility = 'visible';
+            spinner.style.display = 'flex';
             setTimeout(() => {
-              spinner.style.opacity = '0';
-              spinner.style.visibility = 'hidden';
-            }, 4500);
+              spinner.style.display = 'none';
+            }, 3500);
           }
         }
       });
-      
-      // 3. Manejo de spinner en envíos de formularios nativos (no HTMX)
-      document.addEventListener('submit', (e) => {
-        const form = e.target;
-        if (form.hasAttribute('hx-post') || form.hasAttribute('hx-get')) return;
-        
-        const spinner = document.getElementById('global-spinner');
-        if (spinner) {
-          spinner.style.opacity = '1';
-          spinner.style.visibility = 'visible';
-        }
-      });
-      
-      // 4. Interceptar y ocultar spinner cuando HTMX termina cualquier petición exitosa o fallida
+
+      // 3. Garantizar cierre de spinner cuando HTMX finaliza
       document.addEventListener('htmx:afterRequest', () => {
         const spinner = document.getElementById('global-spinner');
-        if (spinner) {
-          spinner.style.opacity = '0';
-          spinner.style.visibility = 'hidden';
-        }
+        if (spinner) spinner.style.display = 'none';
       });
-    }
+    })();
   </script>
 </body>
 </html>

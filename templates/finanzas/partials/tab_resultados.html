@@ -1,4 +1,4 @@
-{% load humanize %}
+{% load humanize l10n %}
 
 <div class="space-y-6" 
   @cerrar-modal="modalNuevoCuadro = false; modalEditarLinea = false; modalEditarNotas = false"
@@ -16,12 +16,17 @@
         observaciones: ''
     },
     abrirEditarLinea(id, codigo, nombre, real, presup, obs) {
+        const cleanVal = (v) => {
+            if (!v) return 0;
+            const s = String(v).replace(/\s/g, '').replace(',', '.');
+            return parseFloat(s) || 0;
+        };
         this.lineaEditando = {
             id: id,
             codigo: codigo,
             nombre: nombre,
-            monto_real: real,
-            monto_presupuestado: presup,
+            monto_real: cleanVal(real),
+            monto_presupuestado: cleanVal(presup),
             observaciones: obs || ''
         };
         this.modalEditarLinea = true;
@@ -511,8 +516,8 @@
                   <!-- Acción: Editar Monto -->
                   <td class="py-2 px-3 text-center">
                     <button 
-                      type="button"
-                      @click="abrirEditarLinea({{ linea.id }}, '{{ linea.cuenta_contable.codigo }}', '{{ linea.cuenta_contable.nombre|escapejs }}', '{{ linea.monto_real }}', '{{ linea.monto_presupuestado }}', '{{ linea.observaciones|escapejs }}')"
+                      type="button" 
+                      @click="abrirEditarLinea({{ linea.id }}, '{{ linea.cuenta_contable.codigo }}', '{{ linea.cuenta_contable.nombre|escapejs }}', '{{ linea.monto_real|unlocalize }}', '{{ linea.monto_presupuestado|unlocalize }}', '{{ linea.observaciones|escapejs }}')"
                       class="inline-flex items-center justify-center p-1 rounded-lg text-slate-400 hover:text-oliva-700 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar importe de esta línea">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
