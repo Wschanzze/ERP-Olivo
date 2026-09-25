@@ -167,28 +167,40 @@
 
           <!-- Punto de Venta y Número -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <!-- Entradas Manuales Oficiales -->
+            <div x-show="esOficial" class="col-span-2 sm:col-span-1">
               <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Punto de Venta (5 dígitos) *</label>
               <input 
                 type="text" 
                 name="punto_de_venta" 
-                required 
+                :required="esOficial"
+                :disabled="!esOficial"
                 maxlength="5"
                 value="00001"
                 placeholder="00001"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
               />
             </div>
-            <div>
+            <div x-show="esOficial" class="col-span-2 sm:col-span-1">
               <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Número de Factura (8 dígitos) *</label>
               <input 
                 type="text" 
                 name="numero_comprobante" 
-                required 
+                :required="esOficial"
+                :disabled="!esOficial"
                 maxlength="8"
                 placeholder="00012345"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
               />
+            </div>
+
+            <!-- Numeración Automática Interna -->
+            <div x-cloak x-show="!esOficial" class="col-span-2 p-3.5 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-slate-700 uppercase tracking-wider">Numeración Interna Automática</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Se asignará un número correlativo propio (PV: 00000) para no interferir con los talonarios de ARCA.</div>
+              </div>
+              <div class="px-3 py-1.5 bg-slate-200 text-slate-600 font-mono font-bold text-xs rounded-lg border border-slate-300">AUTO</div>
             </div>
           </div>
 

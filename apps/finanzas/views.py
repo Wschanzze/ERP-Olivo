@@ -1817,17 +1817,32 @@ class ComprobanteFiscalCreateView(View):
     """Alta de Comprobante Fiscal (Factura A, B, C) con impacto en cta cte y Libro de IVA."""
     def post(self, request):
         try:
+            es_oficial = request.POST.get('es_oficial') == 'on'
             tipo_operacion = request.POST.get('tipo_operacion', 'COMPRA')
             tipo_comprobante = request.POST.get('tipo_comprobante', 'F_A')
-            punto_de_venta = request.POST.get('punto_de_venta', '00001').zfill(5)
-            numero_comprobante = request.POST.get('numero_comprobante', '00000001').zfill(8)
+            
+            if es_oficial:
+                punto_de_venta = request.POST.get('punto_de_venta', '00001').zfill(5)
+                numero_comprobante = request.POST.get('numero_comprobante', '00000001').zfill(8)
+            else:
+                punto_de_venta = '00000'
+                last_comp = ComprobanteFiscal.objects.filter(
+                    es_oficial=False,
+                    tipo_comprobante=tipo_comprobante,
+                    punto_de_venta=punto_de_venta
+                ).order_by('-numero_comprobante').first()
+                if last_comp and last_comp.numero_comprobante.isdigit():
+                    next_num = int(last_comp.numero_comprobante) + 1
+                else:
+                    next_num = 1
+                numero_comprobante = str(next_num).zfill(8)
+
             fecha_emision = request.POST.get('fecha_emision') or timezone.now().date()
             fecha_vencimiento = request.POST.get('fecha_vencimiento') or None
             cuenta_corriente_id = request.POST.get('cuenta_corriente_id')
             concepto = request.POST.get('concepto', '').strip()
 
             condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
-            es_oficial = request.POST.get('es_oficial') == 'on'
 
             if es_oficial:
                 neto_21 = Decimal(request.POST.get('neto_gravado_21') or '0.00')
