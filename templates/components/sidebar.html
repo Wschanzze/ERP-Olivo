@@ -28,7 +28,8 @@
        ======================================================================= -->
   <aside
     id="app-rail1"
-    class="fixed inset-y-0 left-0 z-40 w-20 hidden lg:flex flex-col bg-[#13190C] text-[#E5EBDD] border-r border-[#2C381D] select-none justify-between h-full"
+    :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+    class="fixed inset-y-0 left-0 z-50 w-20 flex flex-col transition-transform duration-300 ease-in-out bg-[#13190C] text-[#E5EBDD] border-r border-[#2C381D] select-none justify-between h-full"
     style="height: 100dvh; max-height: 100dvh;"
   >
     <!-- Textura sutil y fondo oscuro de alta gama -->
@@ -220,8 +221,12 @@
        ======================================================================= -->
   <aside
     id="app-rail2"
-    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none opacity-0'"
-    class="fixed inset-y-0 left-20 w-[220px] bg-[#18210F] text-[#E5EBDD] hidden lg:flex flex-col select-none transition-transform duration-200 ease-in-out border-r border-[#2C381D] z-30"
+    :class="{
+      'translate-x-20 shadow-2xl': mobileMenuOpen,
+      'lg:translate-x-0': !mobileMenuOpen && sidebarOpen,
+      '-translate-x-full lg:-translate-x-full lg:opacity-0 lg:pointer-events-none': !mobileMenuOpen && !sidebarOpen
+    }"
+    class="fixed inset-y-0 left-0 lg:left-20 w-[240px] lg:w-[220px] bg-[#18210F] text-[#E5EBDD] flex flex-col select-none transition-all duration-300 ease-in-out border-r border-[#2C381D] z-40"
     style="height: 100dvh; max-height: 100dvh;"
   >
     <!-- Cabecera del Panel: Título del Módulo + Botón Colapso -->
@@ -245,10 +250,22 @@
         type="button"
         @click="toggleSidebar()"
         title="Ocultar panel secundario"
-        class="p-1 rounded-lg text-[#8FA872] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+        class="hidden lg:block p-1 rounded-lg text-[#8FA872] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <!-- Botón Cerrar Móvil -->
+      <button
+        type="button"
+        @click="mobileMenuOpen = false"
+        title="Cerrar menú"
+        class="lg:hidden p-1 rounded-lg text-[#8FA872] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -280,8 +297,7 @@
     <nav class="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-2 py-2 space-y-1">
 
       <!-- ── TABLEROS & BI ── -->
-      <template x-if="activeModule === 'tableros'">
-        <div class="space-y-1">
+      <div x-show="activeModule === 'tableros'" x-cloak class="space-y-1">
           <a
             href="{% url 'dashboard:index' %}"
             x-show="matchesSearch('Inicio & Accesos', 'launchpad hub carpetas')"
@@ -299,11 +315,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">BI</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- ── CAMPO & OPERACIONES ── -->
-      <template x-if="activeModule === 'campo'">
-        <div class="space-y-1">
+      <div x-show="activeModule === 'campo'" x-cloak class="space-y-1">
             <a
               href="{% url 'campos:orden_trabajo' %}"
               x-show="matchesSearch('Órdenes de Trabajo', 'orden tarea planificacion asignacion')"
@@ -336,11 +351,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">ABC</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- ── FINANZAS & CONTABILIDAD ── -->
-      <template x-if="activeModule === 'finanzas'">
-        <div class="space-y-1">
+      <div x-show="activeModule === 'finanzas'" x-cloak class="space-y-1">
           <!-- Resultado del Período -->
           <a
             href="{% url 'finanzas:dashboard' %}?tab=resultados"
@@ -426,11 +440,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">Árbol</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- ── PERSONAL & CUADRILLAS ── -->
-      <template x-if="activeModule === 'personal'">
-        <div class="space-y-1">
+      <div x-show="activeModule === 'personal'" x-cloak class="space-y-1">
           <a
             href="{% url 'personal:empleados_list' %}"
             x-show="matchesSearch('Legajos de Personal', 'empleados cuadrillas rrhh trabajadores')"
@@ -465,11 +478,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">UATRE</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- ── ALMAZARA & DEPÓSITOS ── -->
-      <template x-if="activeModule === 'almazara'">
-        <div class="space-y-1">
+      <div x-show="activeModule === 'almazara'" x-cloak class="space-y-1">
           <a
             href="{% url 'inventario:insumos_list' %}"
             x-show="matchesSearch('Stock de Insumos', 'fitosanitarios fertilizantes deposito existencia')"
@@ -511,7 +523,7 @@
             <span class="truncate flex-1">Órdenes de Compra</span>
           </a>
         </div>
-      </template>
+      
 
     </nav>
 
@@ -613,8 +625,7 @@
     >
 
       <!-- Vistas Tableros -->
-      <template x-if="activeModule === 'tableros'">
-        <div class="space-y-1.5">
+      <div x-show="activeModule === 'tableros'" x-cloak class="space-y-1.5">
           <a
             href="{% url 'dashboard:index' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -629,11 +640,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">BI</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- Vistas Campo -->
-      <template x-if="activeModule === 'campo'">
-        <div class="space-y-1.5">
+      <div x-show="activeModule === 'campo'" x-cloak class="space-y-1.5">
             <a
               href="{% url 'campos:orden_trabajo' %}"
               class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -660,11 +670,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">ABC</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- Vistas Finanzas -->
-      <template x-if="activeModule === 'finanzas'">
-        <div class="space-y-1.5">
+      <div x-show="activeModule === 'finanzas'" x-cloak class="space-y-1.5">
           <a
             href="{% url 'finanzas:dashboard' %}?tab=resultados"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-emerald-300 bg-white/5 hover:bg-white/10{% endif %}"
@@ -724,11 +733,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">Árbol</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- Vistas Personal -->
-      <template x-if="activeModule === 'personal'">
-        <div class="space-y-1.5">
+      <div x-show="activeModule === 'personal'" x-cloak class="space-y-1.5">
           <a
             href="{% url 'personal:empleados_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -756,11 +764,10 @@
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">UATRE</span>
           </a>
         </div>
-      </template>
+      
 
       <!-- Vistas Almazara -->
-      <template x-if="activeModule === 'almazara'">
-        <div class="space-y-1.5">
+      <div x-show="activeModule === 'almazara'" x-cloak class="space-y-1.5">
           <a
             href="{% url 'inventario:insumos_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name in 'insumos_list insumo_kardex' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -793,7 +800,7 @@
             <span>🛒 Órdenes de Compra</span>
           </a>
         </div>
-      </template>
+      
 
     </nav>
 
