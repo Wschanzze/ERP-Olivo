@@ -680,6 +680,9 @@ class ComprobanteFiscal(TimeStampedModel):
     punto_de_venta = models.CharField(max_length=5, default="00001", verbose_name=_("Punto de Venta (PV)"))
     numero_comprobante = models.CharField(max_length=8, verbose_name=_("Número de Comprobante"))
     
+    es_oficial = models.BooleanField(default=True, verbose_name=_("Registro Oficial (ARCA/AFIP)"), help_text=_("Indica si es factura oficial (Blanco) o interna (Negro/2)"))
+
+    
     fecha_emision = models.DateField(verbose_name=_("Fecha de Emisión"))
     fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name=_("Fecha de Vencimiento"))
 

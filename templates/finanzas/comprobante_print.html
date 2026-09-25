@@ -221,6 +221,8 @@
 
     <!-- AFIP / ARCA CAE, QR Oficial and Authorized Signature Bar -->
     <div class="border-t-2 border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-6">
+      
+      {% if es_oficial %}
       <div class="flex items-center space-x-4">
         {% if qr_arca_base64 %}
           <div class="p-1.5 bg-white border border-slate-300 rounded-lg shadow-xs">
@@ -244,6 +246,12 @@
           <p class="text-[9px] text-slate-400">Comprobante Autorizado por ARCA (ex AFIP) - RG 4291 / RG 5616</p>
         </div>
       </div>
+      {% else %}
+      <div class="flex flex-col text-slate-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Documento No Válido como Factura</span>
+        <span class="text-[10px]">Uso exclusivo para control de gestión y registro en Cuenta Corriente interna.</span>
+      </div>
+      {% endif %}
 
       <!-- Signature & Stamp Box -->
       <div class="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-6">

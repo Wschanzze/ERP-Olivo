@@ -253,7 +253,7 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-oliva-600"></span>
                     CAE {{ f.cae }}
                   </div>
-                {% else %}
+                {% elif f.es_oficial %}
                   <form method="post" action="{% url 'finanzas:comprobante_autorizar_arca' f.id %}" class="inline">
                     {% csrf_token %}
                     <button 
@@ -264,6 +264,10 @@
                       ⚡ Emitir ARCA
                     </button>
                   </form>
+                {% else %}
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-mono font-bold">
+                    Registro Interno
+                  </div>
                 {% endif %}
               </td>
 

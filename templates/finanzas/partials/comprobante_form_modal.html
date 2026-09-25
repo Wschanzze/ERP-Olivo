@@ -7,6 +7,7 @@
   role="dialog" 
   aria-modal="true"
   x-data="{
+    esOficial: true,
     neto21: 0,
     neto105: 0,
     exento: 0,
@@ -57,6 +58,21 @@
 
         <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Modalidad de Registro (Blanco / Negro) -->
+            <div class="sm:col-span-2 p-4 bg-slate-100 rounded-xl border border-slate-300">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <div class="relative">
+                  <input type="checkbox" name="es_oficial" class="sr-only" x-model="esOficial" checked>
+                  <div class="block w-14 h-8 rounded-full transition-colors" :class="esOficial ? 'bg-oliva-600' : 'bg-slate-400'"></div>
+                  <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform" :class="esOficial ? 'translate-x-6' : ''"></div>
+                </div>
+                <div>
+                  <div class="font-bold text-slate-800" x-text="esOficial ? 'Registro Oficial (AFIP/ARCA)' : 'Registro Interno (No Fiscal)'"></div>
+                  <div class="text-[11px] text-slate-500" x-text="esOficial ? 'Impacta en el Libro de IVA y emite factura oficial.' : 'Impacta en Cuenta Corriente pero no se envía a ARCA.'"></div>
+                </div>
+              </label>
+            </div>
+
             <!-- Tipo de Operación -->
             <div>
               <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Tipo de Operación *</label>

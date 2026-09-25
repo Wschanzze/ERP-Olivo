@@ -1839,6 +1839,8 @@ class ComprobanteFiscalCreateView(View):
             cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
 
             condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
+            es_oficial = request.POST.get('es_oficial') == 'on'
+
             comprobante = ComprobanteFiscal.objects.create(
                 tipo_operacion=tipo_operacion,
                 tipo_comprobante=tipo_comprobante,
@@ -1859,7 +1861,8 @@ class ComprobanteFiscalCreateView(View):
                 percepcion_iibb=percep_iibb,
                 total=total,
                 saldo_pendiente=total,
-                cuenta_contable_id=cuenta_contable_id
+                cuenta_contable_id=cuenta_contable_id,
+                es_oficial=es_oficial
             )
 
             # Impacto en la cuenta corriente
@@ -1869,9 +1872,9 @@ class ComprobanteFiscalCreateView(View):
                 cuenta_corriente.saldo_actual += total  # Aumenta crédito por cobrar a cliente
             cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
 
-            # Autorización inmediata en ARCA si fue solicitada para una Venta
+            # Autorización inmediata en ARCA si fue solicitada para una Venta Oficial
             autorizar_arca = request.POST.get('autorizar_arca') in ('1', 'true', 'on')
-            if autorizar_arca and tipo_operacion == 'VENTA':
+            if autorizar_arca and tipo_operacion == 'VENTA' and es_oficial:
                 try:
                     res_arca = autorizar_comprobante_arca(comprobante)
                     messages.success(
@@ -2138,6 +2141,11 @@ class ComprobanteAutorizarArcaView(View):
     """Acción para autorizar un ComprobanteFiscal de VENTA ante ARCA (WSFE) y obtener CAE."""
     def post(self, request, pk):
         comprobante = get_object_or_404(ComprobanteFiscal, pk=pk)
+        
+        if not comprobante.es_oficial:
+            messages.error(request, "No se puede autorizar un comprobante de registro interno ('No Oficial').")
+            return redirect(request.META.get('HTTP_REFERER') or (reverse_lazy('finanzas:dashboard') + '?tab=libro_iva'))
+
         try:
             res = autorizar_comprobante_arca(comprobante)
             messages.success(
@@ -2184,6 +2192,33 @@ class ComprobanteFiscalPrintView(DetailView):
         empresa = Empresa.objects.first()
         ctx['empresa'] = empresa
         ctx['es_comprobante_fiscal'] = True
+        ctx['es_oficial'] = comp.es_oficial
+
+        # Create a proxy 'mov' object to satisfy the comprobante_print.html template which expects a MovimientoFinanciero
+        class ProxyFinca:
+            nombre = "General"
+        class ProxyCentroCosto:
+            nombre = "Administración"
+        class ProxyCuenta:
+            nombre = "Libro de IVA"
+            def get_tipo_display(self):
+                return "Registro de Facturación"
+        
+        class ProxyMov:
+            pk = comp.pk
+            fecha = comp.fecha_emision
+            tipo = 'INGRESO' if comp.tipo_operacion == 'VENTA' else 'EGRESO'
+            cuenta = ProxyCuenta()
+            cuenta_corriente = comp.cuenta_corriente
+            concepto = comp.concepto
+            comprobante_tipo = comp.get_tipo_comprobante_display()
+            comprobante_nro = comp.numero_completo
+            finca = ProxyFinca()
+            centro_de_costo = comp.centro_de_costo or ProxyCentroCosto()
+            moneda = 'ARS'
+            importe = comp.total
+            
+        ctx['mov'] = ProxyMov()
 
         tipo = comp.tipo_comprobante
         if 'F_A' in tipo:
