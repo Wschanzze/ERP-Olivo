@@ -1,3 +1,4 @@
+from apps.core.excel_export import export_to_excel
 
 import json
 from django.views.generic import View, TemplateView

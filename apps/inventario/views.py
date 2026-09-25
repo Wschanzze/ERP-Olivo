@@ -1,3 +1,4 @@
+from apps.core.excel_export import export_to_excel
 from decimal import Decimal
 from datetime import datetime
 from django.views.generic import ListView, CreateView, DetailView
