@@ -68,11 +68,15 @@
     <div class="border-b-2 border-slate-900 pb-6 mb-6">
       <div class="flex items-start justify-between">
         <div class="flex items-center space-x-4">
-          <img src="{% static 'icono.png' %}" alt="Logo Olivar del Valle" class="w-14 h-14 object-contain">
+          {% if empresa_actual.logo %}
+            <img src="{{ empresa_actual.logo.url }}" alt="{{ empresa_actual.razon_social }}" class="w-14 h-14 object-contain">
+          {% else %}
+            <img src="{% static 'icono.png' %}" alt="{{ empresa_actual.razon_social }}" class="w-14 h-14 object-contain">
+          {% endif %}
           <div>
             <div class="text-[11px] font-black uppercase tracking-widest text-[#4E5F36]">ERP AGROINDUSTRIAL OLIVÍCOLA</div>
             <h1 class="text-2xl font-black tracking-tight text-slate-900 mt-0.5">
-              {{ empresa.razon_social|default:"Olivar del Valle Agroindustrial S.A." }}
+              {{ empresa_actual.razon_social|default:"Mi Empresa S.A." }}
             </h1>
             <p class="text-xs text-slate-500 font-medium mt-0.5">
               División Agronómica, Planta de Extracción Almazara y Fraccionamiento

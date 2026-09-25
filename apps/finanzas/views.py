@@ -2025,10 +2025,12 @@ class OrdenPagoReciboPrintView(DetailView):
 
 
 class ExportarLibroIVAView(View):
-    """Exporta el Libro de IVA en formato CSV compatible con AFIP / ARCA."""
+    """Exporta el Libro de IVA en formato Excel (.xlsx) con diseño corporativo."""
     def get(self, request):
-        import csv
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
         from django.http import HttpResponse
+        from apps.core.models import Empresa
 
         try:
             mes = int(request.GET.get('mes', 3))
@@ -2042,32 +2044,81 @@ class ExportarLibroIVAView(View):
 
         qs = ComprobanteFiscal.objects.filter(tipo_operacion=tipo, fecha_emision__year=ano, fecha_emision__month=mes).order_by('fecha_emision', 'numero_comprobante')
 
-        response = HttpResponse(content_type='text/csv; charset=utf-8')
-        filename = f"Libro_IVA_{tipo}_{ano}_{mes:02d}.csv"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        empresa = Empresa.objects.first()
+        razon_social = empresa.razon_social if empresa else "Empresa S.A."
+        cuit = empresa.cuit if empresa else "-"
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Libro IVA {tipo.capitalize()}"
 
-        writer = csv.writer(response)
-        writer.writerow(['Fecha', 'Tipo Comprobante', 'Punto de Venta', 'Numero', 'CUIT', 'Razon Social', 'Condicion IVA', 'Neto Gravado 21%', 'IVA 21%', 'Neto Gravado 10.5%', 'IVA 10.5%', 'Exento/No Gravado', 'Percepciones IIBB', 'Total Facturado', 'Estado'])
+        title_font = Font(name='Arial', size=14, bold=True, color='003D4A2A')
+        header_font = Font(name='Arial', size=10, bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(start_color='005A6E3F', end_color='005A6E3F', fill_type='solid')
+        center_align = Alignment(horizontal='center', vertical='center')
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+        ws.merge_cells('A1:O1')
+        ws['A1'] = f"{razon_social.upper()} - CUIT {cuit}"
+        ws['A1'].font = title_font
+        ws['A1'].alignment = Alignment(horizontal='center')
+        
+        ws.merge_cells('A2:O2')
+        ws['A2'] = f"LIBRO DE IVA {tipo.upper()}S - PERÍODO {mes:02d}/{ano}"
+        ws['A2'].font = Font(name='Arial', size=12, bold=True)
+        ws['A2'].alignment = Alignment(horizontal='center')
+
+        headers = ['Fecha', 'Tipo Comprobante', 'Pto. Venta', 'Número', 'CUIT', 'Razón Social', 'Cond. IVA', 
+                   'Neto Grav 21%', 'IVA 21%', 'Neto Grav 10.5%', 'IVA 10.5%', 'Exento/No Gravado', 
+                   'Perc. IIBB', 'Total Facturado', 'Estado AFIP']
+        
+        ws.append([]) # Fila 3 vacía
+        ws.append(headers) # Fila 4
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_num)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
 
         for c in qs:
-            writer.writerow([
+            row_data = [
                 c.fecha_emision.strftime('%d/%m/%Y'),
                 c.get_tipo_comprobante_display(),
-                c.punto_de_venta,
-                c.numero_comprobante,
-                c.cuit,
-                c.razon_social,
-                c.get_condicion_iva_display(),
-                f"{c.neto_gravado_21:.2f}",
-                f"{c.iva_21:.2f}",
-                f"{c.neto_gravado_10_5:.2f}",
-                f"{c.iva_10_5:.2f}",
-                f"{c.exento:.2f}",
-                f"{c.percepcion_iibb:.2f}",
-                f"{c.total:.2f}",
-                c.get_estado_pago_display()
-            ])
+                f"{c.punto_venta:04d}",
+                f"{c.numero_comprobante:08d}",
+                c.cuenta_corriente.cuit if c.cuenta_corriente else 'Consumidor Final',
+                c.cuenta_corriente.razon_social if c.cuenta_corriente else 'Varios',
+                c.cuenta_corriente.get_tipo_entidad_display() if c.cuenta_corriente else '-',
+                float(c.neto_gravado_21),
+                float(c.iva_21),
+                float(c.neto_gravado_105),
+                float(c.iva_105),
+                float(c.exento),
+                float(c.percepciones_iibb),
+                float(c.total),
+                c.get_estado_afip_display()
+            ]
+            ws.append(row_data)
 
+        # Anchos de columna dinámicos
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                if cell.row > 3:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+            ws.column_dimensions[column].width = min(max_length + 2, 35)
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"Libro_IVA_{tipo}_{ano}_{mes:02d}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
         return response
 
 

@@ -51,7 +51,7 @@
   <div style="display: flex; align-items: center; gap: 14px;">
     <img src="{% static 'icono.png' %}" alt="Logo" style="height: 48px; width: 48px; object-fit: contain;">
     <div>
-      <div class="empresa-nombre">Olivar del Valle</div>
+      <div class="empresa-nombre">{{ empresa_actual.razon_social|default:"Empresa S.A." }}</div>
       <div class="empresa-sub">{{ empresa_actual.razon_social|default:'Olivar del Valle S.A.' }} · CUIT {{ empresa_actual.cuit|default:'30-71458923-4' }}</div>
       <div class="empresa-sub">{{ empresa_actual.direccion|default:'Ruta Nacional 60 Km 1140, Aimogasta' }}, La Rioja</div>
     </div>

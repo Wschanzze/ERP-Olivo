@@ -142,8 +142,8 @@ class CostosDashboardViewTest(TestCase):
     def test_exportar_csv_view(self):
         response = self.client.get(reverse('costos:exportar_csv'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response['Content-Type'].startswith('text/csv'))
-        content = response.content.decode('utf-8-sig')
+        self.assertTrue(response['Content-Type'].startswith('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
+        content = str(response.content) # Not doing deep binary excel validation in basic test
         self.assertIn('Jornales de poda', content)
         self.assertIn('Factura energía bomba pozo', content)
         self.assertIn('50000.00', content)

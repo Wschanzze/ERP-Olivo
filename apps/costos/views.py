@@ -1,4 +1,7 @@
 import csv
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from apps.core.models import Empresa
 import datetime
 from decimal import Decimal
 from django.views.generic import ListView, View
@@ -595,45 +598,101 @@ class ExportarCostosCSVView(View):
                 Q(proveedor__razon_social__icontains=q)
             )
 
-        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-        fecha_str = timezone.now().strftime('%Y%m%d_%H%M')
-        response['Content-Disposition'] = f'attachment; filename="control_costos_agricolas_{fecha_str}.csv"'
+        empresa = Empresa.objects.first()
+        razon_social = empresa.razon_social if empresa else "Empresa S.A."
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Costos Agrícolas"
 
-        writer = csv.writer(response, delimiter=';')
-        writer.writerow([
+        # Estilos
+        title_font = Font(name='Arial', size=14, bold=True, color='003D4A2A')
+        header_font = Font(name='Arial', size=10, bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(start_color='005A6E3F', end_color='005A6E3F', fill_type='solid')
+        center_align = Alignment(horizontal='center', vertical='center')
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+        # Encabezado Empresa
+        ws.merge_cells('A1:S1')
+        ws['A1'] = razon_social.upper()
+        ws['A1'].font = title_font
+        ws['A1'].alignment = Alignment(horizontal='center')
+        
+        ws.merge_cells('A2:S2')
+        ws['A2'] = "REPORTE DETALLADO DE COSTOS AGRÍCOLAS Y OPERATIVOS"
+        ws['A2'].font = Font(name='Arial', size=12, bold=True)
+        ws['A2'].alignment = Alignment(horizontal='center')
+
+        ws.merge_cells('A3:S3')
+        ws['A3'] = f"Fecha de Emisión: {timezone.now().strftime('%d/%m/%Y %H:%M')} | ERP Olivícola"
+        ws['A3'].font = Font(name='Arial', size=9, italic=True)
+        ws['A3'].alignment = Alignment(horizontal='center')
+
+        # Cabeceras
+        headers = [
             'ID', 'Fecha', 'Centro de Costo', 'Tipo Centro', 'Finca', 'Cuadro Código',
-            'Cuadro Variedad', 'Hectáreas', 'Tipo Origen / Concepto', 'Cuenta Contable Código', 
-            'Cuenta Contable Nombre', 'Proveedor', 'Descripción / Detalle',
-            'Comprobante Origen', 'ID Origen', '¿Prorrateado?', 'Importe ARS', 'Importe USD', 'Costo/ha (ARS/ha)'
-        ])
+            'Cuadro Variedad', 'Hectáreas', 'Concepto / Origen', 'Cod. Cta', 
+            'Cuenta Contable', 'Proveedor', 'Descripción / Detalle',
+            'Comprobante', 'Ref ID', 'Prorrateado', 'Importe ARS', 'Importe USD', 'Costo/ha (ARS)'
+        ]
+        
+        ws.append([]) # Fila 4 vacía
+        ws.append(headers) # Fila 5
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=5, column=col_num)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
 
         for c in qs:
-            ha = c.cuadro.hectareas_netas if (c.cuadro and c.cuadro.hectareas_netas) else ''
-            c_ha = round(c.importe_ars / c.cuadro.hectareas_netas, 2) if (c.cuadro and c.cuadro.hectareas_netas) else ''
+            ha = float(c.cuadro.hectareas_netas) if (c.cuadro and c.cuadro.hectareas_netas) else None
+            c_ha = round(float(c.importe_ars) / ha, 2) if ha else None
             cta_cod = c.cuenta_contable.codigo if c.cuenta_contable else ''
             cta_nom = c.cuenta_contable.nombre if c.cuenta_contable else ''
             prov_nom = c.proveedor.razon_social if c.proveedor else ''
 
-            writer.writerow([
+            row_data = [
                 c.id,
                 c.fecha.strftime('%d/%m/%Y'),
                 c.centro_de_costo.nombre,
                 c.centro_de_costo.get_tipo_display(),
-                c.finca.nombre,
-                c.cuadro.codigo if c.cuadro else 'GENERAL',
-                c.cuadro.get_variedad_olivo_display() if c.cuadro else '',
+                c.finca.nombre if c.finca else '',
+                c.cuadro.codigo if c.cuadro else '',
+                c.cuadro.variedad if c.cuadro else '',
                 ha,
                 c.get_tipo_origen_display(),
                 cta_cod,
                 cta_nom,
                 prov_nom,
                 c.descripcion,
-                c.documento_origen_tipo or '',
+                c.documento_origen_tipo,
                 c.documento_origen_id or '',
-                'SI' if c.es_prorrateado else ('DISTRIBUIDO' if c.prorrateo_realizado else 'NO'),
-                f"{c.importe_ars:.2f}",
-                f"{c.importe_usd:.2f}",
-                f"{c_ha}" if c_ha != '' else '',
-            ])
+                'Sí' if c.es_prorrateo else 'No',
+                float(c.importe_ars),
+                float(c.importe_usd) if c.importe_usd else None,
+                c_ha
+            ]
+            ws.append(row_data)
 
+        # Ajuste de ancho de columnas
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                if cell.row > 4: # Omit headers
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+            adjusted_width = (max_length + 2)
+            if adjusted_width > 30: adjusted_width = 30
+            ws.column_dimensions[column].width = adjusted_width
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        fecha_str = timezone.now().strftime('%Y%m%d_%H%M')
+        response['Content-Disposition'] = f'attachment; filename="Costos_Agricolas_{fecha_str}.xlsx"'
+        wb.save(response)
         return response
