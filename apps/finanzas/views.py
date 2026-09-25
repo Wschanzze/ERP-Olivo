@@ -1840,8 +1840,16 @@ class ComprobanteFiscalCreateView(View):
                     next_num = 1
                 numero_comprobante = str(next_num).zfill(8)
 
-            fecha_emision = request.POST.get('fecha_emision') or timezone.now().date()
-            fecha_vencimiento = request.POST.get('fecha_vencimiento') or None
+            from datetime import datetime
+            fecha_emision_str = request.POST.get('fecha_emision')
+            if fecha_emision_str:
+                fecha_emision = datetime.strptime(fecha_emision_str, '%Y-%m-%d').date()
+            else:
+                fecha_emision = timezone.now().date()
+
+            fecha_vencimiento_str = request.POST.get('fecha_vencimiento')
+            fecha_vencimiento = datetime.strptime(fecha_vencimiento_str, '%Y-%m-%d').date() if fecha_vencimiento_str else None
+
             cuenta_corriente_id = request.POST.get('cuenta_corriente_id')
             concepto = request.POST.get('concepto', '').strip()
 
