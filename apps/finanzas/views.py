@@ -649,7 +649,7 @@ class FinanzasDashboardView(TemplateView):
         ctx['plan_cuentas_stats'] = stats
         ctx['cuentas_plan'] = cuentas_qs
         ctx['cuentas_contables_json'] = json.dumps(cuentas_list)
-        ctx['cajas_bancos'] = Cuenta.objects.all().select_related('cuenta_contable')
+        ctx['cajas_banco_emisors'] = Cuenta.objects.all().select_related('cuenta_contable')
         ctx['categorias_insumo'] = CategoriaInsumo.objects.all().select_related('cuenta_contable_activo', 'cuenta_contable_gasto').prefetch_related('insumos')
         ctx['centros_costo'] = CentroDeCosto.objects.all().select_related('cuenta_contable_defecto')
         ctx['cuentas_imputables'] = CuentaContable.objects.filter(es_imputable=True, activa=True).order_by('codigo')
@@ -915,7 +915,7 @@ class CuentasListValoresView(ListView):
 
 class CuentaCreateView(CreateView):
     model = Cuenta
-    fields = ['nombre', 'tipo', 'moneda', 'banco_nombre', 'numero_cuenta', 'cbu_cvu', 'saldo_actual', 'empresa']
+    fields = ['nombre', 'tipo', 'moneda', 'banco_emisor_nombre', 'numero_cuenta', 'cbu_cvu', 'saldo_actual', 'empresa']
     template_name = 'finanzas/partials/cuenta_form_modal.html'
 
     def get_success_url(self):
@@ -930,7 +930,7 @@ class CuentaCreateView(CreateView):
 
 class CuentaUpdateView(UpdateView):
     model = Cuenta
-    fields = ['nombre', 'tipo', 'moneda', 'banco_nombre', 'numero_cuenta', 'cbu_cvu', 'activa', 'empresa']
+    fields = ['nombre', 'tipo', 'moneda', 'banco_emisor_nombre', 'numero_cuenta', 'cbu_cvu', 'activa', 'empresa']
     template_name = 'finanzas/cuenta_edit.html'
     success_url = reverse_lazy('finanzas:dashboard')
 
@@ -1035,7 +1035,7 @@ class ChequesListView(ListView):
 
 class ChequeCreateView(CreateView):
     model = Cheque
-    fields = ['tipo', 'banco_emisor', 'numero', 'emisor_firmante', 'cuit_emisor', 'fecha_emision', 'fecha_cobro', 'importe', 'cuenta_bancaria_origen', 'cuenta_corriente', 'estado', 'observaciones']
+    fields = ['tipo', 'banco_emisor_emisor', 'numero', 'emisor_firmante', 'cuit_emisor', 'fecha_emision', 'fecha_cobro', 'importe', 'cuenta_bancaria_origen', 'cuenta_corriente', 'estado', 'observaciones']
     template_name = 'finanzas/partials/cheque_form_modal.html'
 
     def get_success_url(self):
@@ -1128,7 +1128,7 @@ class PlanCuentasView(TemplateView):
         ctx['stats'] = stats
         ctx['cuentas_plan'] = cuentas_qs
         ctx['cuentas_json'] = json.dumps(cuentas_list)
-        ctx['cajas_bancos'] = Cuenta.objects.all().select_related('cuenta_contable')
+        ctx['cajas_banco_emisors'] = Cuenta.objects.all().select_related('cuenta_contable')
         ctx['categorias_insumo'] = CategoriaInsumo.objects.all().select_related('cuenta_contable_activo', 'cuenta_contable_gasto')
         ctx['centros_costo'] = CentroDeCosto.objects.all().select_related('cuenta_contable_defecto')
         ctx['cuentas_imputables'] = CuentaContable.objects.filter(es_imputable=True, activa=True).order_by('codigo')
@@ -1769,7 +1769,7 @@ class ChequeCambiarEstadoView(View):
                 fecha=timezone.now().date(),
                 importe=cheque.importe,
                 moneda=cuenta.moneda,
-                concepto=f"Acreditación Cheque {cheque.banco_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
+                concepto=f"Acreditación Cheque {cheque.banco_emisor_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
                 comprobante_tipo="CHEQUE_COBRADO",
                 comprobante_nro=cheque.numero,
                 usuario=request.user if request.user.is_authenticated else None
@@ -1788,7 +1788,7 @@ class ChequeCambiarEstadoView(View):
             messages.success(request, f"Cheque #{cheque.numero} (${cheque.importe:,.2f}) endosado a {proveedor.razon_social}. Deuda cancelada.")
             
         elif accion == 'rechazar':
-            motivo = request.POST.get('motivo', 'Rechazado por el banco (sin fondos o defecto formal)')
+            motivo = request.POST.get('motivo', 'Rechazado por el banco_emisor (sin fondos o defecto formal)')
             cheque.estado = Cheque.EstadoCheque.RECHAZADO
             cheque.observaciones = f"{cheque.observaciones or ''} | Rechazo: {motivo}".strip(' |')
             cheque.save(update_fields=['estado', 'observaciones', 'updated_at'])
@@ -1892,7 +1892,7 @@ class ComprobanteFiscalCreateView(View):
 
 
 class ComprobantePagoCobroView(View):
-    """Registra pago de compra o cobro de venta, emite Orden de Pago / Recibo y descuenta cta cte y caja/banco."""
+    """Registra pago de compra o cobro de venta, emite Orden de Pago / Recibo y descuenta cta cte y caja/banco_emisor."""
     def post(self, request):
         try:
             comprobante_id = request.POST.get('comprobante_id')
@@ -1928,7 +1928,7 @@ class ComprobantePagoCobroView(View):
                 usuario=request.user if request.user.is_authenticated else None
             )
 
-            # Actualizar saldos de caja/banco y cta cte
+            # Actualizar saldos de caja/banco_emisor y cta cte
             if es_cobro:
                 cuenta_financiera.saldo_actual += importe
                 cuenta_corriente.saldo_actual -= importe
@@ -2251,7 +2251,7 @@ class ComprobanteFiscalPrintView(DetailView):
 
 class ExportarCajaExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente', 'cuenta_contable').all().order_by('-fecha')
+        qs = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente').all().order_by('-fecha')
         columnas = [
             ("Fecha", lambda m: m.fecha.strftime("%d/%m/%Y")),
             ("Tipo", lambda m: m.get_tipo_movimiento_display()),
@@ -2260,22 +2260,22 @@ class ExportarCajaExcelView(View):
             ("Entidad", lambda m: m.cuenta_corriente.razon_social if m.cuenta_corriente else "Varios"),
             ("Moneda", "moneda"),
             ("Importe", "importe"),
-            ("Estado", "estado"),
+            ("Conciliado", lambda m: "Sí" if m.conciliado else "No"),
             ("Comprobante Nro", "comprobante_nro"),
         ]
         return export_to_excel(qs, columnas, "Registro de Caja y Movimientos Financieros", "caja_movimientos")
 
 class ExportarChequesExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = Cheque.objects.select_related('entidad', 'cuenta_bancaria').all().order_by('-fecha_vencimiento')
+        qs = Cheque.objects.select_related('cuenta_corriente', 'cuenta_bancaria_origen').all().order_by('-fecha_cobro')
         columnas = [
             ("Fecha Emisión", lambda c: c.fecha_emision.strftime("%d/%m/%Y")),
-            ("Vencimiento", lambda c: c.fecha_vencimiento.strftime("%d/%m/%Y")),
+            ("Vencimiento", lambda c: c.fecha_cobro.strftime("%d/%m/%Y")),
             ("Número", "numero"),
-            ("Banco", "banco"),
+            ("Banco", "banco_emisor"),
             ("Tipo", lambda c: c.get_tipo_display()),
             ("Estado", lambda c: c.get_estado_display()),
-            ("Entidad Relacionada", lambda c: c.entidad.razon_social if c.entidad else "-"),
+            ("Entidad Relacionada", lambda c: c.cuenta_corriente.razon_social if c.cuenta_corriente else "-"),
             ("Importe", "importe"),
         ]
         return export_to_excel(qs, columnas, "Cartera de Cheques", "cheques")
