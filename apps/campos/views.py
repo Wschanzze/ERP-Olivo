@@ -247,29 +247,36 @@ class OrdenTrabajoCambiarEstadoView(View):
 
 class ExportarCuadrosExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = Cuadro.objects.select_related('finca').all()
+        qs = Cuadro.objects.select_related('finca').all().order_by('finca__nombre', 'codigo')
         columnas = [
-            ("Finca", lambda c: c.finca.nombre if c.finca else ""),
+            ("Finca", lambda c: c.finca.nombre if c.finca else "-"),
             ("Código Cuadro", "codigo"),
-            ("Variedad", lambda c: c.get_variedad_olivo_display() if hasattr(c, 'get_variedad_olivo_display') else ""),
+            ("Nombre", "nombre"),
+            ("Variedad", "variedad_olivo"),
             ("Hectáreas Netas", "hectareas_netas"),
-            ("Plantas Reales", "plantas_reales"),
-            ("Sistema de Riego", lambda c: c.get_sistema_riego_display() if hasattr(c, 'get_sistema_riego_display') else ""),
-            ("Estado Productivo", lambda c: c.get_estado_productivo_display() if hasattr(c, 'get_estado_productivo_display') else ""),
             ("Año de Plantación", "ano_plantacion"),
+            ("Densidad (pl/ha)", "densidad_plantas_ha"),
+            ("Sistema de Riego", "sistema_riego"),
+            ("Estado Fitosanitario", "estado_fitosanitario"),
         ]
         return export_to_excel(qs, columnas, "Listado de Cuadros y Lotes", "cuadros")
 
 class ExportarOrdenTrabajoExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = TareaOrdenTrabajo.objects.select_related('finca', 'cuadro').all().order_by('-fecha_programada')
+        qs = TareaOrdenTrabajo.objects.select_related('orden', 'finca', 'cuadro').all().order_by('-orden__semana_inicio')
         columnas = [
-            ("Fecha Programada", lambda o: o.fecha_programada.strftime("%d/%m/%Y") if o.fecha_programada else "-"),
-            ("Finca", lambda o: o.finca.nombre if o.finca else "-"),
-            ("Cuadro", lambda o: o.cuadro.codigo if o.cuadro else "General"),
-            ("Tipo de Tarea", lambda o: o.get_tipo_tarea_display() if hasattr(o, 'get_tipo_tarea_display') else "-"),
-            ("Estado", lambda o: o.get_estado_display() if hasattr(o, 'get_estado_display') else "-"),
-            ("Costo Mano Obra Estimado", "costo_mano_obra_estimado"),
-            ("Maquinaria", lambda o: o.maquina_asignada.nombre if hasattr(o, 'maquina_asignada') and o.maquina_asignada else "-"),
+            ("Semana (Inicio)", lambda t: t.orden.semana_inicio.strftime("%d/%m/%Y") if t.orden and t.orden.semana_inicio else "-"),
+            ("Finca", lambda t: (t.finca.nombre if t.finca else (t.orden.finca.nombre if t.orden and t.orden.finca else "-"))),
+            ("Cuadro", lambda t: t.cuadro.codigo if t.cuadro else "General"),
+            ("Actividad", "actividad"),
+            ("Prioridad", "prioridad"),
+            ("Estado Tarea", "estado"),
+            ("Cantidad Meta", "cantidad"),
+            ("Cantidad Completada", "cantidad_completada"),
+            ("Unidad", "unidad"),
+            ("Personal Asignado", "gente"),
+            ("Días Estimados", "dias"),
+            ("Línea de Producto", "linea_producto"),
+            ("Notas", "notas"),
         ]
-        return export_to_excel(qs, columnas, "Registro de Órdenes de Trabajo de Campo", "ordenes_trabajo")
+        return export_to_excel(qs, columnas, "Registro de Tareas y Órdenes de Trabajo", "ordenes_trabajo")

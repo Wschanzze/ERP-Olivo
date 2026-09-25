@@ -675,57 +675,60 @@ class ConfirmarRecepcionView(View):
 
 class ExportarInsumosExcelView(View):
     def get(self, request, *args, **kwargs):
-        insumos = Insumo.objects.all()
+        insumos = Insumo.objects.select_related('categoria').all().order_by('nombre')
         columnas = [
             ("Código", "codigo"),
             ("Insumo / Artículo", "nombre"),
-            ("Categoría", lambda i: i.categoria.nombre if i.categoria else ""),
-            ("Stock Total", "stock_total"),
+            ("Categoría", lambda i: i.categoria.nombre if i.categoria else "-"),
+            ("Stock Actual", "stock_actual"),
+            ("Stock Mínimo", "stock_minimo"),
             ("Unidad", "unidad_medida"),
-            ("Costo Unitario Ref. (ARS)", "costo_unitario_ars"),
+            ("Costo PPP (ARS)", "costo_unitario_ars"),
+            ("Costo PPP (USD)", "costo_unitario_usd"),
         ]
         return export_to_excel(insumos, columnas, "Listado de Insumos y Artículos", "insumos")
 
 class ExportarMovimientosExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = MovimientoStock.objects.select_related('insumo', 'deposito_origen', 'deposito_destino').all().order_by('-fecha')
+        qs = MovimientoStock.objects.select_related('insumo', 'deposito', 'deposito_destino', 'usuario').all().order_by('-fecha')
         columnas = [
-            ("Fecha", lambda m: m.fecha.strftime("%d/%m/%Y %H:%M")),
-            ("Tipo", "tipo_movimiento"),
-            ("Insumo", lambda m: m.insumo.nombre),
+            ("Fecha", lambda m: m.fecha.strftime("%d/%m/%Y %H:%M") if m.fecha else "-"),
+            ("Tipo", "tipo"),
+            ("Insumo", lambda m: m.insumo.nombre if m.insumo else "-"),
             ("Cantidad", "cantidad"),
-            ("Origen", lambda m: m.deposito_origen.nombre if m.deposito_origen else "-"),
-            ("Destino", lambda m: m.deposito_destino.nombre if m.deposito_destino else "-"),
-            ("Costo Total (ARS)", "costo_total_ars"),
+            ("Depósito Origen", lambda m: m.deposito.nombre if m.deposito else "-"),
+            ("Depósito Destino", lambda m: m.deposito_destino.nombre if m.deposito_destino else "-"),
+            ("Costo Unitario", "costo_unitario"),
+            ("Motivo / Referencia", "motivo"),
             ("Responsable", lambda m: m.usuario.username if m.usuario else "Sistema"),
         ]
         return export_to_excel(qs, columnas, "Registro de Movimientos de Stock", "movimientos_stock")
 
 class ExportarRemitosExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = Remito.objects.all().order_by('-fecha')
+        qs = Remito.objects.select_related('finca_origen', 'finca_destino').all().order_by('-fecha')
         columnas = [
-            ("Fecha", lambda r: r.fecha.strftime("%d/%m/%Y")),
+            ("Fecha", lambda r: r.fecha.strftime("%d/%m/%Y") if r.fecha else "-"),
             ("Número", "numero"),
-            ("Tipo", "tipo_remito"),
-            ("Punto Venta", "punto_venta"),
+            ("Tipo", "tipo"),
             ("Estado", "estado"),
-            ("Finca Origen", lambda r: r.finca_origen.nombre if hasattr(r, 'finca_origen') and r.finca_origen else "-"),
-            ("Transportista", "transportista_nombre"),
-            ("Patente", "patente_vehiculo"),
+            ("Entidad", "entidad_nombre"),
+            ("Finca Origen", lambda r: r.finca_origen.nombre if r.finca_origen else "-"),
+            ("Finca Destino", lambda r: r.finca_destino.nombre if r.finca_destino else "-"),
+            ("Observaciones", "observaciones"),
         ]
         return export_to_excel(qs, columnas, "Registro de Remitos", "remitos")
 
 class ExportarOrdenesExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = OrdenCompra.objects.select_related('proveedor').all().order_by('-fecha_emision')
+        qs = OrdenDeCompra.objects.select_related('proveedor', 'finca_destino').all().order_by('-fecha_emision')
         columnas = [
-            ("Fecha Emisión", lambda o: o.fecha_emision.strftime("%d/%m/%Y")),
+            ("Fecha Emisión", lambda o: o.fecha_emision.strftime("%d/%m/%Y") if o.fecha_emision else "-"),
             ("Número", "numero"),
             ("Proveedor", lambda o: o.proveedor.razon_social if o.proveedor else "-"),
+            ("Finca Destino", lambda o: o.finca_destino.nombre if o.finca_destino else "-"),
             ("Estado", "estado"),
             ("Entrega Estimada", lambda o: o.fecha_entrega_estimada.strftime("%d/%m/%Y") if o.fecha_entrega_estimada else "-"),
             ("Total Estimado (ARS)", "total_estimado_ars"),
-            ("Prioridad", "prioridad"),
         ]
         return export_to_excel(qs, columnas, "Registro de Órdenes de Compra", "ordenes_compra")

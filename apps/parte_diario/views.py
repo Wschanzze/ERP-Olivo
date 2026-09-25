@@ -110,14 +110,14 @@ class ParteDiarioGuardarView(View):
 
 class ExportarParteDiarioExcelView(View):
     def get(self, request, *args, **kwargs):
-        qs = ParteDiario.objects.select_related('finca', 'supervisor').all().order_by('-fecha')
+        qs = ParteDiario.objects.select_related('finca', 'cuadro', 'supervisor', 'orden_trabajo').all().order_by('-fecha')
         columnas = [
-            ("Fecha", lambda p: p.fecha.strftime("%d/%m/%Y")),
+            ("Fecha", lambda p: p.fecha.strftime("%d/%m/%Y") if p.fecha else "-"),
             ("Finca", lambda p: p.finca.nombre if p.finca else "-"),
-            ("Supervisor", lambda p: p.supervisor.get_full_name() if p.supervisor else (p.supervisor.username if p.supervisor else "-")),
-            ("Estado", lambda p: p.get_estado_display() if hasattr(p, 'get_estado_display') else "-"),
-            ("Clima Mañana", "clima_manana"),
-            ("Clima Tarde", "clima_tarde"),
+            ("Cuadro", lambda p: p.cuadro.codigo if p.cuadro else "General / Varios"),
+            ("Supervisor", lambda p: p.supervisor.get_full_name() or p.supervisor.username if p.supervisor else "-"),
+            ("Estado", "estado"),
             ("Observaciones", "observaciones"),
+            ("Fecha y Hora Cierre", lambda p: p.fecha_cierre.strftime("%d/%m/%Y %H:%M") if p.fecha_cierre else "Sin Cerrar"),
         ]
         return export_to_excel(qs, columnas, "Registro de Partes Diarios", "partes_diarios")
