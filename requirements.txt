@@ -16,3 +16,4 @@ reportlab>=4.2.0
 openpyxl>=3.1.5
 dj-database-url>=2.2.0
 afip.py>=1.2.0
+pytailwindcss>=0.2.0
