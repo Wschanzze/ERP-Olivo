@@ -463,12 +463,12 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
         "template": {
             "name": template_name,
             "params": {
-                "business_name": "Olivar del Valle Agroindustrial S.A.",
-                "business_tax_id": str(getattr(settings, 'AFIP_CUIT', 20409378472)),
-                "business_address": "Ruta Nacional 60 Km 1140, Aimogasta, La Rioja",
-                "business_vat_condition": "IVA Responsable Inscripto",
-                "business_start_date": "01/03/2012",
-                "business_gross_income": "30-71458923-4",
+                "business_name": Empresa.objects.first().razon_social if Empresa.objects.first() else "Empresa S.A.",
+                "business_tax_id": str(getattr(settings, 'AFIP_CUIT', Empresa.objects.first().cuit if Empresa.objects.first() else 20409378472)),
+                "business_address": Empresa.objects.first().direccion if Empresa.objects.first() else "Direccion Comercial",
+                "business_vat_condition": Empresa.objects.first().condicion_iva if Empresa.objects.first() else "IVA Responsable Inscripto",
+                "business_start_date": Empresa.objects.first().inicio_actividades.strftime("%d/%m/%Y") if Empresa.objects.first() and Empresa.objects.first().inicio_actividades else "01/01/2020",
+                "business_gross_income": Empresa.objects.first().ingresos_brutos if Empresa.objects.first() else "0",
                 "sales_point": int(comprobante.punto_de_venta),
                 "voucher_number": int(comprobante.numero_comprobante),
                 "date": comprobante.fecha_emision.strftime("%d/%m/%Y"),
