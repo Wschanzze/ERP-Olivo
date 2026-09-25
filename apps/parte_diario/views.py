@@ -106,3 +106,17 @@ class ParteDiarioGuardarView(View):
             
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+class ExportarParteDiarioExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = ParteDiario.objects.select_related('finca', 'supervisor').all().order_by('-fecha')
+        columnas = [
+            ("Fecha", lambda p: p.fecha.strftime("%d/%m/%Y")),
+            ("Finca", lambda p: p.finca.nombre if p.finca else "-"),
+            ("Supervisor", lambda p: p.supervisor.get_full_name() if p.supervisor else (p.supervisor.username if p.supervisor else "-")),
+            ("Estado", lambda p: p.get_estado_display() if hasattr(p, 'get_estado_display') else "-"),
+            ("Clima Mañana", "clima_manana"),
+            ("Clima Tarde", "clima_tarde"),
+            ("Observaciones", "observaciones"),
+        ]
+        return export_to_excel(qs, columnas, "Registro de Partes Diarios", "partes_diarios")

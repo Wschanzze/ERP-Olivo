@@ -20,7 +20,12 @@
 
     <!-- Botones de Acción Operativa -->
     <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-      <a 
+      
+        <a href="{% url 'inventario:exportar_insumos' %}" class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:text-[#3D4A2A] hover:border-[#3D4A2A]/40 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors" title="Descargar listado en formato Excel (.xlsx)">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <span>Exportar Excel</span>
+        </a>
+<a 
         href="{% url 'inventario:analisis_stock' %}"
         class="inline-flex items-center gap-1.5 bg-[#EAEFE3] border border-[#D5DFC9] text-[#3D4A2A] text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-[#D5DFC9] transition-colors shadow-2xs"
         title="Dashboard de Clasificación ABC Pareto y Cobertura"

@@ -1,4 +1,7 @@
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, View
+
+from apps.core.excel_export import export_to_excel
+
 from django.urls import reverse_lazy
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
@@ -237,3 +240,36 @@ class OrdenTrabajoCambiarEstadoView(View):
             }), content_type='application/json')
             
         return HttpResponse(json.dumps({'status': 'error'}), status=400, content_type='application/json')
+
+# ==========================================
+# EXPORTADORES A EXCEL (CAMPOS)
+# ==========================================
+
+class ExportarCuadrosExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = Cuadro.objects.select_related('finca').all()
+        columnas = [
+            ("Finca", lambda c: c.finca.nombre if c.finca else ""),
+            ("Código Cuadro", "codigo"),
+            ("Variedad", lambda c: c.get_variedad_olivo_display() if hasattr(c, 'get_variedad_olivo_display') else ""),
+            ("Hectáreas Netas", "hectareas_netas"),
+            ("Plantas Reales", "plantas_reales"),
+            ("Sistema de Riego", lambda c: c.get_sistema_riego_display() if hasattr(c, 'get_sistema_riego_display') else ""),
+            ("Estado Productivo", lambda c: c.get_estado_productivo_display() if hasattr(c, 'get_estado_productivo_display') else ""),
+            ("Año de Plantación", "ano_plantacion"),
+        ]
+        return export_to_excel(qs, columnas, "Listado de Cuadros y Lotes", "cuadros")
+
+class ExportarOrdenTrabajoExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = TareaOrdenTrabajo.objects.select_related('finca', 'cuadro').all().order_by('-fecha_programada')
+        columnas = [
+            ("Fecha Programada", lambda o: o.fecha_programada.strftime("%d/%m/%Y") if o.fecha_programada else "-"),
+            ("Finca", lambda o: o.finca.nombre if o.finca else "-"),
+            ("Cuadro", lambda o: o.cuadro.codigo if o.cuadro else "General"),
+            ("Tipo de Tarea", lambda o: o.get_tipo_tarea_display() if hasattr(o, 'get_tipo_tarea_display') else "-"),
+            ("Estado", lambda o: o.get_estado_display() if hasattr(o, 'get_estado_display') else "-"),
+            ("Costo Mano Obra Estimado", "costo_mano_obra_estimado"),
+            ("Maquinaria", lambda o: o.maquina_asignada.nombre if hasattr(o, 'maquina_asignada') and o.maquina_asignada else "-"),
+        ]
+        return export_to_excel(qs, columnas, "Registro de Órdenes de Trabajo de Campo", "ordenes_trabajo")

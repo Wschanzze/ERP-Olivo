@@ -15,4 +15,9 @@ urlpatterns = [
     path('orden-trabajo/', views.OrdenTrabajoView.as_view(), name='orden_trabajo'),
     path('orden-trabajo/guardar/', views.OrdenTrabajoGuardarView.as_view(), name='orden_trabajo_guardar'),
     path('orden-trabajo/estado/', views.OrdenTrabajoCambiarEstadoView.as_view(), name='orden_trabajo_estado'),
+
+    # Excel Exports
+    path('cuadros/exportar/', views.ExportarCuadrosExcelView.as_view(), name='exportar_cuadros'),
+    path('orden-trabajo/exportar/', views.ExportarOrdenTrabajoExcelView.as_view(), name='exportar_ordenes_trabajo'),
+
 ]
