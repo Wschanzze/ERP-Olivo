@@ -65,7 +65,7 @@
             {% endif %}
             <div>
               <h1 class="text-base font-black tracking-tight text-slate-900 leading-tight">
-                {{ empresa.razon_social|default:"{{ empresa_actual.razon_social|default:'Olivar del Valle S.A.' }}" }}
+                {{ empresa_actual.razon_social|default:"Empresa S.A." }}
               </h1>
               <p class="text-[11px] text-slate-500 font-medium">Explotación Agrícola y Almazara de Aceite de Oliva</p>
             </div>
