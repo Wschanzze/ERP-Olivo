@@ -2086,8 +2086,8 @@ class ExportarLibroIVAView(View):
             row_data = [
                 c.fecha_emision.strftime('%d/%m/%Y'),
                 c.get_tipo_comprobante_display(),
-                f"{c.punto_de_venta:04d}",
-                f"{c.numero_comprobante:08d}",
+                str(c.punto_de_venta).zfill(4),
+                str(c.numero_comprobante).zfill(8),
                 c.cuenta_corriente.cuit if c.cuenta_corriente else 'Consumidor Final',
                 c.cuenta_corriente.razon_social if c.cuenta_corriente else 'Varios',
                 c.cuenta_corriente.get_tipo_entidad_display() if c.cuenta_corriente else '-',
