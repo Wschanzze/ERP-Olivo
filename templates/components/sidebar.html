@@ -221,11 +221,11 @@
        ======================================================================= -->
   <aside
     id="app-rail2"
-    :class="{
-      'translate-x-20 shadow-2xl': mobileMenuOpen,
-      'lg:translate-x-0': !mobileMenuOpen && sidebarOpen,
-      '-translate-x-full lg:-translate-x-full lg:opacity-0 lg:pointer-events-none': !mobileMenuOpen && !sidebarOpen
-    }"
+    :class="
+      mobileMenuOpen ? 'translate-x-20 shadow-2xl lg:translate-x-0' :
+      sidebarOpen ? '-translate-x-full lg:translate-x-0 lg:opacity-100 lg:pointer-events-auto' :
+      '-translate-x-full lg:-translate-x-full lg:opacity-0 lg:pointer-events-none'
+    "
     class="fixed inset-y-0 left-0 lg:left-20 w-[240px] lg:w-[220px] bg-[#18210F] text-[#E5EBDD] flex flex-col select-none transition-all duration-300 ease-in-out border-r border-[#2C381D] z-50 lg:z-40"
     style="height: 100dvh; max-height: 100dvh;"
   >
