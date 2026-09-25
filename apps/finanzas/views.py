@@ -2254,7 +2254,7 @@ class ExportarCajaExcelView(View):
         qs = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente').all().order_by('-fecha')
         columnas = [
             ("Fecha", lambda m: m.fecha.strftime("%d/%m/%Y")),
-            ("Tipo", lambda m: m.get_tipo_movimiento_display()),
+            ("Tipo", "tipo"),
             ("Concepto", "concepto"),
             ("Cuenta", lambda m: m.cuenta.nombre if m.cuenta else "-"),
             ("Entidad", lambda m: m.cuenta_corriente.razon_social if m.cuenta_corriente else "Varios"),
@@ -2273,8 +2273,8 @@ class ExportarChequesExcelView(View):
             ("Vencimiento", lambda c: c.fecha_cobro.strftime("%d/%m/%Y")),
             ("Número", "numero"),
             ("Banco", "banco_emisor"),
-            ("Tipo", lambda c: c.get_tipo_display()),
-            ("Estado", lambda c: c.get_estado_display()),
+            ("Tipo", "tipo"),
+            ("Estado", "estado"),
             ("Entidad Relacionada", lambda c: c.cuenta_corriente.razon_social if c.cuenta_corriente else "-"),
             ("Importe", "importe"),
         ]
@@ -2286,7 +2286,7 @@ class ExportarCuentasCorrientesExcelView(View):
         columnas = [
             ("Razón Social", "razon_social"),
             ("CUIT", "cuit"),
-            ("Tipo Entidad", lambda c: c.get_tipo_entidad_display()),
+            ("Tipo Entidad", "tipo_entidad"),
             ("Teléfono", "telefono"),
             ("Email", "email"),
             ("Saldo Inicial ARS", "saldo_inicial_ars"),
@@ -2299,7 +2299,7 @@ class ExportarOrdenesPagoExcelView(View):
         qs = OrdenPagoRecibo.objects.select_related('cuenta_corriente', 'cuenta_financiera').all().order_by('-fecha')
         columnas = [
             ("Fecha", lambda o: o.fecha.strftime("%d/%m/%Y")),
-            ("Tipo", lambda o: o.get_tipo_display()),
+            ("Tipo", "tipo"),
             ("Número", "numero"),
             ("Entidad", lambda o: o.cuenta_corriente.razon_social if o.cuenta_corriente else "-"),
             ("Cuenta", lambda o: o.cuenta_financiera.nombre if o.cuenta_financiera else "-"),
