@@ -1826,10 +1826,19 @@ class ComprobanteFiscalCreateView(View):
             cuenta_corriente_id = request.POST.get('cuenta_corriente_id')
             concepto = request.POST.get('concepto', '').strip()
 
-            neto_21 = Decimal(request.POST.get('neto_gravado_21') or '0.00')
-            neto_105 = Decimal(request.POST.get('neto_gravado_10_5') or '0.00')
-            exento = Decimal(request.POST.get('exento') or '0.00')
-            percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
+            condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
+            es_oficial = request.POST.get('es_oficial') == 'on'
+
+            if es_oficial:
+                neto_21 = Decimal(request.POST.get('neto_gravado_21') or '0.00')
+                neto_105 = Decimal(request.POST.get('neto_gravado_10_5') or '0.00')
+                exento = Decimal(request.POST.get('exento') or '0.00')
+                percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
+            else:
+                neto_21 = Decimal('0.00')
+                neto_105 = Decimal('0.00')
+                exento = Decimal(request.POST.get('exento_interno') or '0.00')
+                percep_iibb = Decimal('0.00')
 
             iva_21 = round(neto_21 * Decimal('0.21'), 2)
             iva_105 = round(neto_105 * Decimal('0.105'), 2)
@@ -1837,9 +1846,6 @@ class ComprobanteFiscalCreateView(View):
 
             cuenta_corriente = get_object_or_404(CuentaCorriente, pk=cuenta_corriente_id)
             cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
-
-            condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
-            es_oficial = request.POST.get('es_oficial') == 'on'
 
             comprobante = ComprobanteFiscal.objects.create(
                 tipo_operacion=tipo_operacion,

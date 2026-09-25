@@ -12,9 +12,13 @@
     neto105: 0,
     exento: 0,
     percepIIBB: 0,
+    totalInterno: 0,
     iva21() { return Math.round((parseFloat(this.neto21) || 0) * 0.21 * 100) / 100; },
     iva105() { return Math.round((parseFloat(this.neto105) || 0) * 0.105 * 100) / 100; },
     total() {
+      if (!this.esOficial) {
+        return (parseFloat(this.totalInterno) || 0).toFixed(2);
+      }
       return (
         (parseFloat(this.neto21) || 0) +
         (parseFloat(this.neto105) || 0) +
@@ -76,14 +80,32 @@
             <!-- Tipo de Operación -->
             <div>
               <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Tipo de Operación *</label>
+              
+              <!-- Select para Oficiales -->
               <select 
+                x-show="esOficial"
                 name="tipo_operacion" 
                 x-model="tipoComprobanteOperacion"
-                required
+                :required="esOficial"
+                :disabled="!esOficial"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
               >
                 <option value="COMPRA">Factura de Compra (Proveedor - Crédito Fiscal)</option>
                 <option value="VENTA">Factura de Venta (Cliente - Débito Fiscal)</option>
+              </select>
+
+              <!-- Select para Internos -->
+              <select 
+                x-cloak
+                x-show="!esOficial"
+                name="tipo_operacion" 
+                x-model="tipoComprobanteOperacion"
+                :required="!esOficial"
+                :disabled="esOficial"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="COMPRA">Gasto / Compra Interna (Sin Impuestos)</option>
+                <option value="VENTA">Ingreso / Venta Interna (Sin Impuestos)</option>
               </select>
             </div>
 
@@ -230,7 +252,7 @@
           </div>
 
           <!-- Desglose Impositivo con Cálculo en Tiempo Real -->
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+          <div x-show="esOficial" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
             <h4 class="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
               Desglose Impositivo (Alícuotas AFIP)
@@ -244,6 +266,7 @@
                   name="neto_gravado_21" 
                   step="0.01" 
                   x-model="neto21"
+                  :disabled="!esOficial"
                   placeholder="0.00"
                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
                 />
@@ -257,6 +280,7 @@
                   name="neto_gravado_10_5" 
                   step="0.01" 
                   x-model="neto105"
+                  :disabled="!esOficial"
                   placeholder="0.00"
                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
                 />
@@ -272,6 +296,7 @@
                   name="exento" 
                   step="0.01" 
                   x-model="exento"
+                  :disabled="!esOficial"
                   placeholder="0.00"
                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
                 />
@@ -283,6 +308,7 @@
                   name="percepcion_iibb" 
                   step="0.01" 
                   x-model="percepIIBB"
+                  :disabled="!esOficial"
                   placeholder="0.00"
                   class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
                 />
@@ -293,6 +319,26 @@
             <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
               <span class="font-bold text-slate-700 uppercase">Total Factura:</span>
               <span class="font-mono font-black text-base text-slate-900">$<span x-text="total()"></span></span>
+            </div>
+          </div>
+
+          <!-- Importe Simple para Comprobantes Internos -->
+          <div x-cloak x-show="!esOficial" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+            <h4 class="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Importe Total de la Operación
+            </h4>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Monto Total (Sin discriminación impositiva)</label>
+              <input 
+                type="number" 
+                name="exento_interno" 
+                step="0.01" 
+                x-model="totalInterno"
+                :disabled="esOficial"
+                placeholder="0.00"
+                class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl font-mono font-bold text-slate-900 text-lg"
+              />
             </div>
           </div>
 
