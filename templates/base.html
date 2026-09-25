@@ -262,21 +262,21 @@
     </div>
   </div>
 
-  <!-- Spinner Global HTMX (Oculto por defecto mediante display: none) -->
-  <div id="global-spinner" class="htmx-indicator fixed inset-0 z-[9999] bg-slate-950/40 backdrop-blur-sm items-center justify-center" style="display: none;">
-    <div class="bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center space-y-4 border border-oliva-100">
+  <!-- Spinner Global Corporativo (Logo + Giro + Feedback de Carga) -->
+  <div id="global-spinner" class="fixed inset-0 z-[9999] bg-slate-950/40 backdrop-blur-xs flex items-center justify-center cursor-pointer select-none" style="display: none;">
+    <div class="bg-white rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-center space-y-4 border border-slate-100 max-w-xs mx-4 transform transition-all cursor-default">
       <div class="relative w-16 h-16 flex items-center justify-center">
-        <!-- Logo estático en el centro -->
+        <!-- Logo estático en el centro con pulso -->
         <img src="{% static 'icono.png' %}?v=2" alt="Cargando" class="w-10 h-10 object-contain animate-pulse relative z-10" />
-        <!-- Spinner svg girando alrededor -->
-        <svg class="absolute inset-0 w-16 h-16 text-oliva-500 animate-spin z-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <!-- Spinner circular girando alrededor -->
+        <svg class="absolute inset-0 w-16 h-16 text-emerald-600 animate-spin z-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3.5"></circle>
+          <path class="opacity-85" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       </div>
-      <div class="text-sm font-semibold text-slate-700 tracking-wide text-center">
-        Cargando datos...<br>
-        <span class="text-[11px] text-slate-400 font-normal mt-1 block">Aguarde un momento</span>
+      <div class="text-sm font-bold text-slate-800 tracking-wide text-center">
+        Procesando consulta...<br>
+        <span class="text-[11px] text-slate-400 font-normal mt-1 block">ERP Olivícola • Aguarde un instante</span>
       </div>
     </div>
   </div>
@@ -286,33 +286,78 @@
 
   {% block extra_js %}{% endblock %}
 
-  <!-- Control de Spinners y Modales -->
+  <!-- Control Inteligente del Spinner Global -->
   <script>
     (function() {
-      // 1. Ocultar spinner ante restauración de caché o navegación normal
-      window.addEventListener('pageshow', () => {
+      let spinnerTimer = null;
+
+      function showSpinner(maxDuration = 8000) {
+        const spinner = document.getElementById('global-spinner');
+        if (!spinner) return;
+        spinner.style.display = 'flex';
+        if (spinnerTimer) clearTimeout(spinnerTimer);
+        spinnerTimer = setTimeout(() => {
+          hideSpinner();
+        }, maxDuration);
+      }
+
+      function hideSpinner() {
         const spinner = document.getElementById('global-spinner');
         if (spinner) spinner.style.display = 'none';
-      });
+        if (spinnerTimer) {
+          clearTimeout(spinnerTimer);
+          spinnerTimer = null;
+        }
+      }
 
-      // 2. Feedback visual en descarga de Excels
-      document.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
-        if (link && link.href && link.href.includes('exportar')) {
-          const spinner = document.getElementById('global-spinner');
-          if (spinner) {
-            spinner.style.display = 'flex';
-            setTimeout(() => {
-              spinner.style.display = 'none';
-            }, 3500);
-          }
+      // 1. Descartar spinner si el usuario hace clic afuera de la tarjeta
+      window.addEventListener('DOMContentLoaded', () => {
+        const spinner = document.getElementById('global-spinner');
+        if (spinner) {
+          spinner.addEventListener('click', (e) => {
+            if (e.target === spinner) hideSpinner();
+          });
         }
       });
 
-      // 3. Garantizar cierre de spinner cuando HTMX finaliza
-      document.addEventListener('htmx:afterRequest', () => {
-        const spinner = document.getElementById('global-spinner');
-        if (spinner) spinner.style.display = 'none';
+      // 2. Ocultar ante navegación o recarga de caché de historial (bfcache)
+      window.addEventListener('pageshow', hideSpinner);
+      window.addEventListener('load', hideSpinner);
+
+      // 3. Activar spinner en peticiones HTMX (filtros, paginación, cargas diferidas)
+      document.addEventListener('htmx:beforeRequest', () => {
+        showSpinner(8000);
+      });
+      document.addEventListener('htmx:afterRequest', hideSpinner);
+      document.addEventListener('htmx:responseError', hideSpinner);
+      document.addEventListener('htmx:sendError', hideSpinner);
+
+      // 4. Activar spinner en envíos de formularios (filtros de fecha, búsquedas tradicionales)
+      document.addEventListener('submit', () => {
+        showSpinner(9000);
+      });
+
+      // 5. Activar spinner al hacer clic en enlaces de navegación del ERP o descargas de Excel
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (!link || !link.href) return;
+
+        // Si es descarga de Excel, mostrar por 3.5 segundos
+        if (link.href.includes('exportar')) {
+          showSpinner(3500);
+          return;
+        }
+
+        // Ignorar anclas internas (#), javascript o enlaces externos
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank') {
+          return;
+        }
+
+        // Si es navegación a otra vista del ERP dentro del mismo dominio
+        if (link.hostname === window.location.hostname) {
+          showSpinner(8000);
+        }
       });
     })();
   </script>
