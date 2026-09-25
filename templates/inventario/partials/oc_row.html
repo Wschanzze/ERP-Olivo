@@ -5,7 +5,7 @@
   <td class="py-3 px-4 font-semibold text-slate-900 text-xs">{{ orden.proveedor.razon_social }}</td>
   <td class="py-3 px-4 text-xs text-slate-600">{{ orden.finca_destino.nombre }}</td>
   <td class="py-3 px-4 text-xs text-slate-500 font-mono">{{ orden.fecha_emision }}</td>
-  <td class="py-3 px-4 text-xs text-slate-500 font-mono">{{ orden.fecha_entrega_estimada|default:"—" }}</td>
+  <td class="py-3 px-4 text-xs text-slate-500 font-mono">{{ orden.fecha_entrega_estimada|default:"-" }}</td>
   <td class="py-3 px-4 text-center">
     {% if orden.estado == 'BORRADOR' %}
       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Borrador</span>

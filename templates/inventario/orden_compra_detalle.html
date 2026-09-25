@@ -63,12 +63,12 @@
           <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Proveedor</p>
             <p class="text-sm font-semibold text-slate-900">{{ orden.proveedor.razon_social }}</p>
-            <p class="text-xs text-slate-500">CUIT: {{ orden.proveedor.cuit|default:"—" }}</p>
+            <p class="text-xs text-slate-500">CUIT: {{ orden.proveedor.cuit|default:"-" }}</p>
           </div>
           <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Fechas</p>
             <p class="text-sm text-slate-700"><span class="font-medium text-slate-900">Emisión:</span> {{ orden.fecha_emision }}</p>
-            <p class="text-sm text-slate-700"><span class="font-medium text-slate-900">Entrega Estimada:</span> {{ orden.fecha_entrega_estimada|default:"—" }}</p>
+            <p class="text-sm text-slate-700"><span class="font-medium text-slate-900">Entrega Estimada:</span> {{ orden.fecha_entrega_estimada|default:"-" }}</p>
           </div>
         </div>
         

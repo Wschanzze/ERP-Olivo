@@ -45,7 +45,7 @@
           <img src="{{ empresa_actual.logo.url }}" alt="{{ empresa_actual.razon_social }}" class="h-12 object-contain mb-2">
         {% endif %}
         <h2 class="text-xl font-bold text-[#3D4A2A]">{{ empresa_actual.razon_social|default:'Olivar del Valle S.A.' }}</h2>
-        <p class="text-xs text-slate-600 mt-1">CUIT: {{ empresa_actual.cuit|default:'30-71458923-4' }}</p>
+        <p class="text-xs text-slate-600 mt-1">CUIT: {{ empresa_actual.cuit|default:"-" }}</p>
         <p class="text-xs text-slate-600">{{ empresa_actual.direccion|default:'Ruta Nacional 60 Km 1140, Aimogasta' }}</p>
         <p class="text-xs text-slate-600">La Rioja, Argentina</p>
       </div>
@@ -56,8 +56,8 @@
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 border-b border-slate-200 pb-1">Datos del Proveedor</p>
         <p class="font-bold text-sm">{{ orden.proveedor.razon_social }}</p>
-        <p class="text-xs text-slate-600 mt-1">CUIT: {{ orden.proveedor.cuit|default:"—" }}</p>
-        <p class="text-xs text-slate-600">Teléfono: {{ orden.proveedor.telefono|default:"—" }}</p>
+        <p class="text-xs text-slate-600 mt-1">CUIT: {{ orden.proveedor.cuit|default:"-" }}</p>
+        <p class="text-xs text-slate-600">Teléfono: {{ orden.proveedor.telefono|default:"-" }}</p>
       </div>
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 border-b border-slate-200 pb-1">Información de la Orden</p>
@@ -68,7 +68,7 @@
           </tr>
           <tr>
             <td class="py-1 font-semibold text-slate-600">Entrega Estimada:</td>
-            <td class="py-1 font-mono text-slate-900">{{ orden.fecha_entrega_estimada|default:"—" }}</td>
+            <td class="py-1 font-mono text-slate-900">{{ orden.fecha_entrega_estimada|default:"-" }}</td>
           </tr>
           <tr>
             <td class="py-1 font-semibold text-slate-600">Lugar de Entrega:</td>
