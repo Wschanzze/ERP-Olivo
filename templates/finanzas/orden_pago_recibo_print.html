@@ -38,11 +38,15 @@
     <div class="flex items-start justify-between border-b border-slate-200 pb-6">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
-          <span class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm">OL</span>
-          <h1 class="text-xl font-black text-slate-900 tracking-tight">ESTABLECIMIENTO OLIVÍCOLA</h1>
+          {% if empresa_actual.logo %}
+            <img src="{{ empresa_actual.logo.url }}" alt="{{ empresa_actual.razon_social }}" class="h-8 max-w-[80px] object-contain">
+          {% else %}
+            <span class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm">{{ empresa_actual.razon_social|default:"OL"|slice:":2"|upper }}</span>
+          {% endif %}
+          <h1 class="text-xl font-black text-slate-900 tracking-tight">{{ empresa_actual.razon_social|default:"ESTABLECIMIENTO OLIVÍCOLA"|upper }}</h1>
         </div>
-        <p class="text-xs text-slate-500">Pomán, Catamarca • Producción Agropecuaria e Industrial</p>
-        <p class="text-xs text-slate-500 font-mono">CUIT: 30-71234567-8 • IVA Responsable Inscripto</p>
+        <p class="text-xs text-slate-500">{{ empresa_actual.direccion|default:"Dirección Comercial" }}</p>
+        <p class="text-xs text-slate-500 font-mono">CUIT: {{ empresa_actual.cuit|default:"30-71234567-8" }} • {{ empresa_actual.condicion_iva|default:"IVA Responsable Inscripto" }}</p>
       </div>
 
       <div class="text-right p-3 bg-slate-50 rounded-2xl border border-slate-200 min-w-[200px]">

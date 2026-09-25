@@ -58,7 +58,11 @@
         <!-- Left Side: Emisor -->
         <div class="border-r border-slate-200 pr-6">
           <div class="flex items-center space-x-3 mb-2">
-            <img src="{% static 'icono.png' %}" alt="Logo Olivar del Valle" class="w-12 h-12 object-contain">
+            {% if empresa_actual.logo %}
+              <img src="{{ empresa_actual.logo.url }}" alt="{{ empresa_actual.razon_social }}" class="w-12 h-12 object-contain">
+            {% else %}
+              <img src="{% static 'icono.png' %}" alt="{{ empresa_actual.razon_social }}" class="w-12 h-12 object-contain">
+            {% endif %}
             <div>
               <h1 class="text-base font-black tracking-tight text-slate-900 leading-tight">
                 {{ empresa.razon_social|default:"{{ empresa_actual.razon_social|default:'Olivar del Valle S.A.' }}" }}
@@ -68,7 +72,7 @@
           </div>
           <div class="text-[11px] text-slate-600 space-y-0.5 mt-3">
             <p><span class="font-bold text-slate-700">Domicilio Fiscal:</span> {{ empresa_actual.direccion|default:'Ruta Nacional 60 Km 1140, Aimogasta' }}, La Rioja</p>
-            <p><span class="font-bold text-slate-700">Condición frente al IVA:</span> <span class="font-semibold text-emerald-800">IVA Responsable Inscripto</span></p>
+            <p><span class="font-bold text-slate-700">Condición frente al IVA:</span> <span class="font-semibold text-emerald-800">{{ empresa_actual.condicion_iva|default:"IVA Responsable Inscripto" }}</span></p>
           </div>
         </div>
 
@@ -85,7 +89,7 @@
           </div>
           <div class="text-[11px] text-slate-600 space-y-0.5 mt-4 text-right">
             <p><span class="font-bold text-slate-700">CUIT:</span> {{ empresa_actual.cuit|default:'30-71458923-4' }}</p>
-            <p><span class="font-bold text-slate-700">Ingresos Brutos:</span> {{ empresa_actual.cuit|default:'30-71458923-4' }}</p>
+            <p><span class="font-bold text-slate-700">Ingresos Brutos:</span> {{ empresa_actual.ingresos_brutos|default:'-' }}</p>
             <p><span class="font-bold text-slate-700">Inicio de Actividades:</span> 01/03/2012</p>
           </div>
         </div>

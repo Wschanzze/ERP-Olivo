@@ -133,19 +133,35 @@ def _generar_recibo_reportlab(liq) -> bytes:
         textColor=c_gray
     )
 
-    # Logo Corporativo Oficial
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'icono.png')
+    # Configuracion Empresa Dinamica
+    empresa = Empresa.objects.first()
+    razon_social = empresa.razon_social if empresa else "Mi Empresa S.A."
+    cuit = empresa.cuit if empresa else "30-00000000-0"
+    condicion_iva = empresa.condicion_iva if empresa else "IVA Responsable Inscripto"
+    direccion = empresa.direccion if empresa else "Direccion Comercial"
+
+    # Logo Corporativo
     logo_img = None
-    if os.path.exists(logo_path):
-        try:
-            logo_img = RLImage(logo_path, width=44, height=44)
-        except Exception:
-            logo_img = None
+    if empresa and empresa.logo:
+        logo_path = empresa.logo.path
+        if os.path.exists(logo_path):
+            try:
+                logo_img = RLImage(logo_path, width=44, height=44)
+            except Exception:
+                pass
+
+    if not logo_img:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'icono.png')
+        if os.path.exists(logo_path):
+            try:
+                logo_img = RLImage(logo_path, width=44, height=44)
+            except Exception:
+                pass
 
     empresa_p = Paragraph(
-        "<b>Olivar del Valle Agroindustrial S.A.</b><br/>"
-        "CUIT: 30-71458923-4 • Explotación Olivícola<br/>"
-        "Ruta Nacional 60 Km 1140, Aimogasta, La Rioja",
+        f"<b>{razon_social}</b><br/>"
+        f"CUIT: {cuit} • {condicion_iva}<br/>"
+        f"{direccion}",
         sub_style
     )
     recibo_p = Paragraph(
@@ -270,7 +286,7 @@ def _generar_recibo_reportlab(liq) -> bytes:
     firmas_data = [
         [
             Paragraph("___________________________________<br/><b>Firma del Empleado</b><br/>Recibí conforme el importe neto<br/>CUIL: " + str(emp.dni_cuil), sub_style),
-            Paragraph("___________________________________<br/><b>Por Olivar del Valle S.A.</b><br/>Firma y Sello Empleador", sub_style)
+            Paragraph(f"___________________________________<br/><b>Por {razon_social}</b><br/>Firma y Sello Empleador", sub_style)
         ]
     ]
     t_firmas = Table(firmas_data, colWidths=[260, 260])
