@@ -64,10 +64,10 @@
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           <span class="w-8 h-8 rounded-xl bg-oliva-800 text-white flex items-center justify-center font-black text-sm">OL</span>
-          <h2 class="text-xl font-black text-slate-900 tracking-tight">ESTABLECIMIENTO OLIVÍCOLA</h2>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">{{ empresa_actual.razon_social|default:"ESTABLECIMIENTO OLIVÍCOLA"|upper }}</h2>
         </div>
-        <p class="text-xs text-slate-500">Pomán, Catamarca • Rutas Provinciales del Olivo</p>
-        <p class="text-xs text-slate-500 font-mono">CUIT: 30-71234567-8 • IVA Responsable Inscripto</p>
+        <p class="text-xs text-slate-500">{{ empresa_actual.direccion|default:"Pomán, Catamarca • Rutas Provinciales del Olivo" }}</p>
+        <p class="text-xs text-slate-500 font-mono">CUIT: {{ empresa_actual.cuit|default:"30-71234567-8" }} • {{ empresa_actual.condicion_iva|default:"IVA Responsable Inscripto" }}</p>
       </div>
 
       <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-right sm:min-w-[220px]">

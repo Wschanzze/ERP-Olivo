@@ -19,6 +19,12 @@ class Empresa(TimeStampedModel):
     direccion = models.CharField(max_length=255, blank=True, verbose_name=_("Dirección Legal"))
     telefono = models.CharField(max_length=50, blank=True, verbose_name=_("Teléfono"))
     email = models.EmailField(blank=True, verbose_name=_("Correo Electrónico"))
+    
+    # Datos ARCA / AFIP
+    condicion_iva = models.CharField(max_length=100, default='Responsable Inscripto', verbose_name=_("Condición frente al IVA"))
+    ingresos_brutos = models.CharField(max_length=50, blank=True, verbose_name=_("Nro. Ingresos Brutos"))
+    inicio_actividades = models.DateField(null=True, blank=True, verbose_name=_("Inicio de Actividades"))
+
     moneda_principal = models.CharField(max_length=5, default='ARS', verbose_name=_("Moneda Principal"))
     moneda_secundaria = models.CharField(max_length=5, default='USD', verbose_name=_("Moneda Secundaria"))
     logo = models.ImageField(upload_to='empresa/logos/', blank=True, null=True, verbose_name=_("Logo"))
