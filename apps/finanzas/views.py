@@ -1824,7 +1824,15 @@ class ComprobanteFiscalCreateView(View):
             if es_oficial:
                 punto_de_venta = request.POST.get('punto_de_venta', '00001').zfill(5)
                 if tipo_operacion == 'VENTA':
-                    numero_comprobante = '00000000' # Se asignará el real vía ARCA al autorizar
+                    last_comp = ComprobanteFiscal.objects.filter(
+                        tipo_comprobante=tipo_comprobante,
+                        punto_de_venta=punto_de_venta
+                    ).order_by('-numero_comprobante').first()
+                    if last_comp and last_comp.numero_comprobante.isdigit():
+                        next_num = int(last_comp.numero_comprobante) + 1
+                    else:
+                        next_num = 1
+                    numero_comprobante = str(next_num).zfill(8)
                 else:
                     numero_comprobante = request.POST.get('numero_comprobante', '00000001').zfill(8)
             else:
