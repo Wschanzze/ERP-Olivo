@@ -268,25 +268,64 @@
 
   {% block extra_js %}{% endblock %}
 
-  <!-- Interceptar botones de exportación y navegaciones pesadas para mostrar spinner temporal -->
+  
+
+  <!-- Interceptar navegaciones estándar y exportaciones para mostrar spinner de carga -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // 1. Ocultar spinner al cargar/volver a la página (evita que se quede pegado por el bfcache del navegador)
+      window.addEventListener('pageshow', () => {
+        const spinner = document.getElementById('global-spinner');
+        if (spinner) {
+          spinner.style.opacity = '0';
+          spinner.style.visibility = 'hidden';
+        }
+      });
+
+      // 2. Interceptar clics en enlaces
       document.body.addEventListener('click', (e) => {
         const link = e.target.closest('a');
-        if (link && link.href && (link.href.includes('exportar') || link.href.includes('?tab='))) {
-          // Si es una peticion HTMX, no interferimos con el script manual porque htmx ya lo maneja
-          if (link.hasAttribute('hx-get')) return;
-          
-          const spinner = document.getElementById('global-spinner');
-          if (spinner) {
-            spinner.style.opacity = '1';
-            spinner.style.visibility = 'visible';
-            // Ocultar después de 4 segundos asumiendo que ya comenzó la descarga
-            setTimeout(() => {
-              spinner.style.opacity = '0';
-              spinner.style.visibility = 'hidden';
-            }, 4000);
-          }
+        if (!link || !link.href) return;
+        
+        // Ignorar links con target blank, anclas en la misma página, o javascript puro
+        if (link.target === '_blank') return;
+        if (link.getAttribute('href').startsWith('#') || link.href.startsWith('javascript:')) return;
+        if (link.href.includes('#') && link.pathname === window.location.pathname) return;
+        
+        // Ignorar peticiones manejadas por HTMX (ya muestran el spinner automáticamente mediante la clase .htmx-indicator)
+        if (link.hasAttribute('hx-get') || link.hasAttribute('hx-post') || link.hasAttribute('hx-delete')) return;
+
+        const spinner = document.getElementById('global-spinner');
+        if (!spinner) return;
+
+        // Si es un archivo de exportación Excel, mostrar el spinner pero ocultarlo a los 4 segundos (no hay cambio real de página)
+        if (link.href.includes('exportar')) {
+          spinner.style.opacity = '1';
+          spinner.style.visibility = 'visible';
+          setTimeout(() => {
+            spinner.style.opacity = '0';
+            spinner.style.visibility = 'hidden';
+          }, 4500);
+          return;
+        }
+
+        // Navegación estándar a cualquier otra vista del ERP (Inventario, Campos, etc)
+        // Se mantiene visible hasta que el navegador renderice la nueva página
+        if (link.hostname === window.location.hostname) {
+          spinner.style.opacity = '1';
+          spinner.style.visibility = 'visible';
+        }
+      });
+      
+      // 3. Interceptar envíos de formularios tradicionales (filtros, creación sin htmx)
+      document.body.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (form.hasAttribute('hx-post') || form.hasAttribute('hx-get')) return;
+        
+        const spinner = document.getElementById('global-spinner');
+        if (spinner) {
+          spinner.style.opacity = '1';
+          spinner.style.visibility = 'visible';
         }
       });
     });
