@@ -87,17 +87,13 @@ def export_to_excel(queryset, columns, report_title, filename):
         ws.append(row_data)
 
     # Ajuste de ancho de columnas
-    for col in ws.columns:
+    for col_idx, col in enumerate(ws.columns, 1):
         max_length = 0
-        column = col[0].column_letter
+        column = openpyxl.utils.get_column_letter(col_idx)
         for cell in col:
-            if cell.row > 4:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-        ws.column_dimensions[column].width = min(max_length + 2, 40)
+            if cell.row > 4 and cell.value is not None:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[column].width = min(max(max_length + 3, 12), 45)
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     fecha_str = timezone.now().strftime('%Y%m%d_%H%M')

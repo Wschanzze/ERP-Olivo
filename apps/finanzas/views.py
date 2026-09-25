@@ -2086,36 +2086,32 @@ class ExportarLibroIVAView(View):
 
         for c in qs:
             row_data = [
-                c.fecha_emision.strftime('%d/%m/%Y'),
+                c.fecha_emision.strftime('%d/%m/%Y') if c.fecha_emision else '-',
                 c.get_tipo_comprobante_display(),
                 str(c.punto_de_venta).zfill(4),
                 str(c.numero_comprobante).zfill(8),
                 c.cuenta_corriente.cuit if c.cuenta_corriente else 'Consumidor Final',
                 c.cuenta_corriente.razon_social if c.cuenta_corriente else 'Varios',
                 c.cuenta_corriente.get_tipo_entidad_display() if c.cuenta_corriente else '-',
-                float(c.neto_gravado_21),
-                float(c.iva_21),
-                float(c.neto_gravado_10_5),
-                float(c.iva_10_5),
-                float(c.exento),
-                float(c.percepciones_iibb),
-                float(c.total),
-                c.get_estado_afip_display()
+                float(c.neto_gravado_21 or 0),
+                float(c.iva_21 or 0),
+                float(c.neto_gravado_10_5 or 0),
+                float(c.iva_10_5 or 0),
+                float(c.exento or 0),
+                float(c.percepcion_iibb or 0),
+                float(c.total or 0),
+                'Autorizado (CAE)' if c.cae else 'Sin CAE'
             ]
             ws.append(row_data)
 
-        # Anchos de columna dinámicos
-        for col in ws.columns:
+        # Anchos de columna dinámicos seguros con celdas combinadas
+        for col_idx, col in enumerate(ws.columns, 1):
             max_length = 0
-            column = col[0].column_letter
+            column = openpyxl.utils.get_column_letter(col_idx)
             for cell in col:
-                if cell.row > 3:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-            ws.column_dimensions[column].width = min(max_length + 2, 35)
+                if cell.row > 3 and cell.value is not None:
+                    max_length = max(max_length, len(str(cell.value)))
+            ws.column_dimensions[column].width = min(max(max_length + 3, 12), 40)
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         filename = f"Libro_IVA_{tipo}_{ano}_{mes:02d}.xlsx"
