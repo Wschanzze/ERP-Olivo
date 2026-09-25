@@ -766,6 +766,8 @@ class ComprobanteFiscal(TimeStampedModel):
 
     @property
     def numero_completo(self):
+        if self.numero_comprobante == '00000000' and self.es_oficial:
+            return f"{str(self.punto_de_venta).zfill(5)}-(Pte. ARCA)"
         return f"{str(self.punto_de_venta).zfill(5)}-{str(self.numero_comprobante).zfill(8)}"
 
 
