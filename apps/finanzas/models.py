@@ -661,7 +661,10 @@ class ComprobanteFiscal(TimeStampedModel):
         NOTA_CREDITO_A = 'NC_A', _('Nota de Crédito A')
         NOTA_CREDITO_B = 'NC_B', _('Nota de Crédito B')
         NOTA_CREDITO_C = 'NC_C', _('Nota de Crédito C')
-        RECIBO_OFICIAL = 'REC_OF', _('Recibo Oficial / Comprobante X')
+        RECIBO_OFICIAL = 'REC_OF', _('Recibo Oficial / Recibo X')
+        COMPROBANTE_INTERNO_X = 'COMP_X', _('Comprobante Interno (No Fiscal)')
+        PRESUPUESTO = 'PRESUP', _('Presupuesto / Proforma')
+        REMITO_INTERNO = 'REM_INT', _('Remito Valorizado')
 
     class CondicionIVA(models.TextChoices):
         RESPONSABLE_INSCRIPTO = 'RI', _('IVA Responsable Inscripto')

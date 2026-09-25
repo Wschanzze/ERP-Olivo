@@ -90,9 +90,13 @@
             <!-- Tipo de Comprobante -->
             <div>
               <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Comprobante *</label>
+              
+              <!-- Select para Oficiales -->
               <select 
+                x-show="esOficial"
                 name="tipo_comprobante" 
-                required
+                :required="esOficial"
+                :disabled="!esOficial"
                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
               >
                 <option value="F_A">Factura A (Discrimina IVA)</option>
@@ -102,6 +106,21 @@
                 <option value="ND_A">Nota de Débito A</option>
                 <option value="NC_A">Nota de Crédito A</option>
                 <option value="REC_OF">Recibo Oficial</option>
+              </select>
+
+              <!-- Select para Internos / En 2 -->
+              <select 
+                x-cloak
+                x-show="!esOficial"
+                name="tipo_comprobante" 
+                :required="!esOficial"
+                :disabled="esOficial"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="COMP_X">Comprobante Interno (No Fiscal)</option>
+                <option value="PRESUP">Presupuesto / Proforma</option>
+                <option value="REM_INT">Remito Valorizado</option>
+                <option value="REC_OF">Recibo X (Interno)</option>
               </select>
             </div>
           </div>
