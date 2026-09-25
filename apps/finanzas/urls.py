@@ -51,4 +51,11 @@ urlpatterns = [
     # Gestión de Datos de Prueba (Demo Q1 2026)
     path('demo/limpiar/', views.LimpiarDatosDemoView.as_view(), name='demo_limpiar'),
     path('demo/poblar/', views.PoblarDatosDemoView.as_view(), name='demo_poblar'),
+
+    # Excel Exports Finanzas
+    path('caja/exportar/', views.ExportarCajaExcelView.as_view(), name='exportar_caja'),
+    path('cheques/exportar/', views.ExportarChequesExcelView.as_view(), name='exportar_cheques'),
+    path('entidades/exportar/', views.ExportarCuentasCorrientesExcelView.as_view(), name='exportar_cuentas_corrientes'),
+    path('comprobantes/exportar/', views.ExportarOrdenesPagoExcelView.as_view(), name='exportar_ordenes_pago'),
+
 ]

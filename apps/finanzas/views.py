@@ -2086,7 +2086,7 @@ class ExportarLibroIVAView(View):
             row_data = [
                 c.fecha_emision.strftime('%d/%m/%Y'),
                 c.get_tipo_comprobante_display(),
-                f"{c.punto_venta:04d}",
+                f"{c.punto_de_venta:04d}",
                 f"{c.numero_comprobante:08d}",
                 c.cuenta_corriente.cuit if c.cuenta_corriente else 'Consumidor Final',
                 c.cuenta_corriente.razon_social if c.cuenta_corriente else 'Varios',
@@ -2242,3 +2242,66 @@ class ComprobanteFiscalPrintView(DetailView):
         ctx['qr_arca_base64'] = generar_qr_arca_base64(comp)
 
         return ctx
+
+# ==========================================
+# EXPORTADORES A EXCEL (FINANZAS)
+# ==========================================
+
+class ExportarCajaExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente', 'cuenta_contable').all().order_by('-fecha')
+        columnas = [
+            ("Fecha", lambda m: m.fecha.strftime("%d/%m/%Y")),
+            ("Tipo", lambda m: m.get_tipo_movimiento_display()),
+            ("Concepto", "concepto"),
+            ("Cuenta", lambda m: m.cuenta.nombre if m.cuenta else "-"),
+            ("Entidad", lambda m: m.cuenta_corriente.razon_social if m.cuenta_corriente else "Varios"),
+            ("Moneda", "moneda"),
+            ("Importe", "importe"),
+            ("Estado", "estado"),
+            ("Comprobante Nro", "comprobante_nro"),
+        ]
+        return export_to_excel(qs, columnas, "Registro de Caja y Movimientos Financieros", "caja_movimientos")
+
+class ExportarChequesExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = Cheque.objects.select_related('entidad', 'cuenta_bancaria').all().order_by('-fecha_vencimiento')
+        columnas = [
+            ("Fecha Emisión", lambda c: c.fecha_emision.strftime("%d/%m/%Y")),
+            ("Vencimiento", lambda c: c.fecha_vencimiento.strftime("%d/%m/%Y")),
+            ("Número", "numero"),
+            ("Banco", "banco"),
+            ("Tipo", lambda c: c.get_tipo_display()),
+            ("Estado", lambda c: c.get_estado_display()),
+            ("Entidad Relacionada", lambda c: c.entidad.razon_social if c.entidad else "-"),
+            ("Importe", "importe"),
+        ]
+        return export_to_excel(qs, columnas, "Cartera de Cheques", "cheques")
+
+class ExportarCuentasCorrientesExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = CuentaCorriente.objects.all().order_by('razon_social')
+        columnas = [
+            ("Razón Social", "razon_social"),
+            ("CUIT", "cuit"),
+            ("Tipo Entidad", lambda c: c.get_tipo_entidad_display()),
+            ("Teléfono", "telefono"),
+            ("Email", "email"),
+            ("Saldo Inicial ARS", "saldo_inicial_ars"),
+            ("Saldo Inicial USD", "saldo_inicial_usd"),
+        ]
+        return export_to_excel(qs, columnas, "Padrón de Clientes y Proveedores (CC)", "cuentas_corrientes")
+
+class ExportarOrdenesPagoExcelView(View):
+    def get(self, request, *args, **kwargs):
+        qs = OrdenPagoRecibo.objects.select_related('cuenta_corriente', 'cuenta_financiera').all().order_by('-fecha')
+        columnas = [
+            ("Fecha", lambda o: o.fecha.strftime("%d/%m/%Y")),
+            ("Tipo", lambda o: o.get_tipo_display()),
+            ("Número", "numero"),
+            ("Entidad", lambda o: o.cuenta_corriente.razon_social if o.cuenta_corriente else "-"),
+            ("Cuenta", lambda o: o.cuenta_financiera.nombre if o.cuenta_financiera else "-"),
+            ("Importe Total", "importe_total"),
+            ("Concepto", "concepto"),
+        ]
+        return export_to_excel(qs, columnas, "Órdenes de Pago y Recibos", "ordenes_pago_recibos")
