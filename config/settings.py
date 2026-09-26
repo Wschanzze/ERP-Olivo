@@ -14,14 +14,16 @@ IS_RAILWAY = 'RAILWAY_ENVIRONMENT' in os.environ or 'RAILWAY_PROJECT_ID' in os.e
 load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.getenv('SECRET_KEY', '').strip() or 'django-insecure-erp-olivo-fallback-key-2025-x98vercel'
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 # Soporte para proxies reversos (Vercel, Railway, Traefik, Nginx)
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Permitir todos los hosts en Vercel y Railway
-ALLOWED_HOSTS = ['*']
+# Hosts permitidos
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '*')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.vercel.app',
@@ -282,8 +284,9 @@ CELERY_TIMEZONE = TIME_ZONE
 # ──────────────────────────────────────────────────────────────────────────────
 # ARCA (ex AFIP) - AfipSDK Configuration
 # ──────────────────────────────────────────────────────────────────────────────
-AFIP_ACCESS_TOKEN = os.getenv('AFIP_ACCESS_TOKEN', 'RicL9nHsAmq04CL8bVBw1IXVwE61tdfVCD6JCZtzMyDB8rjqP7kUASytDTL0kJF9').strip()
-AFIP_CUIT = int(os.getenv('AFIP_CUIT', '20409378472'))
+AFIP_ACCESS_TOKEN = os.getenv('AFIP_ACCESS_TOKEN', '').strip()
+afip_cuit_env = os.getenv('AFIP_CUIT', '').strip()
+AFIP_CUIT = int(afip_cuit_env) if afip_cuit_env.isdigit() else 0
 AFIP_PRODUCTION = os.getenv('AFIP_PRODUCTION', 'False').lower() in ('true', '1')
 AFIP_DEFAULT_PTO_VTA = int(os.getenv('AFIP_DEFAULT_PTO_VTA', '1'))
 N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', '').strip()
@@ -297,13 +300,11 @@ SUPABASE_SECRET_KEY = os.getenv('SUPABASE_SECRET_KEY', '').strip()
 SUPABASE_PUBLISHABLE_KEY = os.getenv('SUPABASE_PUBLISHABLE_KEY', '').strip()
 SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL', '').strip()
 
-
-
 # Rutas de Autenticación y Redirección
 LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'core:login'
-CELERY_TASK_ALWAYS_EAGER = True
 
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_STORE_EAGER_RESULT = True
+# En entornos serverless sin workers dedicados, o si se fuerza localmente:
+CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False').lower() in ('true', '1') or IS_VERCEL
+CELERY_TASK_STORE_EAGER_RESULT = CELERY_TASK_ALWAYS_EAGER

