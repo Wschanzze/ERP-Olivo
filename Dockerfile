@@ -23,5 +23,5 @@ COPY . /app/
 # Exponer puerto para Gunicorn / Django
 EXPOSE 8000
 
-# Comando por defecto para el contenedor web
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+# Comando por defecto para el contenedor web (soporta $PORT dinámico de Railway)
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]

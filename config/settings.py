@@ -6,8 +6,9 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Detectar si estamos en el entorno serverless de Vercel
+# Detectar si estamos en el entorno serverless de Vercel o en Railway
 IS_VERCEL = 'VERCEL' in os.environ
+IS_RAILWAY = 'RAILWAY_ENVIRONMENT' in os.environ or 'RAILWAY_PROJECT_ID' in os.environ or 'RAILWAY_SERVICE_ID' in os.environ
 
 # Cargar variables de entorno desde .env
 load_dotenv(BASE_DIR / '.env')
@@ -15,19 +16,29 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', '').strip() or 'django-insecure-erp-olivo-fallback-key-2025-x98vercel'
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-# Soporte para proxies reversos (Vercel)
+# Soporte para proxies reversos (Vercel, Railway, Traefik, Nginx)
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Permitir todos los hosts en Vercel (incluyendo previews y dominios personalizados)
+# Permitir todos los hosts en Vercel y Railway
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.vercel.app',
     'https://*.now.sh',
+    'https://*.railway.app',
+    'https://*.up.railway.app',
     'http://localhost:*',
     'http://127.0.0.1:*',
 ]
+
+# Agregar automáticamente dominio asignado por Railway si existe
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    origin = f"https://{railway_domain}"
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
 csrf_env = os.getenv('CSRF_TRUSTED_ORIGINS')
 if csrf_env:
     for origin in csrf_env.split(','):
@@ -97,16 +108,34 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Configuración de Base de Datos
-DATABASE_URL = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
+DATABASE_URL = (
+    os.getenv('DATABASE_URL')
+    or os.getenv('POSTGRES_URL')
+    or os.getenv('DATABASE_PUBLIC_URL')
+    or os.getenv('DATABASE_PRIVATE_URL')
+)
 USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() in ('true', '1')
+
+# Variables estándar de PostgreSQL (compatibles con Railway, Docker Compose, etc.)
+DB_HOST = os.getenv('DB_HOST') or os.getenv('PGHOST')
+DB_PORT = os.getenv('DB_PORT') or os.getenv('PGPORT', '5432')
+DB_NAME = os.getenv('DB_NAME') or os.getenv('PGDATABASE', 'erp_olivo_db')
+DB_USER = os.getenv('DB_USER') or os.getenv('PGUSER', 'erp_user')
+DB_PASSWORD = os.getenv('DB_PASSWORD') or os.getenv('PGPASSWORD', 'erp_password_secret')
 
 if DATABASE_URL:
     is_pgbouncer = '6543' in DATABASE_URL or 'pgbouncer=true' in DATABASE_URL.lower()
+    # Supabase o URLs con sslmode=require requieren SSL; en redes internas (Railway/Docker) no se fuerza si no se especifica
+    ssl_required = (
+        'supabase.co' in DATABASE_URL
+        or 'sslmode=require' in DATABASE_URL.lower()
+        or os.getenv('DB_SSL_REQUIRE', '').lower() in ('true', '1')
+    )
     db_config = dj_database_url.config(
         default=DATABASE_URL,
         conn_max_age=0 if is_pgbouncer else 600,
         conn_health_checks=True,
-        ssl_require=True,
+        ssl_require=ssl_required,
     )
     # dj_database_url incluye parámetros query como opciones de conexión,
     # pero psycopg rechaza 'pgbouncer' como opción válida de conexión.
@@ -117,7 +146,19 @@ if DATABASE_URL:
     DATABASES = {
         'default': db_config
     }
-elif USE_SQLITE or (IS_VERCEL and not os.getenv('DB_HOST')):
+elif DB_HOST and not USE_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+        }
+    }
+else:
+    # Fallback a SQLite para desarrollo local, Vercel o Railway (sin Postgres aprovisionado)
     if IS_VERCEL:
         # En Vercel Serverless Functions, la raíz es de solo lectura. Sólo /tmp es escribible.
         sqlite_path = Path('/tmp') / 'db.sqlite3'
@@ -136,22 +177,17 @@ elif USE_SQLITE or (IS_VERCEL and not os.getenv('DB_HOST')):
                 print(f"Aviso al inicializar db en /tmp: {e}")
     else:
         sqlite_path = BASE_DIR / 'db.sqlite3'
+        seed_db = BASE_DIR / 'db_seed.sqlite3'
+        if not sqlite_path.exists() and seed_db.exists():
+            try:
+                shutil.copyfile(seed_db, sqlite_path)
+            except Exception as e:
+                print(f"Aviso al inicializar db.sqlite3 desde seed: {e}")
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': sqlite_path,
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.getenv('DB_NAME', 'erp_olivo_db'),
-            'USER': os.getenv('DB_USER', 'erp_user'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'erp_password_secret'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
         }
     }
 
