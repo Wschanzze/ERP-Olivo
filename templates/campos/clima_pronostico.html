@@ -3,777 +3,411 @@
 
 {% block title %}Clima & Pronóstico Meteorológico | ERP Olivícola{% endblock %}
 
-{% block extra_head %}
-<!-- Leaflet 1.4.0 y Windy Map Forecast API Bootloader -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
-<script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
-<style>
-  /* Contenedor oficial requerido por Windy Map Forecast API */
-  #windy {
-    width: 100%;
-    height: 600px;
-    position: relative;
-    background-color: #1a2016;
-  }
-  .leaflet-popup-content-wrapper {
-    background: #1B2312 !important;
-    color: #E5EBDD !important;
-    border-radius: 14px !important;
-    border: 1px solid #3D4A2A !important;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5) !important;
-  }
-  .leaflet-popup-tip {
-    background: #1B2312 !important;
-  }
-  .leaflet-container {
-    font-family: inherit !important;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="space-y-8" x-data="climaController()">
+<div class="space-y-6" x-data="climaController()" x-init="init()">
   
   <!-- =======================================================================
        ENCABEZADO GENERAL (Paleta Verde Seco Institucional)
        ======================================================================= -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-2 border-b border-[#D5DFC9]">
-    <div>
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-[#3D4A2A] text-[#E5EBDD] flex items-center justify-center font-bold shadow-xs">
-          <svg class="w-6 h-6 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-2xl font-extrabold text-[#1B2312] tracking-tight">Clima &amp; Pronóstico de Fincas</h1>
-            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#B6C7A2] px-2.5 py-0.5 rounded-full">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#6B894B] animate-pulse"></span>
-              La Rioja • Dpto. Chilecito
-            </span>
-          </div>
-          <p class="text-xs text-[#4E5F36] mt-0.5 font-medium">Monitoreo meteorológico para labores agrícolas en Chilecito, Nonogasta y Vichigasta.</p>
-        </div>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[#D5DFC9]">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-[#3D4A2A] text-[#E5EBDD] flex items-center justify-center font-bold shadow-xs">
+        <svg class="w-6 h-6 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
       </div>
-    </div>
-
-    <!-- Navegación rápida entre Diseños -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <a 
-        href="#diseno-1-widget"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EAEFE3] hover:bg-[#D5DFC9] text-[#2A331D] text-xs font-bold rounded-xl transition-colors border border-[#B6C7A2]"
-      >
-        <span>1️⃣ Diseño A (Widget)</span>
-      </a>
-
-      <a 
-        href="#diseno-2-api"
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3D4A2A] hover:bg-[#2A331D] text-[#E5EBDD] text-xs font-bold rounded-xl shadow-xs transition-colors border border-[#5A6E3F]"
-      >
-        <span>2️⃣ Diseño B (API Nativa + Leaflet)</span>
-        <span class="text-[9px] bg-[#6B894B] text-white px-1.5 py-0.2 rounded-md font-mono">CON KEY</span>
-      </a>
-    </div>
-  </div>
-
-
-  <!-- =======================================================================
-       SECCIÓN 1: DISEÑO A (WIDGET EMBEBIDO RESPONSIVE)
-       ======================================================================= -->
-  <section id="diseno-1-widget" class="space-y-4 pt-2">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#F5F7F2] p-3 rounded-2xl border border-[#D5DFC9]">
-      <div class="flex items-center gap-2">
-        <span class="w-6 h-6 rounded-lg bg-[#3D4A2A] text-white text-xs font-bold flex items-center justify-center">A</span>
-        <div>
-          <h2 class="text-sm font-extrabold text-[#1B2312] uppercase tracking-wider">Diseño 1: Widget Embebido Windy (Iframe Dinámico)</h2>
-          <p class="text-[11px] text-[#4E5F36]">Integración directa del visor oficial con pronóstico por horas y modelos numéricos.</p>
-        </div>
-      </div>
-      <span class="text-[10px] font-mono text-[#4E5F36] bg-white px-2 py-1 rounded-lg border border-[#D5DFC9] self-start sm:self-auto">
-        Sin consumo de créditos API
-      </span>
-    </div>
-
-    <!-- Selector de Ubicación en La Rioja (Chilecito, Nonogasta, Vichigasta) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <!-- 1. Chilecito -->
-      <button
-        type="button"
-        @click="seleccionarUbicacion('chilecito')"
-        :class="ubicacionId === 'chilecito' 
-          ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
-          : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
-        class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
-      >
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-2.5">
-            <span class="text-2xl">🏔️</span>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h3 class="font-extrabold text-sm" :class="ubicacionId === 'chilecito' ? 'text-white' : 'text-[#1B2312]'">Chilecito</h3>
-                <span 
-                  class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
-                  :class="ubicacionId === 'chilecito' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
-                >
-                  1.080 msnm
-                </span>
-              </div>
-              <p class="text-[11px] mt-0.5" :class="ubicacionId === 'chilecito' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Valle de Antinaco - Los Colorados</p>
-            </div>
-          </div>
-          <span 
-            class="w-2.5 h-2.5 rounded-full mt-1"
-            :class="ubicacionId === 'chilecito' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
-          ></span>
-        </div>
-        <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'chilecito' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
-          Cabecera departamental. Fincas y cuadros al pie del Famatina, con vientos catabáticos nocturnos.
-        </p>
-      </button>
-
-      <!-- 2. Nonogasta -->
-      <button
-        type="button"
-        @click="seleccionarUbicacion('nonogasta')"
-        :class="ubicacionId === 'nonogasta' 
-          ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
-          : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
-        class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
-      >
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-2.5">
-            <span class="text-2xl">🫒</span>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h3 class="font-extrabold text-sm" :class="ubicacionId === 'nonogasta' ? 'text-white' : 'text-[#1B2312]'">Nonogasta</h3>
-                <span 
-                  class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
-                  :class="ubicacionId === 'nonogasta' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
-                >
-                  950 msnm
-                </span>
-              </div>
-              <p class="text-[11px] mt-0.5" :class="ubicacionId === 'nonogasta' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Polo Agroindustrial Central</p>
-            </div>
-          </div>
-          <span 
-            class="w-2.5 h-2.5 rounded-full mt-1"
-            :class="ubicacionId === 'nonogasta' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
-          ></span>
-        </div>
-        <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'nonogasta' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
-          Zona central de almazaras y plantaciones intensivas bajo riego presurizado por goteo.
-        </p>
-      </button>
-
-      <!-- 3. Vichigasta -->
-      <button
-        type="button"
-        @click="seleccionarUbicacion('vichigasta')"
-        :class="ubicacionId === 'vichigasta' 
-          ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
-          : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
-        class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
-      >
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-2.5">
-            <span class="text-2xl">🌿</span>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h3 class="font-extrabold text-sm" :class="ubicacionId === 'vichigasta' ? 'text-white' : 'text-[#1B2312]'">Vichigasta</h3>
-                <span 
-                  class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
-                  :class="ubicacionId === 'vichigasta' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
-                >
-                  860 msnm
-                </span>
-              </div>
-              <p class="text-[11px] mt-0.5" :class="ubicacionId === 'vichigasta' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Valle Sur Olivícola</p>
-            </div>
-          </div>
-          <span 
-            class="w-2.5 h-2.5 rounded-full mt-1"
-            :class="ubicacionId === 'vichigasta' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
-          ></span>
-        </div>
-        <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'vichigasta' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
-          Gran cuenca productora de Arauco, Manzanilla y Picual. Microclima propicio para acumulación térmica.
-        </p>
-      </button>
-    </div>
-
-    <!-- Barra de Herramientas del Mapa: Capas y Zoom -->
-    <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-      
-      <!-- Filtro de Capas Meteorológicas -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar">
-        <span class="text-[11px] font-bold text-[#4E5F36] uppercase tracking-wider mr-1 whitespace-nowrap">Capas:</span>
-
-        <button 
-          type="button"
-          @click="seleccionarCapa('wind')"
-          :class="capaActiva === 'wind' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
-        >
-          <span>💨</span>
-          <span>Viento &amp; Ráfagas</span>
-        </button>
-
-        <button 
-          type="button"
-          @click="seleccionarCapa('rain')"
-          :class="capaActiva === 'rain' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
-        >
-          <span>🌧️</span>
-          <span>Lluvia &amp; Tormentas</span>
-        </button>
-
-        <button 
-          type="button"
-          @click="seleccionarCapa('temp')"
-          :class="capaActiva === 'temp' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
-        >
-          <span>🌡️</span>
-          <span>Temperatura / Heladas</span>
-        </button>
-
-        <button 
-          type="button"
-          @click="seleccionarCapa('clouds')"
-          :class="capaActiva === 'clouds' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
-        >
-          <span>☁️</span>
-          <span>Nubosidad</span>
-        </button>
-
-        <button 
-          type="button"
-          @click="seleccionarCapa('radar')"
-          :class="capaActiva === 'radar' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
-        >
-          <span>🛰️</span>
-          <span>Radar Satelital</span>
-        </button>
-      </div>
-
-      <!-- Controles de Zoom y Coordenadas -->
-      <div class="flex items-center gap-2 self-end lg:self-auto flex-wrap">
-        <div class="flex items-center gap-1 bg-[#F5F7F2] p-1 rounded-xl border border-[#D5DFC9]">
-          <button 
-            type="button" 
-            @click="zoomNivel = 11" 
-            :class="zoomNivel === 11 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-            class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            title="Zoom a nivel finca o cuadro"
-          >
-            Finca
-          </button>
-          <button 
-            type="button" 
-            @click="zoomNivel = 9" 
-            :class="zoomNivel === 9 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-            class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            title="Zoom a nivel valle de Chilecito y Famatina"
-          >
-            Valle
-          </button>
-          <button 
-            type="button" 
-            @click="zoomNivel = 7" 
-            :class="zoomNivel === 7 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-            class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            title="Zoom regional provincia de La Rioja"
-          >
-            Región
-          </button>
-        </div>
-
-        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#F5F7F2] border border-[#D5DFC9] rounded-xl text-[11px] text-[#2A331D] font-mono">
-          <span class="text-[#6B894B]">GPS:</span>
-          <span class="font-bold" x-text="`${ubicacionActual.lat.toFixed(3)}, ${ubicacionActual.lon.toFixed(3)}`"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Contenedor del Widget Windy Interactivo -->
-    <div 
-      class="bg-white rounded-3xl border border-[#D5DFC9] shadow-xs overflow-hidden transition-all"
-      :class="pantallaCompleta ? 'fixed inset-0 z-50 rounded-none' : 'relative'"
-    >
-      <!-- Barra superior del visor -->
-      <div class="px-5 py-3 bg-[#1B2312] text-[#E5EBDD] flex items-center justify-between border-b border-[#2C381D]">
-        <div class="flex items-center gap-2.5">
-          <span class="text-lg" x-text="ubicacionActual.icono"></span>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-extrabold tracking-tight text-white" x-text="`Estación ${ubicacionActual.nombre}`"></span>
-              <span class="text-[10px] text-[#A2B38F] font-mono" x-text="`(${ubicacionActual.valle})`"></span>
-            </div>
-            <p class="text-[11px] text-[#8FA872]">Modelo ECMWF 9km • Presión barométrica e isolíneas activas</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button 
-            type="button" 
-            @click="pantallaCompleta = !pantallaCompleta" 
-            class="p-1.5 text-[#A2B38F] hover:text-white hover:bg-[#2C381D] rounded-xl transition-colors cursor-pointer"
-            :title="pantallaCompleta ? 'Salir de pantalla completa' : 'Ver en pantalla completa'"
-          >
-            <svg x-show="!pantallaCompleta" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-            <svg x-show="pantallaCompleta" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Iframe de Windy con URL reactiva -->
-      <div class="w-full relative bg-[#0F140A]" :style="pantallaCompleta ? 'height: calc(100vh - 56px);' : 'height: 600px;'">
-        <iframe
-          id="windy-frame"
-          class="w-full h-full border-0"
-          :src="windyUrl"
-          frameborder="0"
-          allowfullscreen
-          loading="lazy"
-        ></iframe>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- =======================================================================
-       SECCIÓN 2: DISEÑO B (WINDY MAP FORECAST API + LEAFLET NATIVO)
-       ======================================================================= -->
-  <section id="diseno-2-api" class="space-y-4 pt-6 border-t-2 border-dashed border-[#D5DFC9]">
-    
-    <!-- Encabezado de la Sección B -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EAEFE3] p-4 rounded-2xl border border-[#B6C7A2]">
-      <div class="flex items-center gap-3">
-        <span class="w-7 h-7 rounded-xl bg-[#3D4A2A] text-white text-xs font-black flex items-center justify-center shadow-xs">B</span>
-        <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-extrabold text-[#1B2312] uppercase tracking-wider">Diseño 2: Windy Map Forecast API + Leaflet Nativo</h2>
-            <span class="text-[10px] font-bold bg-[#3D4A2A] text-[#E5EBDD] px-2 py-0.5 rounded-full font-mono">CON KEY</span>
-          </div>
-          <p class="text-xs text-[#3D4A2A] mt-0.5">Control programático con Leaflet, sonda climática (Picker) en cualquier coordenada y capas en tiempo real.</p>
-        </div>
-      </div>
-
-      <!-- Botón Configurar API Key -->
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          @click="abrirModalKey()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3D4A2A] hover:bg-[#2A331D] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-        >
-          <svg class="w-3.5 h-3.5 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-          </svg>
-          <span x-text="apiKey ? 'Editar Windy Key' : 'Ingresar Windy Key'"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Aviso de autorización de dominio de Windy API -->
-    <div class="p-3.5 bg-[#F5F7F2] border border-[#D5DFC9] text-xs text-[#3D4A2A] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div class="flex items-start gap-2.5">
-        <span class="text-base">💡</span>
-        <div>
-          <span class="font-bold text-[#1B2312] block">Autorización de dominio en Windy:</span>
-          <p class="text-[11px] text-[#4E5F36] mt-0.5">
-            En la consola de Windy, en <strong>Restricciones de dominio</strong> debes ingresar sólo el dominio limpio (sin <code>https://</code> ni rutas), o dejarlo vacío (recomendado).
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-        <span class="text-[10px] text-[#6B894B] font-mono">Dominio actual:</span>
-        <code class="px-2 py-1 bg-white border border-[#D5DFC9] rounded-lg font-mono text-[11px] font-bold text-[#1B2312]" x-text="window.location.hostname"></code>
-      </div>
-    </div>
-
-    <!-- Mensaje de error si la API falla -->
-    <div x-show="apiError" x-cloak class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex items-center gap-2">
-      <span>⚠️</span>
-      <span x-text="apiError"></span>
-    </div>
-
-    <!-- Controles del Mapa Leaflet Windy API -->
-    <div class="space-y-4">
-
-      
-      <!-- Barra de controles API: Localidades y Capas -->
-      <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        
-        <!-- Botones para centrar en Localidades -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar">
-          <span class="text-[11px] font-bold text-[#4E5F36] uppercase tracking-wider mr-1 whitespace-nowrap">Localidad:</span>
-
-          <button 
-            type="button"
-            @click="centrarEnLocalidad(-29.1619, -67.4965, 11)"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#1B2312] text-xs font-bold rounded-xl border border-[#D5DFC9] transition-colors cursor-pointer"
-          >
-            <span>🏔️</span>
-            <span>Chilecito</span>
-          </button>
-
-          <button 
-            type="button"
-            @click="centrarEnLocalidad(-29.3033, -67.4964, 11)"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#1B2312] text-xs font-bold rounded-xl border border-[#D5DFC9] transition-colors cursor-pointer"
-          >
-            <span>🫒</span>
-            <span>Nonogasta</span>
-          </button>
-
-          <button 
-            type="button"
-            @click="centrarEnLocalidad(-29.4746, -67.5122, 11)"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#1B2312] text-xs font-bold rounded-xl border border-[#D5DFC9] transition-colors cursor-pointer"
-          >
-            <span>🌿</span>
-            <span>Vichigasta</span>
-          </button>
-
-          <button 
-            type="button"
-            @click="centrarEnLocalidad(-29.3033, -67.4964, 9)"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EAEFE3] hover:bg-[#D5DFC9] text-[#2A331D] text-xs font-bold rounded-xl border border-[#B6C7A2] transition-colors cursor-pointer"
-            title="Vista panorámica de todo el valle"
-          >
-            <span>🗺️</span>
-            <span>Valle Completo</span>
-          </button>
-        </div>
-
-        <!-- Capas del Store y Activador de Picker -->
+      <div>
         <div class="flex items-center gap-2 flex-wrap">
-          <!-- Selector de Capas con store.set('overlay', ...) -->
-          <div class="flex items-center gap-1 bg-[#F5F7F2] p-1 rounded-xl border border-[#D5DFC9]">
-            <button 
-              type="button" 
-              @click="cambiarCapaAPI('wind')"
-              :class="apiCapaActiva === 'wind' ? 'bg-[#3D4A2A] text-white font-bold' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Viento
-            </button>
-            <button 
-              type="button" 
-              @click="cambiarCapaAPI('rain')"
-              :class="apiCapaActiva === 'rain' ? 'bg-[#3D4A2A] text-white font-bold' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Lluvia
-            </button>
-            <button 
-              type="button" 
-              @click="cambiarCapaAPI('temp')"
-              :class="apiCapaActiva === 'temp' ? 'bg-[#3D4A2A] text-white font-bold' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Temp
-            </button>
-            <button 
-              type="button" 
-              @click="cambiarCapaAPI('clouds')"
-              :class="apiCapaActiva === 'clouds' ? 'bg-[#3D4A2A] text-white font-bold' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-            >
-              Nubes
-            </button>
-            <button 
-              type="button" 
-              @click="cambiarCapaAPI('rh')"
-              :class="apiCapaActiva === 'rh' ? 'bg-[#3D4A2A] text-white font-bold' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
-              class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
-              title="Humedad Relativa en Superficie"
-            >
-              Humedad
-            </button>
-          </div>
-
-          <!-- Botón de Sonda Meteorológica (Picker) -->
-          <button
-            type="button"
-            @click="togglePickerAPI()"
-            :class="pickerActivo ? 'bg-[#4E5F36] text-white font-bold ring-2 ring-[#3D4A2A]' : 'bg-[#EAEFE3] text-[#2A331D] font-bold border border-[#B6C7A2] hover:bg-[#D5DFC9]'"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl transition-all cursor-pointer shadow-2xs"
-            title="Activa el sondeo puntual en cualquier coordenada al hacer clic"
-          >
-            <span>🎯</span>
-            <span x-text="pickerActivo ? 'Sonda Picker Activa' : 'Activar Picker'"></span>
-          </button>
+          <h1 class="text-2xl font-extrabold text-[#1B2312] tracking-tight">Clima &amp; Pronóstico de Fincas</h1>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#B6C7A2] px-2.5 py-0.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#6B894B] animate-pulse"></span>
+            Windy ECMWF • En Vivo
+          </span>
         </div>
+        <p class="text-xs text-[#4E5F36] mt-0.5 font-medium">Monitoreo satelital y pronóstico agroclimático para Chilecito, Nonogasta y Vichigasta.</p>
       </div>
+    </div>
 
-      <!-- Contenedor del Mapa Leaflet + Windy API -->
-      <div class="relative bg-white rounded-3xl border border-[#D5DFC9] shadow-xs overflow-hidden">
-        
-        <!-- Header del mapa nativo -->
-        <div class="px-5 py-3 bg-[#1B2312] text-[#E5EBDD] flex items-center justify-between border-b border-[#2C381D]">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-extrabold text-white">Mapa Interactivo Leaflet (Windy API SDK)</span>
-            <span class="text-[10px] text-[#A2B38F] bg-[#2C381D] px-2 py-0.5 rounded-full font-mono">L.Map + store + picker</span>
-          </div>
+    <!-- Enlaces directos y acciones -->
+    <div class="flex items-center gap-2">
+      <a 
+        :href="`https://www.windy.com/${ubicacionActual.lat}/${ubicacionActual.lon}?${capaActiva},${ubicacionActual.lat},${ubicacionActual.lon},11`" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#F5F7F2] border border-[#D5DFC9] text-[#2A331D] text-xs font-bold rounded-xl shadow-xs transition-colors"
+        title="Abrir pronóstico completo en Windy.com"
+      >
+        <svg class="w-3.5 h-3.5 text-[#4E5F36]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+        <span>Abrir en Windy</span>
+      </a>
 
-          <div class="flex items-center gap-2 text-xs font-mono text-[#8FA872]">
-            <span>Capas: <strong class="text-white" x-text="apiCapaActiva.toUpperCase()"></strong></span>
+      <a 
+        href="{% url 'campos:orden_trabajo' %}"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3D4A2A] hover:bg-[#2A331D] text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+      >
+        <svg class="w-3.5 h-3.5 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Planificar Labor</span>
+      </a>
+    </div>
+  </div>
+
+
+  <!-- =======================================================================
+       SELECTOR DE UBICACIÓN EN LA RIOJA (Chilecito, Nonogasta, Vichigasta)
+       ======================================================================= -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <!-- 1. Chilecito -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('chilecito')"
+      :class="ubicacionId === 'chilecito' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
+        : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🏔️</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'chilecito' ? 'text-white' : 'text-[#1B2312]'">Chilecito</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'chilecito' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
+              >
+                1.080 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'chilecito' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Valle de Antinaco - Los Colorados</p>
           </div>
         </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'chilecito' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-2.5 line-clamp-2" :class="ubicacionId === 'chilecito' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
+        Cabecera departamental. Fincas y cuadros al pie del Famatina, con notable oscilación térmica.
+      </p>
+    </button>
 
-        <!-- DIV oficial donde se monta el mapa Leaflet de Windy API -->
-        <div id="windy"></div>
+    <!-- 2. Nonogasta -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('nonogasta')"
+      :class="ubicacionId === 'nonogasta' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
+        : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🫒</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'nonogasta' ? 'text-white' : 'text-[#1B2312]'">Nonogasta</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'nonogasta' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
+              >
+                950 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'nonogasta' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Polo Agroindustrial Central</p>
+          </div>
+        </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'nonogasta' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-2.5 line-clamp-2" :class="ubicacionId === 'nonogasta' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
+        Corazón agroindustrial del olivo. Plantaciones intensivas bajo riego localizado y almazaras.
+      </p>
+    </button>
 
-        <!-- Tarjeta Flotante con Datos del Picker al hacer clic o mover -->
-        <div 
-          x-show="pickerActivo && pickerDatos" 
-          x-cloak
-          class="absolute bottom-5 left-5 z-[1000] p-4 bg-[#1B2312]/95 backdrop-blur-md text-[#E5EBDD] rounded-2xl border border-[#3D4A2A] shadow-2xl max-w-sm space-y-2.5"
+    <!-- 3. Vichigasta -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('vichigasta')"
+      :class="ubicacionId === 'vichigasta' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-xs' 
+        : 'bg-white hover:bg-[#F5F7F2] text-[#2A331D] border-[#D5DFC9] hover:border-[#B6C7A2]'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🌿</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'vichigasta' ? 'text-white' : 'text-[#1B2312]'">Vichigasta</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'vichigasta' ? 'bg-white/20 text-[#A2B38F]' : 'bg-[#EAEFE3] text-[#3D4A2A]'"
+              >
+                860 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'vichigasta' ? 'text-[#C8D6BC]' : 'text-[#4E5F36]'">Valle Sur Olivícola</p>
+          </div>
+        </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'vichigasta' ? 'bg-[#A2B38F]' : 'bg-[#D5DFC9] group-hover:bg-[#B6C7A2]'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-2.5 line-clamp-2" :class="ubicacionId === 'vichigasta' ? 'text-[#E5EBDD]/80' : 'text-[#4E5F36]'">
+        Extensa cuenca productiva de Arauco, Manzanilla y Picual. Microclima cálido de valle.
+      </p>
+    </button>
+  </div>
+
+
+  <!-- =======================================================================
+       BARRA DE HERRAMIENTAS: CAPAS Y ZOOM
+       ======================================================================= -->
+  <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    
+    <!-- Filtro de Capas Meteorológicas -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar">
+      <span class="text-[11px] font-bold text-[#4E5F36] uppercase tracking-wider mr-1 whitespace-nowrap">Capas:</span>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('wind')"
+        :class="capaActiva === 'wind' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>💨</span>
+        <span>Viento &amp; Ráfagas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('rain')"
+        :class="capaActiva === 'rain' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🌧️</span>
+        <span>Lluvia &amp; Tormentas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('temp')"
+        :class="capaActiva === 'temp' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🌡️</span>
+        <span>Temperatura / Heladas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('clouds')"
+        :class="capaActiva === 'clouds' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>☁️</span>
+        <span>Nubosidad</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('radar')"
+        :class="capaActiva === 'radar' ? 'bg-[#3D4A2A] text-white font-bold shadow-xs' : 'bg-[#F5F7F2] hover:bg-[#EAEFE3] text-[#2A331D] font-semibold border border-[#D5DFC9]'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🛰️</span>
+        <span>Radar Satelital</span>
+      </button>
+    </div>
+
+    <!-- Controles de Zoom y Coordenadas -->
+    <div class="flex items-center gap-2 self-end lg:self-auto flex-wrap">
+      <div class="flex items-center gap-1 bg-[#F5F7F2] p-1 rounded-xl border border-[#D5DFC9]">
+        <button 
+          type="button" 
+          @click="zoomNivel = 11" 
+          :class="zoomNivel === 11 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom a nivel finca o cuadro"
         >
-          <div class="flex items-center justify-between border-b border-[#2C381D] pb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-lg">🎯</span>
-              <div>
-                <span class="text-xs font-extrabold text-white block">Sonda Meteorológica Puntual</span>
-                <span class="text-[10px] text-[#A2B38F]">Lectura en tiempo real sobre cuadro</span>
-              </div>
-            </div>
-            <button type="button" @click="pickerActivo = false" class="text-[#8FA872] hover:text-white p-1 rounded-lg">✕</button>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-2 text-[11px] font-mono bg-[#0F140A]/60 p-2.5 rounded-xl border border-[#2C381D]">
-            <div>
-              <span class="text-[#8FA872] block text-[9px] uppercase">Latitud:</span>
-              <strong class="text-white" x-text="pickerDatos?.lat?.toFixed(4)"></strong>
-            </div>
-            <div>
-              <span class="text-[#8FA872] block text-[9px] uppercase">Longitud:</span>
-              <strong class="text-white" x-text="pickerDatos?.lon?.toFixed(4)"></strong>
-            </div>
-          </div>
-
-          <div class="text-[11px] text-[#C8D6BC] flex items-center justify-between pt-1">
-            <span>Capa monitoreada:</span>
-            <span class="font-bold text-[#A2B38F] uppercase" x-text="apiCapaActiva"></span>
-          </div>
-          
-          <p class="text-[10px] text-[#8FA872] leading-tight">
-            Haz clic o arrastra sobre el mapa para sondear cualquier cuadro o lote de olivo de tus fincas.
-          </p>
-        </div>
-
+          Finca
+        </button>
+        <button 
+          type="button" 
+          @click="zoomNivel = 9" 
+          :class="zoomNivel === 9 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom a nivel valle de Chilecito y Famatina"
+        >
+          Valle
+        </button>
+        <button 
+          type="button" 
+          @click="zoomNivel = 7" 
+          :class="zoomNivel === 7 ? 'bg-[#3D4A2A] text-white font-bold shadow-2xs' : 'text-[#4E5F36] hover:text-[#1B2312] font-semibold'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom regional provincia de La Rioja"
+        >
+          Región
+        </button>
       </div>
 
-    </div>
-
-  </section>
-
-
-  <!-- =======================================================================
-       TABLA COMPARATIVA DE AMBOS DISEÑOS (PARA TU EVALUACIÓN)
-       ======================================================================= -->
-  <div class="bg-white p-6 rounded-3xl border border-[#D5DFC9] shadow-xs space-y-4">
-    <div class="flex items-center justify-between border-b border-[#D5DFC9] pb-3">
-      <div class="flex items-center gap-2.5">
-        <span class="text-2xl">⚖️</span>
-        <div>
-          <h3 class="text-sm font-extrabold text-[#1B2312] uppercase tracking-wider">Comparativa Técnica: Diseño 1 vs. Diseño 2</h3>
-          <p class="text-xs text-[#4E5F36]">Guía para decidir qué implementación se adapta mejor a la operativa de tus olivares.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
-        <thead>
-          <tr class="border-b border-[#D5DFC9] text-[#2A331D] bg-[#F5F7F2]">
-            <th class="p-3 font-extrabold">Característica</th>
-            <th class="p-3 font-extrabold">1️⃣ Diseño A (Widget Iframe)</th>
-            <th class="p-3 font-extrabold">2️⃣ Diseño B (Windy API + Leaflet)</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-[#D5DFC9] text-[#1B2312]">
-          <tr>
-            <td class="p-3 font-bold">Consumo de Clave / Cuota</td>
-            <td class="p-3 text-emerald-800 font-semibold">✅ Gratuito, sin límite de llamadas</td>
-            <td class="p-3 text-[#4E5F36]">Utiliza tu Windy API Key oficial</td>
-          </tr>
-          <tr>
-            <td class="p-3 font-bold">Pronóstico Extendido Inferior</td>
-            <td class="p-3 text-emerald-800 font-semibold">✅ Incluido nativo con meteograma por horas</td>
-            <td class="p-3 text-[#4E5F36]">Centrado en mapa satelital y capas vectoriales</td>
-          </tr>
-          <tr>
-            <td class="p-3 font-bold">Marcadores Propios de Fincas</td>
-            <td class="p-3 text-slate-500">❌ No permite agregar pines propios</td>
-            <td class="p-3 text-emerald-800 font-semibold">✅ Pines Leaflet personalizados sobre cada cuadro</td>
-          </tr>
-          <tr>
-            <td class="p-3 font-bold">Sonda de Punto Exacto (Picker)</td>
-            <td class="p-3 text-slate-500">❌ Sólo visualización de mapa</td>
-            <td class="p-3 text-emerald-800 font-semibold">✅ Lee datos climáticos al hacer clic en cualquier punto</td>
-          </tr>
-          <tr>
-            <td class="p-3 font-bold">Eventos y Programación JS</td>
-            <td class="p-3 text-slate-500">Limitado a cambiar el URL del iframe</td>
-            <td class="p-3 text-emerald-800 font-semibold">✅ Acceso completo a <code>map</code>, <code>store</code>, <code>bcast</code> y <code>utils</code></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-
-  <!-- =======================================================================
-       CRITERIOS AGROCLIMÁTICOS DE REFERENCIA (Paleta Verde Seco)
-       ======================================================================= -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <!-- Criterio 1: Viento y Pulverizaciones -->
-    <div class="bg-white p-4 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="w-8 h-8 rounded-xl bg-[#EAEFE3] text-[#3D4A2A] flex items-center justify-center font-bold text-sm">💨</span>
-          <div>
-            <h4 class="font-extrabold text-xs text-[#1B2312] uppercase tracking-wider">Criterio de Pulverización</h4>
-            <span class="text-[10px] text-[#6B894B]">Tratamientos foliares y curaciones</span>
-          </div>
-        </div>
-        <p class="text-xs text-[#4E5F36] leading-relaxed">
-          El viento óptimo para curaciones con cobre contra <em>Repilo</em> debe ser de <strong>5 a 15 km/h</strong>. Con ráfagas mayores a <strong>20 km/h</strong> suspender por deriva y pérdida de cobertura del canopio.
-        </p>
-      </div>
-      <div class="mt-3 pt-2.5 border-t border-[#EAEFE3] flex items-center justify-between text-[11px]">
-        <span class="text-[#6B894B]">Horario sugerido:</span>
-        <span class="font-bold text-[#3D4A2A]">Primeras horas de calma</span>
-      </div>
-    </div>
-
-    <!-- Criterio 2: Heladas y Floración -->
-    <div class="bg-white p-4 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="w-8 h-8 rounded-xl bg-[#EAEFE3] text-[#3D4A2A] flex items-center justify-center font-bold text-sm">🌡️</span>
-          <div>
-            <h4 class="font-extrabold text-xs text-[#1B2312] uppercase tracking-wider">Umbral Crítico de Heladas</h4>
-            <span class="text-[10px] text-[#6B894B]">Floración y cuaje de aceituna</span>
-          </div>
-        </div>
-        <p class="text-xs text-[#4E5F36] leading-relaxed">
-          Durante brotación y floración primaveral (septiembre a noviembre), temperaturas inferiores a <strong>-1.5°C</strong> dañan inflorescencias. En reposo invernal, el olivo tolera hasta <strong>-7°C</strong>.
-        </p>
-      </div>
-      <div class="mt-3 pt-2.5 border-t border-[#EAEFE3] flex items-center justify-between text-[11px]">
-        <span class="text-[#6B894B]">Riesgo en Valle:</span>
-        <span class="font-bold text-[#3D4A2A]">Mayor en cuencas bajas</span>
-      </div>
-    </div>
-
-    <!-- Criterio 3: Riego y Viento Zonda -->
-    <div class="bg-white p-4 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="w-8 h-8 rounded-xl bg-[#EAEFE3] text-[#3D4A2A] flex items-center justify-center font-bold text-sm">💧</span>
-          <div>
-            <h4 class="font-extrabold text-xs text-[#1B2312] uppercase tracking-wider">Demanda Hídrica &amp; Zonda</h4>
-            <span class="text-[10px] text-[#6B894B]">Riego por goteo presurizado</span>
-          </div>
-        </div>
-        <p class="text-xs text-[#4E5F36] leading-relaxed">
-          Con viento Zonda o humedad relativa menor a <strong>15%</strong>, la evapotranspiración (ETc) se triplica. Anticipar turnos de fertirriego para evitar estrés hídrico y caída de fruta cuajada.
-        </p>
-      </div>
-      <div class="mt-3 pt-2.5 border-t border-[#EAEFE3] flex items-center justify-between text-[11px]">
-        <span class="text-[#6B894B]">Manejo sugerido:</span>
-        <span class="font-bold text-[#3D4A2A]">Riego previo al evento</span>
+      <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#F5F7F2] border border-[#D5DFC9] rounded-xl text-[11px] text-[#2A331D] font-mono">
+        <span class="text-[#6B894B]">GPS:</span>
+        <span class="font-bold" x-text="`${ubicacionActual.lat.toFixed(3)}, ${ubicacionActual.lon.toFixed(3)}`"></span>
       </div>
     </div>
   </div>
 
 
   <!-- =======================================================================
-       MODAL: CONFIGURAR WINDY API KEY
+       VISOR DE WINDY CON FORECAST DETALLADO INTEGRADO
        ======================================================================= -->
   <div 
-    x-show="modalKeyOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+    class="bg-white rounded-3xl border border-[#D5DFC9] shadow-xs overflow-hidden transition-all"
+    :class="pantallaCompleta ? 'fixed inset-0 z-50 rounded-none' : 'relative'"
   >
-    <div 
-      @click.away="modalKeyOpen = false" 
-      class="bg-white rounded-3xl max-w-md w-full border border-[#D5DFC9] shadow-2xl overflow-hidden text-left"
-    >
-      <div class="p-5 bg-[#3D4A2A] text-white flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <span class="text-xl">🔑</span>
-          <h3 class="text-base font-bold">Configurar Windy API Key</h3>
-        </div>
-        <button type="button" @click="modalKeyOpen = false" class="text-[#A2B38F] hover:text-white p-1 rounded-lg">✕</button>
-      </div>
-
-      <div class="p-6 space-y-4 text-xs">
-        <p class="text-[#4E5F36] leading-relaxed">
-          Ingresa o edita la clave generada en tu cuenta de <a href="https://api.windy.com/" target="_blank" class="text-[#3D4A2A] underline font-bold">api.windy.com</a> para inicializar el mapa Leaflet interactivo del <strong>Diseño 2</strong>.
-        </p>
-
+    <!-- Barra superior del visor -->
+    <div class="px-5 py-3 bg-[#1B2312] text-[#E5EBDD] flex items-center justify-between border-b border-[#2C381D]">
+      <div class="flex items-center gap-2.5">
+        <span class="text-lg" x-text="ubicacionActual.icono"></span>
         <div>
-          <label class="block font-bold text-[#2A331D] mb-1.5 uppercase tracking-wider text-[11px]">Tu API Key de Windy</label>
-          <input 
-            type="text" 
-            x-model="nuevaKey" 
-            placeholder="Pega aquí tu clave" 
-            class="w-full px-3.5 py-2.5 bg-[#F5F7F2] border border-[#D5DFC9] rounded-xl font-mono text-xs text-[#1B2312] focus:bg-white focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
-          />
-        </div>
-
-        <div class="p-3 bg-[#EAEFE3] rounded-xl text-[11px] text-[#3D4A2A] space-y-1 border border-[#B6C7A2]">
-          <div class="font-bold">🔒 Almacenamiento local</div>
-          <p>La clave se guarda en tu navegador para mantener la sesión activa sin necesidad de volver a ingresarla.</p>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-extrabold tracking-tight text-white" x-text="`Estación ${ubicacionActual.nombre}`"></span>
+            <span class="text-[10px] text-[#A2B38F] font-mono" x-text="`(${ubicacionActual.valle})`"></span>
+          </div>
+          <p class="text-[11px] text-[#8FA872]">Modelo ECMWF 9km • Presión barométrica • Pronóstico detallado por horas activo</p>
         </div>
       </div>
 
-      <div class="p-4 bg-[#F5F7F2] border-t border-[#D5DFC9] flex items-center justify-end gap-2">
+      <div class="flex items-center gap-2">
         <button 
           type="button" 
-          @click="modalKeyOpen = false" 
-          class="px-3.5 py-2 text-xs font-semibold text-[#4E5F36] hover:bg-[#D5DFC9]/50 rounded-xl transition-colors cursor-pointer"
+          @click="pantallaCompleta = !pantallaCompleta" 
+          class="p-1.5 text-[#A2B38F] hover:text-white hover:bg-[#2C381D] rounded-xl transition-colors cursor-pointer"
+          :title="pantallaCompleta ? 'Salir de pantalla completa' : 'Ver en pantalla completa'"
         >
-          Cancelar
-        </button>
-        <button 
-          type="button" 
-          @click="guardarKey()" 
-          class="px-4 py-2 bg-[#3D4A2A] hover:bg-[#2A331D] text-white text-xs font-bold rounded-xl transition-colors shadow-xs cursor-pointer"
-        >
-          Guardar &amp; Cargar Mapa
+          <svg x-show="!pantallaCompleta" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+          <svg x-show="pantallaCompleta" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
+    </div>
+
+    <!-- Iframe con Windy + Forecast inferior nativo (detail=true) -->
+    <div class="w-full relative bg-[#0F140A]" :style="pantallaCompleta ? 'height: calc(100vh - 56px);' : 'height: 650px;'">
+      <iframe
+        id="windy-frame"
+        class="w-full h-full border-0"
+        :src="windyUrl"
+        frameborder="0"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+
+
+  <!-- =======================================================================
+       CINTA DE PRONÓSTICO EXTENDIDO A 7 DÍAS (FORECAST POR LOCALIDAD)
+       ======================================================================= -->
+  <div class="bg-white p-5 rounded-3xl border border-[#D5DFC9] shadow-xs space-y-3.5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D5DFC9] pb-3">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">📅</span>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-extrabold text-[#1B2312] uppercase tracking-wider">Pronóstico Extendido a 7 Días</h3>
+            <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] px-2 py-0.5 rounded-full border border-[#B6C7A2]" x-text="ubicacionActual.nombre"></span>
+          </div>
+          <p class="text-xs text-[#4E5F36]">Previsión meteorológica diaria para planificación de riegos, pulverizaciones y labores de campo.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs text-[#6B894B]">
+        <span x-show="cargandoPronostico" class="animate-pulse flex items-center gap-1 font-semibold text-[#3D4A2A]">
+          <span class="w-2 h-2 rounded-full bg-[#6B894B]"></span> Actualizando...
+        </span>
+      </div>
+    </div>
+
+    <!-- Tarjetas de los 7 días -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+      <template x-for="(dia, idx) in diasForecast" :key="idx">
+        <div 
+          class="p-3 rounded-2xl border text-center transition-all flex flex-col justify-between"
+          :class="idx === 0 
+            ? 'bg-[#EAEFE3] border-[#B6C7A2] shadow-2xs' 
+            : 'bg-[#F5F7F2] hover:bg-[#EAEFE3]/70 border-[#D5DFC9]'"
+        >
+          <div>
+            <!-- Encabezado Día -->
+            <div class="flex items-center justify-between mb-1">
+              <span 
+                class="text-xs font-black uppercase tracking-tight"
+                :class="idx === 0 ? 'text-[#3D4A2A]' : 'text-[#1B2312]'"
+                x-text="dia.dia"
+              ></span>
+              <span class="text-[10px] font-mono text-[#6B894B]" x-text="dia.fecha"></span>
+            </div>
+
+            <!-- Ícono y estado -->
+            <div class="my-2">
+              <span class="text-3xl block" x-text="dia.icono"></span>
+              <span class="text-[10px] text-[#4E5F36] font-medium truncate block mt-1" x-text="dia.estado"></span>
+            </div>
+          </div>
+
+          <!-- Métricas climáticas -->
+          <div class="space-y-1.5 pt-2 border-t border-[#D5DFC9]/70 text-[11px]">
+            <!-- Temperatura Máx / Mín -->
+            <div class="flex items-center justify-center gap-2 font-mono">
+              <span class="font-bold text-[#1B2312]" x-text="`${dia.max}°`" title="Temperatura Máxima"></span>
+              <span class="text-[#8FA872] font-semibold" x-text="`${dia.min}°`" title="Temperatura Mínima"></span>
+            </div>
+
+            <!-- Viento -->
+            <div class="flex items-center justify-center gap-1 text-[10px] text-[#4E5F36]" title="Viento máximo">
+              <span>💨</span>
+              <span class="font-bold font-mono" x-text="`${dia.viento} km/h`"></span>
+            </div>
+
+            <!-- Lluvia -->
+            <div class="flex items-center justify-center gap-1 text-[10px]" :class="dia.lluvia > 0 ? 'text-blue-700 font-bold' : 'text-[#8FA872]'" title="Precipitación acumulada">
+              <span>🌧️</span>
+              <span class="font-mono" x-text="`${dia.lluvia} mm`"></span>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 
 </div>
 
 <!-- =========================================================================
-     JAVASCRIPT LIMPIO DEL CONTROLADOR CLIMA (Separado del HTML)
+     CONTROLADOR JS LIMPIO (Alpine.js)
      ========================================================================= -->
 <script>
   function climaController() {
     return {
-      /* === ESTADO DISEÑO 1 (WIDGET EMBEBIDO) === */
       ubicacionId: '{{ ubicacion_actual.id }}',
       capaActiva: 'wind',
       zoomNivel: 10,
       pantallaCompleta: false,
+      cargandoPronostico: false,
+      diasForecast: [],
+      apiKey: '{{ windy_api_key|default:"lGCxMnOmJKwM4cxE441od9xhzm2l1C6A" }}',
       
       ubicaciones: {
         chilecito: {
@@ -814,169 +448,71 @@
 
       get windyUrl() {
         const u = this.ubicacionActual;
-        return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km/h&zoom=' + 
-               this.zoomNivel + '&overlay=' + this.capaActiva + 
-               '&product=ecmwf&level=surface&lat=' + u.lat + '&lon=' + u.lon + 
-               '&detailLat=' + u.lat + '&detailLon=' + u.lon + 
-               '&detail=true&pressure=true&message=true';
+        let url = 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km/h&zoom=' + 
+                  this.zoomNivel + '&overlay=' + this.capaActiva + 
+                  '&product=ecmwf&level=surface&lat=' + u.lat + '&lon=' + u.lon + 
+                  '&detailLat=' + u.lat + '&detailLon=' + u.lon + 
+                  '&detail=true&pressure=true&message=true';
+        if (this.apiKey) {
+          url += '&key=' + encodeURIComponent(this.apiKey);
+        }
+        return url;
+      },
+
+      init() {
+        this.cargarPronostico(this.ubicacionActual.lat, this.ubicacionActual.lon);
       },
 
       seleccionarUbicacion(id) {
         this.ubicacionId = id;
+        this.cargarPronostico(this.ubicacionActual.lat, this.ubicacionActual.lon);
       },
 
       seleccionarCapa(capa) {
         this.capaActiva = capa;
       },
 
-      /* === ESTADO DISEÑO 2 (WINDY API + LEAFLET NATIVO) === */
-      apiKey: localStorage.getItem('windy_api_key') || '{{ windy_api_key|default:"lGCxMnOmJKwM4cxE441od9xhzm2l1C6A" }}',
-      apiIniciada: false,
-      apiError: null,
-      apiCapaActiva: 'wind',
-      pickerActivo: false,
-      pickerDatos: null,
-      modalKeyOpen: false,
-      nuevaKey: '',
+      async cargarPronostico(lat, lon) {
+        this.cargandoPronostico = true;
+        try {
+          const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + 
+                      '&longitude=' + lon + 
+                      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max' + 
+                      '&timezone=America%2FArgentina%2FLa_Rioja&forecast_days=7';
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data && data.daily) {
+            const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            this.diasForecast = data.daily.time.map((fecha, idx) => {
+              const d = new Date(fecha + 'T12:00:00');
+              const nombreDia = idx === 0 ? 'Hoy' : diasSemana[d.getDay()];
+              const code = data.daily.weather_code[idx];
+              let icono = '☀️';
+              let estado = 'Despejado';
+              if (code >= 1 && code <= 3) { icono = '⛅'; estado = 'Parcial nublado'; }
+              else if (code >= 45 && code <= 48) { icono = '🌫️'; estado = 'Niebla'; }
+              else if (code >= 51 && code <= 67) { icono = '🌧️'; estado = 'Lluvia'; }
+              else if (code >= 71 && code <= 77) { icono = '🌨️'; estado = 'Nieve/Granizo'; }
+              else if (code >= 80 && code <= 82) { icono = '🌦️'; estado = 'Chubascos'; }
+              else if (code >= 95) { icono = '⛈️'; estado = 'Tormenta'; }
 
-      init() {
-        const self = this;
-        // Iniciar mapa API automáticamente
-        setTimeout(() => {
-          if (self.apiKey) {
-            self.iniciarMapaWindyAPI();
-          }
-        }, 300);
-      },
-
-      abrirModalKey() {
-        this.nuevaKey = this.apiKey;
-        this.modalKeyOpen = true;
-      },
-
-      guardarKey() {
-        if (this.nuevaKey.trim()) {
-          this.apiKey = this.nuevaKey.trim();
-          localStorage.setItem('windy_api_key', this.apiKey);
-          this.modalKeyOpen = false;
-          this.iniciarMapaWindyAPI();
-        }
-      },
-
-      iniciarMapaWindyAPI() {
-        if (!this.apiKey) {
-          this.apiError = 'Debes ingresar tu clave de Windy API para inicializar la instancia interactiva de Leaflet.';
-          return;
-        }
-        this.apiError = null;
-
-        const self = this;
-        let intentos = 0;
-
-        const intentarInit = () => {
-          if (typeof windyInit === 'function') {
-            ejecutar();
-          } else if (intentos < 25) {
-            intentos++;
-            setTimeout(intentarInit, 200);
-          } else {
-            self.apiError = 'La librería Windy Map Forecast API no se cargó correctamente. Verifica tu conexión a Internet o bloqueadores de script.';
-          }
-        };
-
-        const ejecutar = () => {
-          const options = {
-            key: self.apiKey,
-            lat: -29.3033, // Centrado en el valle central (Nonogasta)
-            lon: -67.4964,
-            zoom: 10,
-            verbose: false,
-          };
-
-          try {
-            windyInit(options, windyAPI => {
-              self.apiIniciada = true;
-              window._windyAPI = windyAPI;
-              const { map, store, picker } = windyAPI;
-
-              // Marcadores Leaflet en las 3 localidades
-              const locs = [
-                { id: 'chilecito', nombre: 'Chilecito', lat: -29.1619, lon: -67.4965, alt: '1.080 msnm', info: 'Fincas Tradicionales y Pie de Monte' },
-                { id: 'nonogasta', nombre: 'Nonogasta', lat: -29.3033, lon: -67.4964, alt: '950 msnm', info: 'Polo Agroindustrial y Almazaras' },
-                { id: 'vichigasta', nombre: 'Vichigasta', lat: -29.4746, lon: -67.5122, alt: '860 msnm', info: 'Gran Cuenca Olivícola Valle Sur' }
-              ];
-
-              // Icono personalizado estilo verde oliva
-              const oliveIcon = L.divIcon({
-                className: 'custom-pin',
-                html: '<div style="background-color:#3D4A2A; border:2px solid #A2B38F; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.4);">🫒</div>',
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-              });
-
-              locs.forEach(loc => {
-                const marker = L.marker([loc.lat, loc.lon], { icon: oliveIcon }).addTo(map);
-                marker.bindPopup(
-                  '<div style="padding: 4px; min-width: 170px;">' +
-                    '<div style="font-weight: 800; font-size: 13px; color: #A2B38F;">' + loc.nombre + '</div>' +
-                    '<div style="font-size: 10px; color: #C8D6BC; margin-bottom: 4px;">' + loc.alt + ' • ' + loc.info + '</div>' +
-                    '<div style="font-size: 11px; color: #E5EBDD;">Lat: ' + loc.lat.toFixed(3) + ' | Lon: ' + loc.lon.toFixed(3) + '</div>' +
-                  '</div>'
-                );
-              });
-
-              // Listener de Picker (Sonda meteorológica puntual)
-              picker.on('pickerOpened', params => {
-                self.pickerDatos = params;
-              });
-              picker.on('pickerMoved', params => {
-                self.pickerDatos = params;
-              });
-              picker.on('pickerClosed', () => {
-                self.pickerDatos = null;
-              });
-
-              // Click en el mapa abre el picker si está activo
-              map.on('click', e => {
-                if (self.pickerActivo) {
-                  picker.open({ lat: e.latlng.lat, lon: e.latlng.lng });
-                }
-              });
+              return {
+                dia: nombreDia,
+                fecha: d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
+                max: Math.round(data.daily.temperature_2m_max[idx]),
+                min: Math.round(data.daily.temperature_2m_min[idx]),
+                viento: Math.round(data.daily.wind_speed_10m_max[idx]),
+                lluvia: data.daily.precipitation_sum[idx],
+                probLluvia: data.daily.precipitation_probability_max[idx] || 0,
+                icono: icono,
+                estado: estado
+              };
             });
-          } catch (err) {
-            self.apiError = 'Error al inicializar Windy API: ' + (err.message || err);
           }
-        };
-
-        intentarInit();
-      },
-
-      centrarEnLocalidad(lat, lon, zoom = 11) {
-        if (window._windyAPI && window._windyAPI.map) {
-          window._windyAPI.map.setView([lat, lon], zoom);
-          if (this.pickerActivo && window._windyAPI.picker) {
-            window._windyAPI.picker.open({ lat, lon });
-          }
-        }
-      },
-
-      cambiarCapaAPI(capa) {
-        this.apiCapaActiva = capa;
-        if (window._windyAPI && window._windyAPI.store) {
-          window._windyAPI.store.set('overlay', capa);
-        }
-      },
-
-      togglePickerAPI() {
-        this.pickerActivo = !this.pickerActivo;
-        if (window._windyAPI && window._windyAPI.picker) {
-          if (this.pickerActivo) {
-            const center = window._windyAPI.map.getCenter();
-            window._windyAPI.picker.open({ lat: center.lat, lon: center.lng });
-          } else {
-            window._windyAPI.picker.close();
-            this.pickerDatos = null;
-          }
+        } catch (e) {
+          console.error('Error al cargar pronostico:', e);
+        } finally {
+          this.cargandoPronostico = false;
         }
       }
     };
