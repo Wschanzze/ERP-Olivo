@@ -384,6 +384,23 @@
       </div>
     </div>
 
+    <!-- Aviso de autorización de dominio de Windy API -->
+    <div class="p-3.5 bg-[#F5F7F2] border border-[#D5DFC9] text-xs text-[#3D4A2A] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base">💡</span>
+        <div>
+          <span class="font-bold text-[#1B2312] block">Autorización de dominio en Windy:</span>
+          <p class="text-[11px] text-[#4E5F36] mt-0.5">
+            En la consola de Windy, en <strong>Restricciones de dominio</strong> debes ingresar sólo el dominio limpio (sin <code>https://</code> ni rutas), o dejarlo vacío (recomendado).
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <span class="text-[10px] text-[#6B894B] font-mono">Dominio actual:</span>
+        <code class="px-2 py-1 bg-white border border-[#D5DFC9] rounded-lg font-mono text-[11px] font-bold text-[#1B2312]" x-text="window.location.hostname"></code>
+      </div>
+    </div>
+
     <!-- Mensaje de error si la API falla -->
     <div x-show="apiError" x-cloak class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex items-center gap-2">
       <span>⚠️</span>
@@ -392,6 +409,7 @@
 
     <!-- Controles del Mapa Leaflet Windy API -->
     <div class="space-y-4">
+
       
       <!-- Barra de controles API: Localidades y Capas -->
       <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
