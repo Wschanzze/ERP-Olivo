@@ -455,19 +455,21 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
     template_name = AFIP_PDF_TEMPLATES.get(cbte_tipo_num, 'invoice-b')
 
     cuit_clean = clean_cuit(comprobante.cuit)
-    doc_tipo_desc = 'CUIT' if len(cuit_clean) == 11 else ('DNI' if len(cuit_clean) == 8 else 'Consumidor Final')
+    doc_tipo_num = 80 if len(cuit_clean) == 11 else (96 if len(cuit_clean) == 8 else 99)
+    
+    empresa = Empresa.objects.first()
 
     pdf_payload = {
         "file_name": f"{comprobante.get_tipo_comprobante_display()}_{comprobante.numero_completo}.pdf",
         "template": {
             "name": template_name,
             "params": {
-                "issuer_business_name": Empresa.objects.first().razon_social if Empresa.objects.first() else "Empresa S.A.",
-                "issuer_cuit": str(getattr(settings, 'AFIP_CUIT', Empresa.objects.first().cuit if Empresa.objects.first() else 20409378472)),
-                "issuer_address": Empresa.objects.first().direccion if Empresa.objects.first() else "Direccion Comercial",
-                "issuer_iva_condition": Empresa.objects.first().condicion_iva if Empresa.objects.first() else "IVA Responsable Inscripto",
-                "issuer_activity_start_date": Empresa.objects.first().inicio_actividades.strftime("%d/%m/%Y") if Empresa.objects.first() and Empresa.objects.first().inicio_actividades else "01/01/2020",
-                "issuer_gross_income": Empresa.objects.first().ingresos_brutos if Empresa.objects.first() else "0",
+                "issuer_business_name": empresa.razon_social if empresa and empresa.razon_social else "Empresa S.A.",
+                "issuer_cuit": str(getattr(settings, 'AFIP_CUIT', empresa.cuit if empresa else 20409378472)),
+                "issuer_address": empresa.direccion if empresa and empresa.direccion else "-",
+                "issuer_iva_condition": empresa.condicion_iva if empresa and empresa.condicion_iva else "IVA Responsable Inscripto",
+                "issuer_activity_start_date": empresa.inicio_actividades.strftime("%d/%m/%Y") if empresa and empresa.inicio_actividades else "01/01/2020",
+                "issuer_gross_income": empresa.ingresos_brutos if empresa and empresa.ingresos_brutos else "0",
                 "sales_point": int(comprobante.punto_de_venta),
                 "voucher_number": int(comprobante.numero_comprobante),
                 "issue_date": comprobante.fecha_emision.strftime("%d/%m/%Y"),
@@ -478,7 +480,7 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
                 "currency_id": "PES",
                 "currency_rate": 1.0,
                 "receiver_name": comprobante.razon_social,
-                "receiver_document_type": doc_tipo_desc,
+                "receiver_document_type": doc_tipo_num,
                 "receiver_document_number": cuit_clean or "0",
                 "receiver_address": comprobante.cuenta_corriente.direccion if comprobante.cuenta_corriente else "-",
                 "receiver_iva_condition": comprobante.get_condicion_iva_display(),
@@ -495,6 +497,7 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
                 "net_amount_untaxed": float(comprobante.no_gravado or 0),
                 "exempt_amount": float(comprobante.exento or 0),
                 "tributes_amount": float((comprobante.percepcion_iva or 0) + (comprobante.percepcion_iibb or 0) + (comprobante.impuestos_internos or 0)),
+                "vat_amount": float((comprobante.iva_21 or 0) + (comprobante.iva_10_5 or 0) + (comprobante.iva_27 or 0)),
                 "total_amount": float(comprobante.total)
             }
         }
