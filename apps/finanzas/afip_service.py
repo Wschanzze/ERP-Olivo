@@ -462,35 +462,40 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
         "template": {
             "name": template_name,
             "params": {
-                "business_name": Empresa.objects.first().razon_social if Empresa.objects.first() else "Empresa S.A.",
-                "business_tax_id": str(getattr(settings, 'AFIP_CUIT', Empresa.objects.first().cuit if Empresa.objects.first() else 20409378472)),
-                "business_address": Empresa.objects.first().direccion if Empresa.objects.first() else "Direccion Comercial",
-                "business_vat_condition": Empresa.objects.first().condicion_iva if Empresa.objects.first() else "IVA Responsable Inscripto",
-                "business_start_date": Empresa.objects.first().inicio_actividades.strftime("%d/%m/%Y") if Empresa.objects.first() and Empresa.objects.first().inicio_actividades else "01/01/2020",
-                "business_gross_income": Empresa.objects.first().ingresos_brutos if Empresa.objects.first() else "0",
+                "issuer_business_name": Empresa.objects.first().razon_social if Empresa.objects.first() else "Empresa S.A.",
+                "issuer_cuit": str(getattr(settings, 'AFIP_CUIT', Empresa.objects.first().cuit if Empresa.objects.first() else 20409378472)),
+                "issuer_address": Empresa.objects.first().direccion if Empresa.objects.first() else "Direccion Comercial",
+                "issuer_iva_condition": Empresa.objects.first().condicion_iva if Empresa.objects.first() else "IVA Responsable Inscripto",
+                "issuer_activity_start_date": Empresa.objects.first().inicio_actividades.strftime("%d/%m/%Y") if Empresa.objects.first() and Empresa.objects.first().inicio_actividades else "01/01/2020",
+                "issuer_gross_income": Empresa.objects.first().ingresos_brutos if Empresa.objects.first() else "0",
                 "sales_point": int(comprobante.punto_de_venta),
                 "voucher_number": int(comprobante.numero_comprobante),
-                "date": comprobante.fecha_emision.strftime("%d/%m/%Y"),
+                "issue_date": comprobante.fecha_emision.strftime("%d/%m/%Y"),
                 "cae": comprobante.cae,
-                "cae_expiration_date": comprobante.vto_cae.strftime("%d/%m/%Y") if comprobante.vto_cae else "",
-                "concept": "Productos",
-                "client_name": comprobante.razon_social,
-                "client_tax_id": cuit_clean or "0",
-                "client_tax_id_type": doc_tipo_desc,
-                "client_address": comprobante.cuenta_corriente.direccion if comprobante.cuenta_corriente else "",
-                "client_vat_condition": comprobante.get_condicion_iva_display(),
+                "cae_due_date": comprobante.vto_cae.strftime("%d/%m/%Y") if comprobante.vto_cae else "",
+                "concept": 1,
+                "sale_condition": "Contado",
+                "currency_id": "PES",
+                "currency_rate": 1.0,
+                "receiver_name": comprobante.razon_social,
+                "receiver_document_type": doc_tipo_desc,
+                "receiver_document_number": cuit_clean or "0",
+                "receiver_address": comprobante.cuenta_corriente.direccion if comprobante.cuenta_corriente else "-",
+                "receiver_iva_condition": comprobante.get_condicion_iva_display(),
                 "items": [
                     {
-                        "description": comprobante.concepto or "Productos Olivícolas (Aceite de Oliva / Aceitunas)",
+                        "description": comprobante.concepto or "Productos Olivícolas",
                         "quantity": 1,
                         "unit_price": float(comprobante.neto_gravado_21 or comprobante.total),
                         "subtotal": float(comprobante.neto_gravado_21 or comprobante.total),
-                        "vat": 21.0
+                        "vat_rate": 21.0
                     }
                 ],
-                "net_amount": float(comprobante.neto_gravado_21 or comprobante.total),
-                "vat_amount": float(comprobante.iva_21 or 0),
-                "total": float(comprobante.total)
+                "net_amount_taxed": float(comprobante.neto_gravado_21 or comprobante.total),
+                "net_amount_untaxed": float(comprobante.no_gravado or 0),
+                "exempt_amount": float(comprobante.exento or 0),
+                "tributes_amount": float((comprobante.percepcion_iva or 0) + (comprobante.percepcion_iibb or 0) + (comprobante.impuestos_internos or 0)),
+                "total_amount": float(comprobante.total)
             }
         }
     }
