@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 
+from django.conf import settings
 import json
 from apps.personal.models import OrdenTrabajo, TareaOrdenTrabajo
 from apps.campos.models import Cuadro
@@ -72,7 +73,9 @@ class ClimaPronosticoView(TemplateView):
         ctx['ubicaciones_json'] = json.dumps(ubicaciones)
         ctx['ubicacion_actual'] = ubicacion_actual
         ctx['fincas'] = Finca.objects.all()
+        ctx['windy_api_key'] = getattr(settings, 'WINDY_API_KEY', '')
         return ctx
+
 
 
 class CuadrosListView(ListView):
