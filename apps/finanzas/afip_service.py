@@ -459,6 +459,33 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
     
     empresa = Empresa.objects.first()
 
+    vat_breakdown = []
+    if comprobante.neto_gravado_21 and comprobante.iva_21:
+        vat_breakdown.append({
+            "vat_rate": 21.0,
+            "taxable_base": float(comprobante.neto_gravado_21),
+            "vat_amount": float(comprobante.iva_21)
+        })
+    if comprobante.neto_gravado_10_5 and comprobante.iva_10_5:
+        vat_breakdown.append({
+            "vat_rate": 10.5,
+            "taxable_base": float(comprobante.neto_gravado_10_5),
+            "vat_amount": float(comprobante.iva_10_5)
+        })
+    if comprobante.neto_gravado_27 and comprobante.iva_27:
+        vat_breakdown.append({
+            "vat_rate": 27.0,
+            "taxable_base": float(comprobante.neto_gravado_27),
+            "vat_amount": float(comprobante.iva_27)
+        })
+    # Fallback si no hay desgloses pero es Factura A (evitar arreglo vacío que AfipSDK rechazaría)
+    if not vat_breakdown and template_name == 'invoice-a':
+        vat_breakdown.append({
+            "vat_rate": 21.0,
+            "taxable_base": float(comprobante.neto_gravado_21 or comprobante.total or 0),
+            "vat_amount": float(comprobante.iva_21 or 0)
+        })
+
     pdf_payload = {
         "file_name": f"{comprobante.get_tipo_comprobante_display()}_{comprobante.numero_completo}.pdf",
         "template": {
@@ -493,6 +520,7 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
                         "vat_rate": 21.0
                     }
                 ],
+                "vat_breakdown": vat_breakdown,
                 "net_amount_taxed": float(comprobante.neto_gravado_21 or comprobante.total),
                 "net_amount_untaxed": float(comprobante.no_gravado or 0),
                 "exempt_amount": float(comprobante.exento or 0),
