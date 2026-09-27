@@ -920,7 +920,7 @@ class CuentasListValoresView(ListView):
 
 class CuentaCreateView(CreateView):
     model = Cuenta
-    fields = ['nombre', 'tipo', 'moneda', 'banco_emisor_nombre', 'numero_cuenta', 'cbu_cvu', 'saldo_actual', 'empresa']
+    fields = ['nombre', 'tipo', 'moneda', 'banco_nombre', 'numero_cuenta', 'cbu_cvu', 'saldo_actual', 'empresa']
     template_name = 'finanzas/partials/cuenta_form_modal.html'
 
     def get_success_url(self):
@@ -935,7 +935,8 @@ class CuentaCreateView(CreateView):
 
 class CuentaUpdateView(UpdateView):
     model = Cuenta
-    fields = ['nombre', 'tipo', 'moneda', 'banco_emisor_nombre', 'numero_cuenta', 'cbu_cvu', 'activa', 'empresa']
+    fields = ['nombre', 'tipo', 'moneda', 'banco_nombre', 'numero_cuenta', 'cbu_cvu', 'activa', 'empresa']
+
     template_name = 'finanzas/cuenta_edit.html'
     success_url = reverse_lazy('finanzas:dashboard')
 
