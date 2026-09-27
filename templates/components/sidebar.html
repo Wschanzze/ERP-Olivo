@@ -570,10 +570,10 @@
     </div>
 
     <!-- Carrusel Horizontal de Módulos -->
-    <div class="flex-shrink-0 bg-[#161F0E] border-b border-[#2C381D] px-2 py-3">
-      <div class="flex items-start space-x-2 overflow-x-auto pb-1 custom-scrollbar px-1 justify-center min-w-min">
+    <div class="flex-shrink-0 bg-[#161F0E] border-b border-[#2C381D] px-0 py-3">
+      <div class="flex flex-nowrap items-start space-x-6 overflow-x-auto pb-2 pt-1 custom-scrollbar px-6 snap-x w-full">
         <!-- 1. Tableros -->
-        <button type="button" @click="activeModule = 'tableros'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+        <button type="button" @click="activeModule = 'tableros'" class="snap-center flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
           <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'tableros' ? 'text-[#E5B842] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(229,184,66,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#E5B842] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
           </svg>
