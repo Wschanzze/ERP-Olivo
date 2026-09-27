@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, View
+from django.views.generic import ListView, CreateView, View, TemplateView
 
 from apps.core.excel_export import export_to_excel
 
@@ -8,11 +8,72 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 
 import json
-from django.views import View
 from apps.personal.models import OrdenTrabajo, TareaOrdenTrabajo
 from apps.campos.models import Cuadro
 from apps.core.models import Finca
 from .models import LoteDeCosecha, RegistroFenologico, EventoCuadro
+
+
+class ClimaPronosticoView(TemplateView):
+    """
+    Vista meteorológica y de pronóstico climático para gestión de fincas olivícolas,
+    integrada con Windy.com con selector de ubicaciones en La Rioja:
+    Chilecito, Nonogasta y Vichigasta.
+    """
+    template_name = 'campos/clima_pronostico.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        
+        # Localidades olivícolas clave de La Rioja (Chilecito, Nonogasta y Vichigasta)
+        ubicaciones = [
+            {
+                'id': 'chilecito',
+                'nombre': 'Chilecito',
+                'departamento': 'Chilecito, La Rioja',
+                'lat': -29.1619,
+                'lon': -67.4965,
+                'altitud': '1.080 msnm',
+                'valle': 'Valle de Antinaco - Los Colorados',
+                'descripcion': 'Cabecera del departamento. Fincas y olivares en pendiente al pie del macizo de Famatina.',
+                'clima_tipo': 'Árido de sierras y bolsones, gran amplitud térmica y vientos de montaña',
+                'icono': '🏔️',
+            },
+            {
+                'id': 'nonogasta',
+                'nombre': 'Nonogasta',
+                'departamento': 'Chilecito, La Rioja',
+                'lat': -29.3033,
+                'lon': -67.4964,
+                'altitud': '950 msnm',
+                'valle': 'Polo Agroindustrial Central',
+                'descripcion': 'Centro neurálgico olivícola e industrial. Plantaciones con fertirriego por goteo y almazaras.',
+                'clima_tipo': 'Seco y soleado con alta heliofanía; noches frescas ideales para síntesis de polifenoles',
+                'icono': '🫒',
+            },
+            {
+                'id': 'vichigasta',
+                'nombre': 'Vichigasta',
+                'departamento': 'Chilecito, La Rioja',
+                'lat': -29.4746,
+                'lon': -67.5122,
+                'altitud': '860 msnm',
+                'valle': 'Valle Sur Olivícola',
+                'descripcion': 'Extensa cuenca olivícola de variedades aceiteras y de conserva (Arauco, Manzanilla, Picual).',
+                'clima_tipo': 'Microclima de llanura aluvial, menor incidencia de heladas tardías que en altura',
+                'icono': '🌿',
+            },
+        ]
+
+        ubicacion_req = self.request.GET.get('ubicacion', 'chilecito').lower()
+        ubicacion_actual = next((u for u in ubicaciones if u['id'] == ubicacion_req), ubicaciones[0])
+
+        ctx['ubicaciones'] = ubicaciones
+        ctx['ubicaciones_json'] = json.dumps(ubicaciones)
+        ctx['ubicacion_actual'] = ubicacion_actual
+        ctx['fincas'] = Finca.objects.all()
+        return ctx
+
 
 class CuadrosListView(ListView):
     model = Cuadro

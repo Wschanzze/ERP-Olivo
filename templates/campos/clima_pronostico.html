@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clima & Pronóstico Meteorológico | ERP Olivícola{% endblock %}
+
+{% block content %}
+<div 
+  class="space-y-6" 
+  x-data="{
+    ubicacionId: '{{ ubicacion_actual.id }}',
+    capaActiva: 'wind',
+    zoomNivel: 10,
+    pantallaCompleta: false,
+    
+    ubicaciones: {
+      chilecito: {
+        nombre: 'Chilecito',
+        departamento: 'Dpto. Chilecito, La Rioja',
+        lat: -29.1619,
+        lon: -67.4965,
+        altitud: '1.080 msnm',
+        valle: 'Valle de Antinaco - Los Colorados',
+        icono: '🏔️',
+        desc: 'Cabecera departamental. Fincas y cuadros al pie del Famatina, con notable oscilación térmica entre día y noche.'
+      },
+      nonogasta: {
+        nombre: 'Nonogasta',
+        departamento: 'Dpto. Chilecito, La Rioja',
+        lat: -29.3033,
+        lon: -67.4964,
+        altitud: '950 msnm',
+        valle: 'Polo Agroindustrial Central',
+        icono: '🫒',
+        desc: 'Corazón agroindustrial de la olivicultura. Plantaciones intensivas bajo riego localizado por goteo y almazaras.'
+      },
+      vichigasta: {
+        nombre: 'Vichigasta',
+        departamento: 'Dpto. Chilecito, La Rioja',
+        lat: -29.4746,
+        lon: -67.5122,
+        altitud: '860 msnm',
+        valle: 'Valle Sur Olivícola',
+        icono: '🌿',
+        desc: 'Extensa cuenca productiva con excelente acumulación de horas de frío y microclima propicio para variedades aceiteras y de mesa.'
+      }
+    },
+
+    get ubicacionActual() {
+      return this.ubicaciones[this.ubicacionId] || this.ubicaciones.chilecito;
+    },
+
+    get windyUrl() {
+      const u = this.ubicacionActual;
+      return `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km/h&zoom=${this.zoomNivel}&overlay=${this.capaActiva}&product=ecmwf&level=surface&lat=${u.lat}&lon=${u.lon}&detailLat=${u.lat}&detailLon=${u.lon}&detail=true&pressure=true&message=true`;
+    },
+
+    seleccionarUbicacion(id) {
+      this.ubicacionId = id;
+    },
+
+    seleccionarCapa(capa) {
+      this.capaActiva = capa;
+    }
+  }"
+>
+  
+  <!-- Encabezado Principal -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="w-10 h-10 rounded-2xl bg-[#3D4A2A] text-white flex items-center justify-center font-bold shadow-xs">
+          <svg class="w-5 h-5 text-[#A3E635]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Clima &amp; Pronóstico de Fincas</h1>
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Windy ECMWF En Vivo
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Control meteorológico satelital y pronóstico extendido para labores agrícolas en La Rioja.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones rápidas de cabecera -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <a 
+        :href="`https://www.windy.com/${ubicacionActual.lat}/${ubicacionActual.lon}?${capaActiva},${ubicacionActual.lat},${ubicacionActual.lon},11`" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shadow-xs transition-colors"
+        title="Abrir pronóstico completo en Windy.com"
+      >
+        <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+        <span>Abrir en Windy</span>
+      </a>
+
+      <a 
+        href="{% url 'campos:orden_trabajo' %}"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#3D4A2A] hover:bg-[#2F3A20] text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+      >
+        <svg class="w-4 h-4 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>Planificar Labor</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Selector de Ubicación en La Rioja (Chilecito, Nonogasta, Vichigasta) -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <!-- 1. Chilecito -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('chilecito')"
+      :class="ubicacionId === 'chilecito' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-sm' 
+        : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/90 hover:border-slate-300'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🏔️</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'chilecito' ? 'text-white' : 'text-slate-900'">Chilecito</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'chilecito' ? 'bg-white/20 text-[#A3E635]' : 'bg-slate-100 text-slate-600'"
+              >
+                1.080 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'chilecito' ? 'text-white/80' : 'text-slate-500'">Valle de Antinaco - Los Colorados</p>
+          </div>
+        </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'chilecito' ? 'bg-[#A3E635]' : 'bg-slate-300 group-hover:bg-slate-400'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'chilecito' ? 'text-white/70' : 'text-slate-500'">
+        Cabecera departamental. Fincas y cuadros al pie del Famatina, con vientos catabáticos nocturnos.
+      </p>
+    </button>
+
+    <!-- 2. Nonogasta -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('nonogasta')"
+      :class="ubicacionId === 'nonogasta' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-sm' 
+        : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/90 hover:border-slate-300'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🫒</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'nonogasta' ? 'text-white' : 'text-slate-900'">Nonogasta</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'nonogasta' ? 'bg-white/20 text-[#A3E635]' : 'bg-slate-100 text-slate-600'"
+              >
+                950 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'nonogasta' ? 'text-white/80' : 'text-slate-500'">Polo Agroindustrial Central</p>
+          </div>
+        </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'nonogasta' ? 'bg-[#A3E635]' : 'bg-slate-300 group-hover:bg-slate-400'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'nonogasta' ? 'text-white/70' : 'text-slate-500'">
+        Zona central de almazaras y plantaciones intensivas bajo riego presurizado por goteo.
+      </p>
+    </button>
+
+    <!-- 3. Vichigasta -->
+    <button
+      type="button"
+      @click="seleccionarUbicacion('vichigasta')"
+      :class="ubicacionId === 'vichigasta' 
+        ? 'bg-[#3D4A2A] text-white ring-2 ring-[#3D4A2A] ring-offset-2 border-transparent shadow-sm' 
+        : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/90 hover:border-slate-300'"
+      class="p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex flex-col justify-between group"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🌿</span>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm" :class="ubicacionId === 'vichigasta' ? 'text-white' : 'text-slate-900'">Vichigasta</h3>
+              <span 
+                class="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold"
+                :class="ubicacionId === 'vichigasta' ? 'bg-white/20 text-[#A3E635]' : 'bg-slate-100 text-slate-600'"
+              >
+                860 msnm
+              </span>
+            </div>
+            <p class="text-[11px] mt-0.5" :class="ubicacionId === 'vichigasta' ? 'text-white/80' : 'text-slate-500'">Valle Sur Olivícola</p>
+          </div>
+        </div>
+        <span 
+          class="w-2.5 h-2.5 rounded-full mt-1"
+          :class="ubicacionId === 'vichigasta' ? 'bg-[#A3E635]' : 'bg-slate-300 group-hover:bg-slate-400'"
+        ></span>
+      </div>
+      <p class="text-[11px] mt-3 line-clamp-2" :class="ubicacionId === 'vichigasta' ? 'text-white/70' : 'text-slate-500'">
+        Gran cuenca productora de Arauco, Manzanilla y Picual. Microclima cálido y gran acumulación térmica.
+      </p>
+    </button>
+  </div>
+
+  <!-- Barra de Herramientas del Mapa: Capas Meteorológicas y Zoom -->
+  <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    
+    <!-- Filtro de Capas Meteorológicas (Pills) -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 custom-scrollbar">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 whitespace-nowrap">Capas:</span>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('wind')"
+        :class="capaActiva === 'wind' ? 'bg-sky-600 text-white font-bold shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>💨</span>
+        <span>Viento &amp; Ráfagas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('rain')"
+        :class="capaActiva === 'rain' ? 'bg-blue-600 text-white font-bold shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🌧️</span>
+        <span>Lluvia &amp; Tormentas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('temp')"
+        :class="capaActiva === 'temp' ? 'bg-amber-600 text-white font-bold shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🌡️</span>
+        <span>Temperatura / Heladas</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('clouds')"
+        :class="capaActiva === 'clouds' ? 'bg-slate-700 text-white font-bold shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>☁️</span>
+        <span>Nubosidad</span>
+      </button>
+
+      <button 
+        type="button"
+        @click="seleccionarCapa('radar')"
+        :class="capaActiva === 'radar' ? 'bg-purple-700 text-white font-bold shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors whitespace-nowrap cursor-pointer"
+      >
+        <span>🛰️</span>
+        <span>Radar Satelital</span>
+      </button>
+    </div>
+
+    <!-- Controles de Zoom y Estado Activo -->
+    <div class="flex items-center gap-2 self-end lg:self-auto flex-wrap">
+      <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        <button 
+          type="button" 
+          @click="zoomNivel = 11" 
+          :class="zoomNivel === 11 ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom a nivel finca o cuadro"
+        >
+          Finca
+        </button>
+        <button 
+          type="button" 
+          @click="zoomNivel = 9" 
+          :class="zoomNivel === 9 ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom a nivel valle de Chilecito y Famatina"
+        >
+          Valle
+        </button>
+        <button 
+          type="button" 
+          @click="zoomNivel = 7" 
+          :class="zoomNivel === 7 ? 'bg-white text-slate-900 font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'"
+          class="px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer"
+          title="Zoom regional provincia de La Rioja"
+        >
+          Región
+        </button>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 font-mono">
+        <span class="text-slate-400">Coordenadas:</span>
+        <span class="font-bold" x-text="`${ubicacionActual.lat.toFixed(3)}, ${ubicacionActual.lon.toFixed(3)}`"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor del Widget Windy Interactivo -->
+  <div 
+    class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden transition-all"
+    :class="pantallaCompleta ? 'fixed inset-0 z-50 rounded-none' : 'relative'"
+  >
+    <!-- Barra superior del visor -->
+    <div class="px-5 py-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <span class="text-lg" x-text="ubicacionActual.icono"></span>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-extrabold tracking-tight" x-text="`Estación ${ubicacionActual.nombre}`"></span>
+            <span class="text-[10px] text-slate-400 font-mono" x-text="`(${ubicacionActual.valle})`"></span>
+          </div>
+          <p class="text-[11px] text-slate-400">Modelo ECMWF 9km • Presión barométrica e isolíneas activas</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          @click="pantallaCompleta = !pantallaCompleta" 
+          class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+          :title="pantallaCompleta ? 'Salir de pantalla completa' : 'Ver en pantalla completa'"
+        >
+          <svg x-show="!pantallaCompleta" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+          <svg x-show="pantallaCompleta" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Iframe de Windy con URL reactiva -->
+    <div class="w-full relative bg-slate-950" :style="pantallaCompleta ? 'height: calc(100vh - 56px);' : 'height: 640px;'">
+      <iframe
+        id="windy-frame"
+        class="w-full h-full border-0"
+        :src="windyUrl"
+        frameborder="0"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+
+  <!-- Recomendaciones y Criterios Agroclimáticos para el Olivar -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Criterio 1: Viento y Pulverizaciones -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center font-bold text-sm">💨</span>
+          <div>
+            <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Criterio de Pulverización</h4>
+            <span class="text-[10px] text-slate-400">Tratamientos foliares y curaciones</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          El viento óptimo para curaciones con cobre contra <em>Repilo</em> o fitosanitarios debe ser de <strong>5 a 15 km/h</strong>. Con ráfagas superiores a <strong>20 km/h</strong> suspender por deriva y pérdida de cobertura.
+        </p>
+      </div>
+      <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+        <span class="text-slate-500">Horario sugerido:</span>
+        <span class="font-bold text-sky-700">Primeras horas (calma)</span>
+      </div>
+    </div>
+
+    <!-- Criterio 2: Heladas y Floración -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-sm">🌡️</span>
+          <div>
+            <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Umbral Crítico de Heladas</h4>
+            <span class="text-[10px] text-slate-400">Floración y cuaje de aceituna</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Durante brotación y floración primaveral (septiembre a noviembre), temperaturas inferiores a <strong>-1.5°C</strong> dañan inflorescencias. En invierno, el olivo soporta hasta <strong>-7°C</strong> sin daño leñoso severo.
+        </p>
+      </div>
+      <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+        <span class="text-slate-500">Riesgo en Valle:</span>
+        <span class="font-bold text-amber-700">Mayor en zonas bajas (pozo frío)</span>
+      </div>
+    </div>
+
+    <!-- Criterio 3: Riego y Viento Zonda -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold text-sm">💧</span>
+          <div>
+            <h4 class="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Demanda Hídrica &amp; Zonda</h4>
+            <span class="text-[10px] text-slate-400">Riego por goteo presurizado</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Ante eventos de viento Zonda o humedad relativa menor al <strong>15%</strong>, la evapotranspiración (ETc) se triplica. Anticipar turnos de fertirriego para evitar estrés hídrico y caída de fruto en desarrollo.
+        </p>
+      </div>
+      <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+        <span class="text-slate-500">Manejo sugerido:</span>
+        <span class="font-bold text-emerald-700">Riego previo a ráfagas secas</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

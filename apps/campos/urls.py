@@ -11,6 +11,9 @@ urlpatterns = [
     path('fenologia/crear/', views.RegistroFenologicoCreateView.as_view(), name='fenologia_create'),
     path('eventos/crear/', views.EventoCuadroCreateView.as_view(), name='evento_create'),
     
+    # Clima & Pronóstico (Windy)
+    path('clima/', views.ClimaPronosticoView.as_view(), name='clima'),
+    
     # Órdenes de Trabajo
     path('orden-trabajo/', views.OrdenTrabajoView.as_view(), name='orden_trabajo'),
     path('orden-trabajo/guardar/', views.OrdenTrabajoGuardarView.as_view(), name='orden_trabajo_guardar'),
