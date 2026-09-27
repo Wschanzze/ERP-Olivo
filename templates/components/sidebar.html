@@ -570,51 +570,55 @@
     </div>
 
     <!-- Carrusel Horizontal de Módulos -->
-    <div class="flex-shrink-0 bg-[#161F0E] border-b border-[#2C381D] px-2 py-2">
-      <div class="text-[9.5px] font-mono text-[#8FA872] uppercase tracking-wider px-1 pb-1 font-bold">
-        Módulo:
-      </div>
-      <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 custom-scrollbar">
-        <button
-          type="button"
-          @click="activeModule = 'tableros'"
-          :class="activeModule === 'tableros' ? 'bg-[#3D4A2A] text-white font-bold border-[#637946] shadow-xs' : 'bg-white/5 text-[#A2B38F] hover:text-white border-transparent'"
-          class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer"
-        >
-          📊 Tableros
+    <div class="flex-shrink-0 bg-[#161F0E] border-b border-[#2C381D] px-2 py-3">
+      <div class="flex items-start space-x-2 overflow-x-auto pb-1 custom-scrollbar px-1 justify-center min-w-min">
+        <!-- 1. Tableros -->
+        <button type="button" @click="activeModule = 'tableros'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+          <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'tableros' ? 'text-[#E5B842] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(229,184,66,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#E5B842] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span class="text-[10px] leading-none mt-1.5 tracking-tight transition-colors" :class="activeModule === 'tableros' ? 'text-white font-bold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'">Tableros</span>
         </button>
-        <button
-          type="button"
-          @click="activeModule = 'campo'"
-          :class="activeModule === 'campo' ? 'bg-[#3D4A2A] text-white font-bold border-[#637946] shadow-xs' : 'bg-white/5 text-[#A2B38F] hover:text-white border-transparent'"
-          class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer"
-        >
-          🌿 Campo
+
+        <!-- 2. Campo -->
+        {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_campo %}
+        <button type="button" @click="activeModule = 'campo'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+          <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'campo' ? 'text-[#4ADE80] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(74,222,128,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#4ADE80] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span class="text-[10px] leading-none mt-1.5 tracking-tight transition-colors" :class="activeModule === 'campo' ? 'text-white font-bold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'">Campo</span>
         </button>
-        <button
-          type="button"
-          @click="activeModule = 'finanzas'"
-          :class="activeModule === 'finanzas' ? 'bg-[#3D4A2A] text-white font-bold border-[#637946] shadow-xs' : 'bg-white/5 text-[#A2B38F] hover:text-white border-transparent'"
-          class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer"
-        >
-          💰 Finanzas
+        {% endif %}
+
+        <!-- 3. Finanzas -->
+        {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_finanzas %}
+        <button type="button" @click="activeModule = 'finanzas'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+          <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'finanzas' ? 'text-[#34D399] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(52,211,153,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#34D399] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-[10px] leading-none mt-1.5 tracking-tight transition-colors" :class="activeModule === 'finanzas' ? 'text-white font-bold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'">Finanzas</span>
         </button>
-        <button
-          type="button"
-          @click="activeModule = 'personal'"
-          :class="activeModule === 'personal' ? 'bg-[#3D4A2A] text-white font-bold border-[#637946] shadow-xs' : 'bg-white/5 text-[#A2B38F] hover:text-white border-transparent'"
-          class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer"
-        >
-          👥 Personal
+        {% endif %}
+
+        <!-- 4. Personal -->
+        {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_personal %}
+        <button type="button" @click="activeModule = 'personal'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+          <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'personal' ? 'text-[#A3E635] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(163,230,53,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#A3E635] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-[10px] leading-none mt-1.5 tracking-tight transition-colors" :class="activeModule === 'personal' ? 'text-white font-bold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'">Personal</span>
         </button>
-        <button
-          type="button"
-          @click="activeModule = 'almazara'"
-          :class="activeModule === 'almazara' ? 'bg-[#3D4A2A] text-white font-bold border-[#637946] shadow-xs' : 'bg-white/5 text-[#A2B38F] hover:text-white border-transparent'"
-          class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs border transition-colors cursor-pointer"
-        >
-          🏭 Almazara
+        {% endif %}
+
+        <!-- 5. Almazara -->
+        {% if not user.is_authenticated or user.is_admin_general or user.puede_ver_almazara %}
+        <button type="button" @click="activeModule = 'almazara'" class="flex-shrink-0 w-16 flex flex-col items-center justify-center transition-all duration-150 cursor-pointer group bg-transparent border-0 select-none">
+          <svg class="w-8 h-8 transition-all duration-150" :class="activeModule === 'almazara' ? 'text-[#FBBF24] scale-110 opacity-100 drop-shadow-[0_2px_10px_rgba(251,191,36,0.35)]' : 'text-[#8FA872]/80 opacity-70 group-hover:text-[#FBBF24] group-hover:opacity-100'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span class="text-[10px] leading-none mt-1.5 tracking-tight transition-colors" :class="activeModule === 'almazara' ? 'text-white font-bold' : 'text-[#8FA872]/70 group-hover:text-white font-medium'">Almazara</span>
         </button>
+        {% endif %}
       </div>
     </div>
 
@@ -630,13 +634,13 @@
             href="{% url 'dashboard:index' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'dashboard' and request.resolver_match.url_name == 'index' and 'vista=tablero' not in request.get_full_path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🏠 Inicio &amp; Accesos</span>
+            <span>Inicio &amp; Accesos</span>
           </a>
           <a
             href="{% url 'dashboard:tablero' %}?vista=tablero"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if 'vista=tablero' in request.get_full_path or request.resolver_match.url_name == 'tablero' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📈 Tablero Ejecutivo</span>
+            <span>Tablero Ejecutivo</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">BI</span>
           </a>
         </div>
@@ -648,25 +652,25 @@
               href="{% url 'campos:orden_trabajo' %}"
               class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'orden_trabajo' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
             >
-              <span>📋 Órdenes de Trabajo</span>
+              <span>Órdenes de Trabajo</span>
             </a>
           <a
             href="{% url 'campos:cuadros_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'campos' and request.resolver_match.url_name == 'cuadros_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🗺️ Campos y Cuadros</span>
+            <span>Campos y Cuadros</span>
           </a>
           <a
             href="{% url 'parte_diario:partes_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'parte_diario' and request.resolver_match.url_name == 'partes_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📋 Partes Diarios de Labor</span>
+            <span>Partes Diarios de Labor</span>
           </a>
           <a
             href="{% url 'costos:dashboard' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'costos' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📊 Costos por Cuadro</span>
+            <span>Costos por Cuadro</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">ABC</span>
           </a>
         </div>
@@ -678,58 +682,58 @@
             href="{% url 'finanzas:dashboard' %}?tab=resultados"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-emerald-300 bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📈 Resultado Período</span>
+            <span>Resultado Período</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">P&amp;L</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=caja"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'caja' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🏦 Cajas &amp; Bancos (Arqueo)</span>
+            <span>Cajas &amp; Bancos (Arqueo)</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=libro_iva"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'libro_iva' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📑 Libro de IVA &amp; Facturas</span>
+            <span>Libro de IVA &amp; Facturas</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">AFIP</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=proveedores"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'proveedores' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🤝 Cuentas Proveedores</span>
+            <span>Cuentas Proveedores</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=clientes"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'clientes' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>👥 Cuentas Clientes</span>
+            <span>Cuentas Clientes</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=cheques"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'cheques' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>💳 Cheques en Cartera</span>
+            <span>Cheques en Cartera</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono">Valores</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=conciliacion"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'conciliacion' or 'conciliacion' in request.path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>⚖️ Conciliaciones Bancarias</span>
+            <span>Conciliaciones Bancarias</span>
           </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=flujo"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'flujo' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🌊 Tesorería &amp; Flujo</span>
+            <span>Tesorería &amp; Flujo</span>
           </a>
           <a
             href="{% url 'finanzas:plan_cuentas' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🌳 Plan de Cuentas</span>
+            <span>Plan de Cuentas</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">Árbol</span>
           </a>
         </div>
@@ -741,7 +745,7 @@
             href="{% url 'personal:empleados_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'personal' and request.resolver_match.url_name == 'empleados_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>👨‍🌾 Legajos de Personal</span>
+            <span>‍ Legajos de Personal</span>
           </a>
           <a
             href="{% url 'personal:asistencia_diaria' %}"
@@ -753,14 +757,14 @@
             href="{% url 'personal:fichaje_qr' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if 'fichaje-qr' in request.path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📱 Fichaje por QR</span>
+            <span>Fichaje por QR</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">QR</span>
           </a>
           <a
             href="{% url 'liquidacion:periodos_list' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'liquidacion' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>💵 Liquidación Haberes</span>
+            <span>Liquidación Haberes</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">UATRE</span>
           </a>
         </div>
@@ -772,32 +776,32 @@
             href="{% url 'inventario:insumos_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name in 'insumos_list insumo_kardex' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📦 Stock de Insumos</span>
+            <span>Stock de Insumos</span>
           </a>
           <a
             href="{% url 'inventario:remitos_list' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if 'remito' in request.path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>✍️ Remitos &amp; Firma Móvil</span>
+            <span>Remitos &amp; Firma Móvil</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">Firma</span>
           </a>
           <a
             href="{% url 'inventario:analisis_stock' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'analisis_stock' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>📊 Análisis ABC &amp; Stock</span>
+            <span>Análisis ABC &amp; Stock</span>
           </a>
           <a
             href="{% url 'inventario:movimientos_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.url_name == 'movimientos_list' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🔄 Kardex &amp; Movimientos</span>
+            <span>Kardex &amp; Movimientos</span>
           </a>
           <a
             href="{% url 'inventario:ordenes_compra_list' %}"
             class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if 'ordenes-compra' in request.path or 'recepciones' in request.path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
           >
-            <span>🛒 Órdenes de Compra</span>
+            <span>Órdenes de Compra</span>
           </a>
         </div>
       
