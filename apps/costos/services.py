@@ -257,3 +257,207 @@ def sincronizar_costos_con_cuadro_resultado(cuadro_resultado: CuadroResultado = 
         'nuevo_ebitda': cuadro_resultado.ebitda,
         'nuevo_resultado_neto': cuadro_resultado.resultado_neto,
     }
+
+
+def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) -> dict:
+    """
+    Agrega datos de rendimiento, costos y rentabilidad estimada por cuadro y campaña.
+
+    Retorna un dict con:
+    - analitica_por_cuadro: lista de dicts por cuadro con datos históricos por campaña
+    - campanas_disponibles: lista ordenada de campañas detectadas
+    - ranking_rendimiento: cuadros ordenados por rinde_kg_ha DESC (mejor campaña)
+    - ranking_rentabilidad: cuadros ordenados por margen_por_ha DESC (mejor campaña)
+    - evolucion_historica: estructura lista para Chart.js (labels + datasets por cuadro)
+    """
+    from apps.campos.models import LoteDeCosecha
+
+    # ── Base querysets filtrados ──────────────────────────────────────────────
+    lotes_qs = LoteDeCosecha.objects.select_related('cuadro', 'cuadro__finca')
+    costos_qs = CostoPorCentro.objects.filter(prorrateo_realizado=False, cuadro__isnull=False)
+
+    if finca_id:
+        lotes_qs = lotes_qs.filter(cuadro__finca_id=finca_id)
+        costos_qs = costos_qs.filter(finca_id=finca_id)
+    if cuadro_id:
+        lotes_qs = lotes_qs.filter(cuadro_id=cuadro_id)
+        costos_qs = costos_qs.filter(cuadro_id=cuadro_id)
+
+    # ── Campañas disponibles ──────────────────────────────────────────────────
+    campanas_set = set(lotes_qs.values_list('campana', flat=True).distinct())
+    if campanas:
+        campanas_set = campanas_set.intersection(set(campanas))
+    campanas_disponibles = sorted(campanas_set)
+
+    # ── Bulk queries para cosecha y costos por cuadro+campaña ────────────────
+    # Cosecha: suma de kg por cuadro + campaña, y precio promedio ponderado
+    cosecha_raw = lotes_qs.values('cuadro_id', 'campana').annotate(
+        total_kg=Sum('kg_cosechados')
+    )
+    # Para precio promedio ponderado, traemos todos los lotes con precio
+    lotes_con_precio = list(
+        lotes_qs.filter(precio_venta_estimado_por_kg__isnull=False)
+        .values('cuadro_id', 'campana', 'kg_cosechados', 'precio_venta_estimado_por_kg')
+    )
+
+    # Costos: suma de importe_ars por cuadro + campaña (usando año de la fecha)
+    costos_raw = costos_qs.values('cuadro_id', 'cuadro__campana_cosecha' if False else 'cuadro_id').annotate(
+        total_ars=Sum('importe_ars')
+    )
+    # Nota: costos no tienen campo campaña directo; los asociamos por finca/cuadro global
+    costos_por_cuadro = {}
+    for r in CostoPorCentro.objects.filter(prorrateo_realizado=False, cuadro__isnull=False).values(
+        'cuadro_id'
+    ).annotate(total_ars=Sum('importe_ars')):
+        costos_por_cuadro[r['cuadro_id']] = r['total_ars'] or Decimal('0.00')
+
+    if finca_id:
+        costos_por_cuadro = {
+            k: v for k, v in costos_por_cuadro.items()
+        }
+
+    # Map: (cuadro_id, campana) -> total_kg
+    cosecha_map = {(r['cuadro_id'], r['campana']): r['total_kg'] or Decimal('0.00') for r in cosecha_raw}
+
+    # Map: (cuadro_id, campana) -> precio_ponderado
+    precio_map = {}
+    for lote in lotes_con_precio:
+        key = (lote['cuadro_id'], lote['campana'])
+        if key not in precio_map:
+            precio_map[key] = {'kg_sum': Decimal('0'), 'ingreso_sum': Decimal('0')}
+        kg = lote['kg_cosechados'] or Decimal('0')
+        precio = lote['precio_venta_estimado_por_kg'] or Decimal('0')
+        precio_map[key]['kg_sum'] += kg
+        precio_map[key]['ingreso_sum'] += kg * precio
+
+    # ── Cuadros involucrados ──────────────────────────────────────────────────
+    cuadro_ids = set(cid for (cid, _) in cosecha_map.keys())
+    from apps.campos.models import Cuadro as CuadroModel
+    cuadros = {c.id: c for c in CuadroModel.objects.select_related('finca').filter(id__in=cuadro_ids, activo=True)}
+
+    if not cuadros and not campanas_disponibles:
+        return {
+            'analitica_por_cuadro': [],
+            'campanas_disponibles': [],
+            'ranking_rendimiento': [],
+            'ranking_rentabilidad': [],
+            'evolucion_historica': {'labels': [], 'datasets': []},
+        }
+
+    # ── Construir analítica por cuadro ────────────────────────────────────────
+    analitica_por_cuadro = []
+    for cuadro_id_key, cuadro in cuadros.items():
+        ha = cuadro.hectareas_netas or Decimal('0.00')
+        costo_global = costos_por_cuadro.get(cuadro_id_key, Decimal('0.00'))
+
+        campanas_data = []
+        mejor_rinde = Decimal('0.00')
+        mejor_margen_ha = None
+        prev_rinde = None
+
+        for i, campana in enumerate(campanas_disponibles):
+            key = (cuadro_id_key, campana)
+            kg = cosecha_map.get(key, Decimal('0.00'))
+            rinde_kg_ha = round(kg / ha, 2) if ha > 0 and kg > 0 else Decimal('0.00')
+
+            # Costo: distribuimos el costo global entre campañas por proporción de kg
+            # (aproximación razonable cuando costos no tienen campo campaña)
+            total_kg_cuadro = sum(
+                v for (cid, _), v in cosecha_map.items() if cid == cuadro_id_key
+            ) or Decimal('1')
+            costo_campana = round(costo_global * kg / total_kg_cuadro, 2) if total_kg_cuadro > 0 else Decimal('0.00')
+
+            costo_ha = round(costo_campana / ha, 2) if ha > 0 and costo_campana > 0 else Decimal('0.00')
+            costo_kg = round(costo_campana / kg, 2) if kg > 0 and costo_campana > 0 else None
+
+            # Ingreso estimado
+            pm = precio_map.get(key)
+            if pm and pm['kg_sum'] > 0:
+                precio_ponderado = round(pm['ingreso_sum'] / pm['kg_sum'], 2)
+                ingreso_total = round(kg * precio_ponderado, 2)
+            else:
+                precio_ponderado = None
+                ingreso_total = None
+
+            margen_total = round(ingreso_total - costo_campana, 2) if ingreso_total is not None else None
+            margen_ha = round(margen_total / ha, 2) if margen_total is not None and ha > 0 else None
+
+            # Variación vs campaña anterior
+            variacion_rinde_pct = None
+            if prev_rinde is not None and prev_rinde > 0 and rinde_kg_ha > 0:
+                variacion_rinde_pct = round((rinde_kg_ha - prev_rinde) / prev_rinde * 100, 1)
+            prev_rinde = rinde_kg_ha if rinde_kg_ha > 0 else prev_rinde
+
+            if rinde_kg_ha > mejor_rinde:
+                mejor_rinde = rinde_kg_ha
+            if margen_ha is not None and (mejor_margen_ha is None or margen_ha > mejor_margen_ha):
+                mejor_margen_ha = margen_ha
+
+            campanas_data.append({
+                'campana': campana,
+                'kg_cosechados': kg,
+                'rinde_kg_ha': rinde_kg_ha,
+                'costo_ha': costo_ha,
+                'costo_kg': costo_kg,
+                'precio_venta_kg': precio_ponderado,
+                'ingreso_estimado': ingreso_total,
+                'margen_total': margen_total,
+                'margen_ha': margen_ha,
+                'variacion_rinde_pct': variacion_rinde_pct,
+            })
+
+        analitica_por_cuadro.append({
+            'cuadro': cuadro,
+            'finca': cuadro.finca,
+            'hectareas': ha,
+            'variedad': cuadro.get_variedad_olivo_display(),
+            'mejor_rinde_kg_ha': mejor_rinde,
+            'mejor_margen_ha': mejor_margen_ha,
+            'campanas': campanas_data,
+        })
+
+    # ── Rankings ──────────────────────────────────────────────────────────────
+    ranking_rendimiento = sorted(
+        analitica_por_cuadro,
+        key=lambda x: x['mejor_rinde_kg_ha'],
+        reverse=True
+    )
+    ranking_rentabilidad = sorted(
+        [it for it in analitica_por_cuadro if it['mejor_margen_ha'] is not None],
+        key=lambda x: x['mejor_margen_ha'],
+        reverse=True
+    )
+
+    # ── Evolución histórica para Chart.js ────────────────────────────────────
+    COLORS = ['#3D4A2A', '#8FA872', '#A2B38F', '#4E5F36', '#D5DFC9', '#6B7F52']
+    datasets = []
+    for idx, it in enumerate(analitica_por_cuadro):
+        color = COLORS[idx % len(COLORS)]
+        data_points = [
+            float(c['rinde_kg_ha']) if c['rinde_kg_ha'] else None
+            for c in it['campanas']
+        ]
+        datasets.append({
+            'label': f"{it['cuadro'].codigo} ({it['variedad'][:8]})",
+            'data': data_points,
+            'borderColor': color,
+            'backgroundColor': color + '22',
+            'tension': 0.3,
+            'fill': False,
+            'pointRadius': 5,
+            'pointHoverRadius': 7,
+        })
+
+    evolucion_historica = {
+        'labels': campanas_disponibles,
+        'datasets': datasets,
+    }
+
+    return {
+        'analitica_por_cuadro': analitica_por_cuadro,
+        'campanas_disponibles': campanas_disponibles,
+        'ranking_rendimiento': ranking_rendimiento,
+        'ranking_rentabilidad': ranking_rentabilidad,
+        'evolucion_historica': evolucion_historica,
+    }
+

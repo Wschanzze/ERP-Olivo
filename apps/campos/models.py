@@ -192,6 +192,14 @@ class LoteDeCosecha(TimeStampedModel):
     )
     calidad_observaciones = models.TextField(blank=True, verbose_name=_("Notas de Calidad / Acidez"))
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.EN_CURSO, verbose_name=_("Estado"))
+    precio_venta_estimado_por_kg = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Precio de Venta Estimado (ARS/kg)"),
+        help_text=_("Precio de referencia por kilogramo para calcular ingreso y margen estimado.")
+    )
 
     class Meta:
         verbose_name = _("Lote de Cosecha")
@@ -210,3 +218,10 @@ class LoteDeCosecha(TimeStampedModel):
         if self.cuadro.hectareas_netas > 0:
             return round(self.kg_cosechados / self.cuadro.hectareas_netas, 2)
         return 0
+
+    @property
+    def ingreso_estimado(self):
+        """Ingreso bruto estimado en ARS basado en precio_venta_estimado_por_kg."""
+        if self.precio_venta_estimado_por_kg and self.kg_cosechados > 0:
+            return round(self.kg_cosechados * self.precio_venta_estimado_por_kg, 2)
+        return None

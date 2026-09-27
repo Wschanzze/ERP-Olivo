@@ -1,4 +1,5 @@
 import csv
+import json
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from apps.core.models import Empresa
@@ -16,10 +17,12 @@ from .models import CostoPorCentro
 from .services import (
     registrar_costo, 
     prorratear_costo_indirecto, 
-    sincronizar_costos_con_cuadro_resultado
+    sincronizar_costos_con_cuadro_resultado,
+    obtener_analitica_rendimiento,
 )
 from apps.core.models import CentroDeCosto, Finca
 from apps.campos.models import Cuadro, LoteDeCosecha
+
 from apps.finanzas.models import (
     CuentaContable, 
     CuentaCorriente, 
@@ -375,7 +378,26 @@ class CostosDashboardView(ListView):
         ctx['filtro_q'] = self.request.GET.get('q', '')
         ctx['tab_activa'] = self.request.GET.get('tab', 'imputaciones')
 
-        # ── 7. Enriquecer los items de la página actual ───────────────────────
+        # ── 7. Analítica Rendimiento & Rentabilidad (Tab 5) ───────────────────
+        if ctx['tab_activa'] == 'rendimiento':
+            analitica = obtener_analitica_rendimiento(
+                finca_id=self.request.GET.get('finca') or None,
+                cuadro_id=self.request.GET.get('cuadro') or None,
+            )
+            ctx['analitica_por_cuadro'] = analitica['analitica_por_cuadro']
+            ctx['campanas_disponibles'] = analitica['campanas_disponibles']
+            ctx['ranking_rendimiento'] = analitica['ranking_rendimiento']
+            ctx['ranking_rentabilidad'] = analitica['ranking_rentabilidad']
+            ctx['evolucion_historica_json'] = json.dumps(analitica['evolucion_historica'])
+        else:
+            ctx['analitica_por_cuadro'] = []
+            ctx['campanas_disponibles'] = []
+            ctx['ranking_rendimiento'] = []
+            ctx['ranking_rentabilidad'] = []
+            ctx['evolucion_historica_json'] = json.dumps({'labels': [], 'datasets': []})
+
+        # ── 8. Enriquecer los items de la página actual ───────────────────────
+
         for item in ctx['costos']:
             item.meta = CATEGORIA_META.get(item.tipo_origen, {
                 'label': item.get_tipo_origen_display(),

@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Control de Gestión y Costos Agrícolas | ERP Olivícola{% endblock %}
@@ -350,6 +350,18 @@
         {% if cuadro_resultado_activo %}
           <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">P&amp;L Q1</span>
         {% endif %}
+      </button>
+
+      <button 
+        @click="activeTab = 'rendimiento'" 
+        :class="activeTab === 'rendimiento' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
+        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <span>Rendimiento &amp; Rentabilidad</span>
+        <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2 py-0.5 rounded-full">kg/ha</span>
       </button>
     </nav>
   </div>
@@ -899,10 +911,180 @@
     </div>
   </div>
 
+
+  <!-- ===================================================================== -->
+  <!-- TAB 5: RENDIMIENTO & RENTABILIDAD (kg/ha, histórico, margen)          -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'rendimiento'" class="space-y-6">
+
+    {% if not campanas_disponibles %}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
+      <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>
+      <p class="font-semibold text-slate-600">Sin datos de cosecha registrados</p>
+      <p class="text-xs text-slate-400 mt-1">Registra lotes de cosecha en los cuadros para ver el analisis de rendimiento.</p>
+      <a href="{% url 'campos:campos_list' %}" class="inline-flex items-center gap-1.5 mt-4 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Ranking Rendimiento</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Mejor campaña registrada por cuadro</p>
+          </div>
+          <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-1 rounded-full font-mono">kg / ha</span>
+        </div>
+        <div class="space-y-3">
+          {% for it in ranking_rendimiento %}
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-black font-mono text-slate-400 w-5 text-center">{{ forloop.counter }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-mono font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-xs px-1.5 py-0.5 rounded">{{ it.cuadro.codigo }}</span>
+                <span class="text-xs text-slate-600 font-medium truncate">{{ it.variedad }}</span>
+                <span class="text-[10px] text-slate-400">{{ it.hectareas }} ha</span>
+              </div>
+              <div class="mt-1.5 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-[#3D4A2A] h-1.5 rounded-full" style="width:{% if ranking_rendimiento.0.mejor_rinde_kg_ha > 0 %}{% widthratio it.mejor_rinde_kg_ha ranking_rendimiento.0.mejor_rinde_kg_ha 100 %}{% else %}0{% endif %}%"></div>
+              </div>
+            </div>
+            <span class="text-sm font-black font-mono text-[#3D4A2A] tabular-nums whitespace-nowrap">{{ it.mejor_rinde_kg_ha|floatformat:1 }}<span class="text-[10px] font-normal text-slate-400"> kg/ha</span></span>
+          </div>
+          {% empty %}<p class="text-xs text-slate-400 italic text-center py-4">Sin datos de rendimiento.</p>{% endfor %}
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Ranking Rentabilidad</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Margen estimado por ha (requiere precio de venta)</p>
+          </div>
+          <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full font-mono">$/ha margen</span>
+        </div>
+        {% if ranking_rentabilidad %}
+        <div class="space-y-3">
+          {% for it in ranking_rentabilidad %}
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-black font-mono text-slate-400 w-5 text-center">{{ forloop.counter }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2"><span class="font-mono font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-xs px-1.5 py-0.5 rounded">{{ it.cuadro.codigo }}</span><span class="text-xs text-slate-600 font-medium truncate">{{ it.variedad }}</span></div>
+              <div class="mt-1.5 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div class="h-1.5 rounded-full {% if it.mejor_margen_ha >= 0 %}bg-[#8FA872]{% else %}bg-rose-400{% endif %}" style="width:{% if ranking_rentabilidad.0.mejor_margen_ha > 0 %}{% widthratio it.mejor_margen_ha ranking_rentabilidad.0.mejor_margen_ha 100 %}{% else %}0{% endif %}%"></div>
+              </div>
+            </div>
+            <span class="text-sm font-black font-mono {% if it.mejor_margen_ha >= 0 %}text-[#3D4A2A]{% else %}text-rose-600{% endif %} tabular-nums whitespace-nowrap">${{ it.mejor_margen_ha|floatformat:0 }}<span class="text-[10px] font-normal text-slate-400">/ha</span></span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-6 text-center">
+          <p class="text-xs text-slate-500 font-medium">Sin precio de venta cargado</p>
+          <p class="text-[11px] text-slate-400 mt-1">Edita los lotes de cosecha y asignales un precio estimado de venta por kg para ver el margen.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Evolucion Historica de Rendimiento por Campana</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Rendimiento en kg/ha por cuadro comparado entre campanas disponibles</p>
+        </div>
+        <div class="flex items-center gap-2">{% for campana in campanas_disponibles %}<span class="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ campana }}</span>{% endfor %}</div>
+      </div>
+      <div class="relative" style="height:300px;"><canvas id="chartEvolucionRendimiento"></canvas></div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
+      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tabla Analitica Detallada</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Rendimiento, costos y margen estimado por cuadro y campana</p>
+      </div>
+      {% for it in analitica_por_cuadro %}
+      <div class="border-b border-slate-100 last:border-b-0">
+        <div class="px-6 py-3 bg-[#F5F7F2] flex items-center gap-3 flex-wrap">
+          <span class="font-mono font-black text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-sm px-2 py-0.5 rounded-lg">{{ it.cuadro.codigo }}</span>
+          <span class="font-bold text-slate-800 text-sm">{{ it.cuadro.nombre }}</span>
+          <span class="text-xs text-slate-500">{{ it.finca.nombre }} &bull; {{ it.variedad }} &bull; {{ it.hectareas }} ha</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs min-w-[780px]">
+            <thead>
+              <tr class="border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/30">
+                <th class="py-2 px-6">Campana</th>
+                <th class="py-2 px-4 text-right">Kg Cosechados</th>
+                <th class="py-2 px-4 text-right">Rinde (kg/ha)</th>
+                <th class="py-2 px-4 text-right">Costo/ha</th>
+                <th class="py-2 px-4 text-right">Costo/kg</th>
+                <th class="py-2 px-4 text-right">Precio Venta/kg</th>
+                <th class="py-2 px-4 text-right">Ingreso Est.</th>
+                <th class="py-2 px-4 text-right">Margen/ha</th>
+                <th class="py-2 px-4 text-center">Var. Rinde</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for c in it.campanas %}
+              <tr class="hover:bg-[#F5F7F2]/60 transition-colors">
+                <td class="py-2.5 px-6 font-mono font-bold text-slate-700">{{ c.campana }}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-700">{% if c.kg_cosechados %}{{ c.kg_cosechados|floatformat:0 }} kg{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-[#3D4A2A]">{% if c.rinde_kg_ha %}{{ c.rinde_kg_ha|floatformat:1 }} kg/ha{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-700">{% if c.costo_ha %}${{ c.costo_ha|floatformat:2 }}{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">{% if c.costo_kg %}${{ c.costo_kg|floatformat:2 }}{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">{% if c.precio_venta_kg %}${{ c.precio_venta_kg|floatformat:2 }}{% else %}<span class="text-slate-300 italic text-[10px]">Sin precio</span>{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-slate-800">{% if c.ingreso_estimado %}${{ c.ingreso_estimado|floatformat:0 }}{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums">
+                  {% if c.margen_ha is not None %}<span class="{% if c.margen_ha >= 0 %}text-[#3D4A2A]{% else %}text-rose-600{% endif %}">${{ c.margen_ha|floatformat:0 }}/ha</span>{% else %}-{% endif %}
+                </td>
+                <td class="py-2.5 px-4 text-center">
+                  {% if c.variacion_rinde_pct is not None %}<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full {% if c.variacion_rinde_pct >= 0 %}text-[#3D4A2A] bg-[#EAEFE3]{% else %}text-rose-700 bg-rose-50{% endif %}">{% if c.variacion_rinde_pct >= 0 %}&#9650;{% else %}&#9660;{% endif %} {{ c.variacion_rinde_pct|floatformat:1 }}%</span>{% else %}<span class="text-slate-300 text-[10px]">-</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% empty %}<div class="py-10 text-center text-slate-400 text-xs"><p>Sin datos para los filtros seleccionados.</p></div>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
   <!-- Modales Operativos -->
   {% include 'costos/partials/costo_form_modal.html' %}
   {% include 'costos/partials/costo_editar_modal.html' %}
   {% include 'costos/partials/costo_prorratear_modal.html' %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var data = {{ evolucion_historica_json|safe }};
+  if (!data || !data.labels || data.labels.length === 0) return;
+  var canvas = document.getElementById('chartEvolucionRendimiento');
+  if (!canvas) return;
+  new Chart(canvas, {
+    type: 'line',
+    data: { labels: data.labels, datasets: data.datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, padding: 16, boxWidth: 12, boxHeight: 12 } },
+        tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + ' kg/ha' : 'sin dato'); } } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: '#F1F5F0' }, ticks: { font: { size: 11 }, callback: function(v) { return v + ' kg/ha'; } } }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}
