@@ -1,5 +1,6 @@
 from django.views.generic import TemplateView, ListView, CreateView, DetailView, UpdateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.db.models import Sum, Q
