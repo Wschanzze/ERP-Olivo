@@ -9,13 +9,14 @@
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
 <style>
-  /* Contenedor del mapa Leaflet Windy API */
-  #windy-api-map {
+  /* Contenedor oficial requerido por Windy Map Forecast API */
+  #windy {
     width: 100%;
     height: 620px;
     position: relative;
     background-color: #1a2016;
   }
+
   .leaflet-popup-content-wrapper {
     background: #1B2312 !important;
     color: #E5EBDD !important;
@@ -93,7 +94,7 @@
     },
 
     /* === ESTADO DISEÑO 2 (WINDY API + LEAFLET NATIVO) === */
-    apiKey: localStorage.getItem('windy_api_key') || '{{ windy_api_key|default:'' }}',
+    apiKey: localStorage.getItem('windy_api_key') || '{{ windy_api_key|default:'lGCxMnOmJKwM4cxE441od9xhzm2l1C6A' }}',
     apiIniciada: false,
     apiError: null,
     apiCapaActiva: 'wind',
@@ -119,73 +120,86 @@
       this.apiError = null;
 
       const self = this;
-      const options = {
-        key: this.apiKey,
-        lat: -29.3033, // Centrado en el valle central (Nonogasta)
-        lon: -67.4964,
-        zoom: 10,
-        verbose: false,
+      let intentos = 0;
+
+      const intentarInit = () => {
+        if (typeof windyInit === 'function') {
+          ejecutar();
+        } else if (intentos < 25) {
+          intentos++;
+          setTimeout(intentarInit, 200);
+        } else {
+          self.apiError = 'La librería Windy Map Forecast API no se cargó correctamente. Verifica tu conexión a Internet o bloqueadores de script.';
+        }
       };
 
-      if (typeof windyInit !== 'function') {
-        this.apiError = 'La librería Windy Map Forecast API no se cargó correctamente. Verifica tu conexión a Internet o bloqueadores de script.';
-        return;
-      }
+      const ejecutar = () => {
+        const options = {
+          key: self.apiKey,
+          lat: -29.3033, // Centrado en el valle central (Nonogasta)
+          lon: -67.4964,
+          zoom: 10,
+          verbose: false,
+        };
 
-      try {
-        windyInit(options, windyAPI => {
-          self.apiIniciada = true;
-          window._windyAPI = windyAPI;
-          const { map, store, picker } = windyAPI;
+        try {
+          windyInit(options, windyAPI => {
+            self.apiIniciada = true;
+            window._windyAPI = windyAPI;
+            const { map, store, picker } = windyAPI;
 
-          // Marcadores Leaflet en las 3 localidades
-          const locs = [
-            { id: 'chilecito', nombre: 'Chilecito', lat: -29.1619, lon: -67.4965, alt: '1.080 msnm', info: 'Fincas Tradicionales y Pie de Monte' },
-            { id: 'nonogasta', nombre: 'Nonogasta', lat: -29.3033, lon: -67.4964, alt: '950 msnm', info: 'Polo Agroindustrial y Almazaras' },
-            { id: 'vichigasta', nombre: 'Vichigasta', lat: -29.4746, lon: -67.5122, alt: '860 msnm', info: 'Gran Cuenca Olivícola Valle Sur' }
-          ];
+            // Marcadores Leaflet en las 3 localidades
+            const locs = [
+              { id: 'chilecito', nombre: 'Chilecito', lat: -29.1619, lon: -67.4965, alt: '1.080 msnm', info: 'Fincas Tradicionales y Pie de Monte' },
+              { id: 'nonogasta', nombre: 'Nonogasta', lat: -29.3033, lon: -67.4964, alt: '950 msnm', info: 'Polo Agroindustrial y Almazaras' },
+              { id: 'vichigasta', nombre: 'Vichigasta', lat: -29.4746, lon: -67.5122, alt: '860 msnm', info: 'Gran Cuenca Olivícola Valle Sur' }
+            ];
 
-          // Icono personalizado estilo verde oliva
-          const oliveIcon = L.divIcon({
-            className: 'custom-pin',
-            html: '<div style=\"background-color:#3D4A2A; border:2px solid #A2B38F; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.4);\">🫒</div>',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-          });
+            // Icono personalizado estilo verde oliva
+            const oliveIcon = L.divIcon({
+              className: 'custom-pin',
+              html: '<div style="background-color:#3D4A2A; border:2px solid #A2B38F; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.4);">🫒</div>',
+              iconSize: [30, 30],
+              iconAnchor: [15, 15]
+            });
 
-          locs.forEach(loc => {
-            const marker = L.marker([loc.lat, loc.lon], { icon: oliveIcon }).addTo(map);
-            marker.bindPopup(`
-              <div style=\"padding: 4px; min-width: 170px;\">
-                <div style=\"font-weight: 800; font-size: 13px; color: #A2B38F;\">${loc.nombre}</div>
-                <div style=\"font-size: 10px; color: #C8D6BC; margin-bottom: 4px;\">${loc.alt} • ${loc.info}</div>
-                <div style=\"font-size: 11px; color: #E5EBDD;\">Lat: ${loc.lat.toFixed(3)} | Lon: ${loc.lon.toFixed(3)}</div>
-              </div>
-            `);
-          });
+            locs.forEach(loc => {
+              const marker = L.marker([loc.lat, loc.lon], { icon: oliveIcon }).addTo(map);
+              marker.bindPopup(`
+                <div style="padding: 4px; min-width: 170px;">
+                  <div style="font-weight: 800; font-size: 13px; color: #A2B38F;">${loc.nombre}</div>
+                  <div style="font-size: 10px; color: #C8D6BC; margin-bottom: 4px;">${loc.alt} • ${loc.info}</div>
+                  <div style="font-size: 11px; color: #E5EBDD;">Lat: ${loc.lat.toFixed(3)} | Lon: ${loc.lon.toFixed(3)}</div>
+                </div>
+              `);
+            });
 
-          // Listener de Picker (Sonda meteorológica puntual)
-          picker.on('pickerOpened', params => {
-            self.pickerDatos = params;
-          });
-          picker.on('pickerMoved', params => {
-            self.pickerDatos = params;
-          });
-          picker.on('pickerClosed', () => {
-            self.pickerDatos = null;
-          });
+            // Listener de Picker (Sonda meteorológica puntual)
+            picker.on('pickerOpened', params => {
+              self.pickerDatos = params;
+            });
+            picker.on('pickerMoved', params => {
+              self.pickerDatos = params;
+            });
+            picker.on('pickerClosed', () => {
+              self.pickerDatos = null;
+            });
 
-          // Click en el mapa abre el picker si está activo
-          map.on('click', e => {
-            if (self.pickerActivo) {
-              picker.open({ lat: e.latlng.lat, lon: e.latlng.lng });
-            }
+            // Click en el mapa abre el picker si está activo
+            map.on('click', e => {
+              if (self.pickerActivo) {
+                picker.open({ lat: e.latlng.lat, lon: e.latlng.lng });
+              }
+            });
           });
-        });
-      } catch (err) {
-        self.apiError = 'Error al inicializar Windy API: ' + (err.message || err);
-      }
+        } catch (err) {
+          self.apiError = 'Error al inicializar Windy API: ' + (err.message || err);
+        }
+      };
+
+      intentarInit();
     },
+
 
     centrarEnLocalidad(lat, lon, zoom = 11) {
       if (window._windyAPI && window._windyAPI.map) {
@@ -724,32 +738,47 @@
           </div>
         </div>
 
-        <!-- DIV donde se monta el mapa Leaflet de Windy -->
-        <div id="windy-api-map"></div>
+        <!-- DIV oficial donde se monta el mapa Leaflet de Windy API -->
+        <div id="windy"></div>
 
         <!-- Tarjeta Flotante con Datos del Picker al hacer clic o mover -->
         <div 
           x-show="pickerActivo && pickerDatos" 
           x-cloak
-          class="absolute bottom-4 left-4 z-[1000] p-4 bg-[#1B2312]/95 backdrop-blur-md text-[#E5EBDD] rounded-2xl border border-[#3D4A2A] shadow-xl max-w-xs space-y-2"
+          class="absolute bottom-5 left-5 z-[1000] p-4 bg-[#1B2312]/95 backdrop-blur-md text-[#E5EBDD] rounded-2xl border border-[#3D4A2A] shadow-2xl max-w-sm space-y-2.5"
         >
-          <div class="flex items-center justify-between border-b border-[#2C381D] pb-1.5">
-            <div class="flex items-center gap-1.5">
-              <span class="text-base">🎯</span>
-              <span class="text-xs font-extrabold text-white">Sonda en Coordenadas</span>
+          <div class="flex items-center justify-between border-b border-[#2C381D] pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🎯</span>
+              <div>
+                <span class="text-xs font-extrabold text-white block">Sonda Meteorológica Puntual</span>
+                <span class="text-[10px] text-[#A2B38F]">Lectura en tiempo real sobre cuadro</span>
+              </div>
             </div>
-            <button type="button" @click="pickerActivo = false" class="text-[#8FA872] hover:text-white text-xs">✕</button>
+            <button type="button" @click="pickerActivo = false" class="text-[#8FA872] hover:text-white p-1 rounded-lg">✕</button>
           </div>
           
-          <div class="text-[11px] font-mono text-[#A2B38F]">
-            Lat: <strong class="text-white" x-text="pickerDatos?.lat?.toFixed(4)"></strong> | 
-            Lon: <strong class="text-white" x-text="pickerDatos?.lon?.toFixed(4)"></strong>
+          <div class="grid grid-cols-2 gap-2 text-[11px] font-mono bg-[#0F140A]/60 p-2.5 rounded-xl border border-[#2C381D]">
+            <div>
+              <span class="text-[#8FA872] block text-[9px] uppercase">Latitud:</span>
+              <strong class="text-white" x-text="pickerDatos?.lat?.toFixed(4)"></strong>
+            </div>
+            <div>
+              <span class="text-[#8FA872] block text-[9px] uppercase">Longitud:</span>
+              <strong class="text-white" x-text="pickerDatos?.lon?.toFixed(4)"></strong>
+            </div>
           </div>
 
-          <div class="text-xs text-[#C8D6BC]">
-            Haz clic en cualquier punto del mapa para leer las condiciones meteorológicas precisas de ese cuadro o finca.
+          <div class="text-[11px] text-[#C8D6BC] flex items-center justify-between pt-1">
+            <span>Capa monitoreada:</span>
+            <span class="font-bold text-[#A2B38F] uppercase" x-text="apiCapaActiva"></span>
           </div>
+          
+          <p class="text-[10px] text-[#8FA872] leading-tight">
+            Haz clic o arrastra sobre el mapa para sondear cualquier cuadro o lote de olivo de tus fincas.
+          </p>
         </div>
+
 
       </div>
 

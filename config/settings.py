@@ -306,6 +306,12 @@ LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'core:login'
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Windy Map Forecast API Configuration
+# ──────────────────────────────────────────────────────────────────────────────
+WINDY_API_KEY = os.getenv('WINDY_API_KEY', 'lGCxMnOmJKwM4cxE441od9xhzm2l1C6A').strip()
+
+
 # En entornos serverless sin workers dedicados, o si se fuerza localmente:
 CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False').lower() in ('true', '1') or IS_VERCEL
 CELERY_TASK_STORE_EAGER_RESULT = CELERY_TASK_ALWAYS_EAGER
