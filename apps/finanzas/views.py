@@ -666,23 +666,20 @@ class FinanzasDashboardView(TemplateView):
         ctx['total_consolidado_usd'] = total_consolidado_usd
 
         # Datos para Módulo de Libro de IVA & Facturación (1 consulta unificada)
-        try:
-            mes_iva = int(self.request.GET.get('periodo_mes', 3))
-        except (ValueError, TypeError):
-            mes_iva = 3
-        try:
-            ano_iva = int(self.request.GET.get('periodo_ano', 2026))
-        except (ValueError, TypeError):
-            ano_iva = 2026
+        periodo_mes = self.request.GET.get('periodo_mes')
+        periodo_ano = self.request.GET.get('periodo_ano')
 
-        ctx['periodo_mes'] = mes_iva
-        ctx['periodo_ano'] = ano_iva
+        ctx['periodo_mes'] = str(periodo_mes) if periodo_mes else ''
+        ctx['periodo_ano'] = str(periodo_ano) if periodo_ano else ''
 
-        facturas_mes = list(
-            ComprobanteFiscal.objects.filter(
-                fecha_emision__year=ano_iva, fecha_emision__month=mes_iva
-            ).select_related('cuenta_corriente').order_by('-fecha_emision', '-id')
-        )
+        comprobantes_qs = ComprobanteFiscal.objects.select_related('cuenta_corriente').order_by('-fecha_emision', '-id')
+        
+        if periodo_ano and str(periodo_ano).isdigit():
+            comprobantes_qs = comprobantes_qs.filter(fecha_emision__year=int(periodo_ano))
+        if periodo_mes and str(periodo_mes).isdigit():
+            comprobantes_qs = comprobantes_qs.filter(fecha_emision__month=int(periodo_mes))
+
+        facturas_mes = list(comprobantes_qs)
         facturas_compras = [f for f in facturas_mes if f.tipo_operacion == 'COMPRA']
         facturas_ventas = [f for f in facturas_mes if f.tipo_operacion == 'VENTA']
 
