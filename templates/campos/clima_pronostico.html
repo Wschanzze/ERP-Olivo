@@ -4,7 +4,7 @@
 {% block title %}Clima & Pronóstico Meteorológico | ERP Olivícola{% endblock %}
 
 {% block extra_head %}
-<!-- Leaflet 1.4.0 y Windy Map Forecast API Bootloader (Requerido para Diseño 2) -->
+<!-- Leaflet 1.4.0 y Windy Map Forecast API Bootloader -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
 <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
@@ -12,11 +12,10 @@
   /* Contenedor oficial requerido por Windy Map Forecast API */
   #windy {
     width: 100%;
-    height: 620px;
+    height: 600px;
     position: relative;
     background-color: #1a2016;
   }
-
   .leaflet-popup-content-wrapper {
     background: #1B2312 !important;
     color: #E5EBDD !important;
@@ -34,208 +33,7 @@
 {% endblock %}
 
 {% block content %}
-<div 
-  class="space-y-8" 
-  x-data="{
-    /* === ESTADO DISEÑO 1 (WIDGET EMBEBIDO) === */
-    ubicacionId: '{{ ubicacion_actual.id }}',
-    capaActiva: 'wind',
-    zoomNivel: 10,
-    pantallaCompleta: false,
-    
-    ubicaciones: {
-      chilecito: {
-        nombre: 'Chilecito',
-        departamento: 'Dpto. Chilecito, La Rioja',
-        lat: -29.1619,
-        lon: -67.4965,
-        altitud: '1.080 msnm',
-        valle: 'Valle de Antinaco - Los Colorados',
-        icono: '🏔️',
-        desc: 'Cabecera departamental. Fincas y cuadros al pie del Famatina, con vientos catabáticos nocturnos.'
-      },
-      nonogasta: {
-        nombre: 'Nonogasta',
-        departamento: 'Dpto. Chilecito, La Rioja',
-        lat: -29.3033,
-        lon: -67.4964,
-        altitud: '950 msnm',
-        valle: 'Polo Agroindustrial Central',
-        icono: '🫒',
-        desc: 'Corazón agroindustrial de la olivicultura. Plantaciones intensivas bajo riego localizado por goteo y almazaras.'
-      },
-      vichigasta: {
-        nombre: 'Vichigasta',
-        departamento: 'Dpto. Chilecito, La Rioja',
-        lat: -29.4746,
-        lon: -67.5122,
-        altitud: '860 msnm',
-        valle: 'Valle Sur Olivícola',
-        icono: '🌿',
-        desc: 'Extensa cuenca productiva con excelente acumulación de horas de frío y microclima propicio para variedades aceiteras y de mesa.'
-      }
-    },
-
-    get ubicacionActual() {
-      return this.ubicaciones[this.ubicacionId] || this.ubicaciones.chilecito;
-    },
-
-    get windyUrl() {
-      const u = this.ubicacionActual;
-      return `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km/h&zoom=${this.zoomNivel}&overlay=${this.capaActiva}&product=ecmwf&level=surface&lat=${u.lat}&lon=${u.lon}&detailLat=${u.lat}&detailLon=${u.lon}&detail=true&pressure=true&message=true`;
-    },
-
-    seleccionarUbicacion(id) {
-      this.ubicacionId = id;
-    },
-
-    seleccionarCapa(capa) {
-      this.capaActiva = capa;
-    },
-
-    /* === ESTADO DISEÑO 2 (WINDY API + LEAFLET NATIVO) === */
-    apiKey: localStorage.getItem('windy_api_key') || '{{ windy_api_key|default:'lGCxMnOmJKwM4cxE441od9xhzm2l1C6A' }}',
-    apiIniciada: false,
-    apiError: null,
-    apiCapaActiva: 'wind',
-    pickerActivo: false,
-    pickerDatos: null,
-    modalKeyOpen: false,
-    nuevaKey: '',
-
-    guardarKey() {
-      if (this.nuevaKey.trim()) {
-        this.apiKey = this.nuevaKey.trim();
-        localStorage.setItem('windy_api_key', this.apiKey);
-        this.modalKeyOpen = false;
-        this.iniciarMapaWindyAPI();
-      }
-    },
-
-    iniciarMapaWindyAPI() {
-      if (!this.apiKey) {
-        this.apiError = 'Debes ingresar tu clave de Windy API para inicializar la instancia interactiva de Leaflet.';
-        return;
-      }
-      this.apiError = null;
-
-      const self = this;
-      let intentos = 0;
-
-      const intentarInit = () => {
-        if (typeof windyInit === 'function') {
-          ejecutar();
-        } else if (intentos < 25) {
-          intentos++;
-          setTimeout(intentarInit, 200);
-        } else {
-          self.apiError = 'La librería Windy Map Forecast API no se cargó correctamente. Verifica tu conexión a Internet o bloqueadores de script.';
-        }
-      };
-
-      const ejecutar = () => {
-        const options = {
-          key: self.apiKey,
-          lat: -29.3033, // Centrado en el valle central (Nonogasta)
-          lon: -67.4964,
-          zoom: 10,
-          verbose: false,
-        };
-
-        try {
-          windyInit(options, windyAPI => {
-            self.apiIniciada = true;
-            window._windyAPI = windyAPI;
-            const { map, store, picker } = windyAPI;
-
-            // Marcadores Leaflet en las 3 localidades
-            const locs = [
-              { id: 'chilecito', nombre: 'Chilecito', lat: -29.1619, lon: -67.4965, alt: '1.080 msnm', info: 'Fincas Tradicionales y Pie de Monte' },
-              { id: 'nonogasta', nombre: 'Nonogasta', lat: -29.3033, lon: -67.4964, alt: '950 msnm', info: 'Polo Agroindustrial y Almazaras' },
-              { id: 'vichigasta', nombre: 'Vichigasta', lat: -29.4746, lon: -67.5122, alt: '860 msnm', info: 'Gran Cuenca Olivícola Valle Sur' }
-            ];
-
-            // Icono personalizado estilo verde oliva
-            const oliveIcon = L.divIcon({
-              className: 'custom-pin',
-              html: '<div style="background-color:#3D4A2A; border:2px solid #A2B38F; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.4);">🫒</div>',
-              iconSize: [30, 30],
-              iconAnchor: [15, 15]
-            });
-
-            locs.forEach(loc => {
-              const marker = L.marker([loc.lat, loc.lon], { icon: oliveIcon }).addTo(map);
-              marker.bindPopup(`
-                <div style="padding: 4px; min-width: 170px;">
-                  <div style="font-weight: 800; font-size: 13px; color: #A2B38F;">${loc.nombre}</div>
-                  <div style="font-size: 10px; color: #C8D6BC; margin-bottom: 4px;">${loc.alt} • ${loc.info}</div>
-                  <div style="font-size: 11px; color: #E5EBDD;">Lat: ${loc.lat.toFixed(3)} | Lon: ${loc.lon.toFixed(3)}</div>
-                </div>
-              `);
-            });
-
-            // Listener de Picker (Sonda meteorológica puntual)
-            picker.on('pickerOpened', params => {
-              self.pickerDatos = params;
-            });
-            picker.on('pickerMoved', params => {
-              self.pickerDatos = params;
-            });
-            picker.on('pickerClosed', () => {
-              self.pickerDatos = null;
-            });
-
-            // Click en el mapa abre el picker si está activo
-            map.on('click', e => {
-              if (self.pickerActivo) {
-                picker.open({ lat: e.latlng.lat, lon: e.latlng.lng });
-              }
-            });
-          });
-        } catch (err) {
-          self.apiError = 'Error al inicializar Windy API: ' + (err.message || err);
-        }
-      };
-
-      intentarInit();
-    },
-
-
-    centrarEnLocalidad(lat, lon, zoom = 11) {
-      if (window._windyAPI && window._windyAPI.map) {
-        window._windyAPI.map.setView([lat, lon], zoom);
-        if (this.pickerActivo && window._windyAPI.picker) {
-          window._windyAPI.picker.open({ lat, lon });
-        }
-      }
-    },
-
-    cambiarCapaAPI(capa) {
-      this.apiCapaActiva = capa;
-      if (window._windyAPI && window._windyAPI.store) {
-        window._windyAPI.store.set('overlay', capa);
-      }
-    },
-
-    togglePickerAPI() {
-      this.pickerActivo = !this.pickerActivo;
-      if (window._windyAPI && window._windyAPI.picker) {
-        if (this.pickerActivo) {
-          const center = window._windyAPI.map.getCenter();
-          window._windyAPI.picker.open({ lat: center.lat, lon: center.lng });
-        } else {
-          window._windyAPI.picker.close();
-          this.pickerDatos = null;
-        }
-      }
-    }
-  }"
-  x-init="
-    if (apiKey) {
-      setTimeout(() => { iniciarMapaWindyAPI(); }, 500);
-    }
-  "
->
+<div class="space-y-8" x-data="climaController()">
   
   <!-- =======================================================================
        ENCABEZADO GENERAL (Paleta Verde Seco Institucional)
@@ -256,7 +54,7 @@
               La Rioja • Dpto. Chilecito
             </span>
           </div>
-          <p class="text-xs text-[#4E5F36] mt-0.5 font-medium">Monitoreo meteorológico satelital para labores agrícolas en Chilecito, Nonogasta y Vichigasta.</p>
+          <p class="text-xs text-[#4E5F36] mt-0.5 font-medium">Monitoreo meteorológico para labores agrícolas en Chilecito, Nonogasta y Vichigasta.</p>
         </div>
       </div>
     </div>
@@ -274,8 +72,8 @@
         href="#diseno-2-api"
         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3D4A2A] hover:bg-[#2A331D] text-[#E5EBDD] text-xs font-bold rounded-xl shadow-xs transition-colors border border-[#5A6E3F]"
       >
-        <span>2️⃣ Diseño B (API Nativa)</span>
-        <span class="text-[9px] bg-[#6B894B] text-white px-1.5 py-0.2 rounded-md font-mono">NUEVO</span>
+        <span>2️⃣ Diseño B (API Nativa + Leaflet)</span>
+        <span class="text-[9px] bg-[#6B894B] text-white px-1.5 py-0.2 rounded-md font-mono">CON KEY</span>
       </a>
     </div>
   </div>
@@ -406,7 +204,7 @@
       </button>
     </div>
 
-    <!-- Barra de Herramientas del Mapa: Capas y Zoom (Verde Seco Institucional) -->
+    <!-- Barra de Herramientas del Mapa: Capas y Zoom -->
     <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
       
       <!-- Filtro de Capas Meteorológicas -->
@@ -575,7 +373,7 @@
       <div class="flex items-center gap-2">
         <button
           type="button"
-          @click="modalKeyOpen = true; nuevaKey = apiKey;"
+          @click="abrirModalKey()"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3D4A2A] hover:bg-[#2A331D] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
         >
           <svg class="w-3.5 h-3.5 text-[#A2B38F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -586,36 +384,14 @@
       </div>
     </div>
 
-    <!-- Si no hay Key cargada, banner explicativo y botón para ingresarla -->
-    <div x-show="!apiKey" class="p-5 bg-white rounded-3xl border border-[#D5DFC9] shadow-xs space-y-3">
-      <div class="flex items-start gap-3">
-        <span class="text-2xl">🔑</span>
-        <div>
-          <h3 class="text-sm font-bold text-[#1B2312]">Ingresa tu clave de Windy Map Forecast API para habilitar este diseño</h3>
-          <p class="text-xs text-[#4E5F36] mt-1">
-            Esta versión interactiva utiliza la librería nativa de <strong>Leaflet</strong> y el <strong>Windy API SDK</strong>. Al ingresar tu key podrás:
-          </p>
-          <ul class="text-xs text-[#4E5F36] mt-2 space-y-1 list-disc list-inside">
-            <li>Inspeccionar valores exactos en cualquier punto del mapa con la herramienta <strong>Picker</strong>.</li>
-            <li>Colocar marcadores directos sobre tus cuadros y fincas de olivos.</li>
-            <li>Controlar las capas programáticamente con <code>store.set()</code> sin recargar el navegador.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="pt-2 flex items-center gap-2">
-        <button
-          type="button"
-          @click="modalKeyOpen = true; nuevaKey = '';"
-          class="px-4 py-2 bg-[#3D4A2A] hover:bg-[#2A331D] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-        >
-          Cargar mi Windy API Key
-        </button>
-      </div>
+    <!-- Mensaje de error si la API falla -->
+    <div x-show="apiError" x-cloak class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-2xl flex items-center gap-2">
+      <span>⚠️</span>
+      <span x-text="apiError"></span>
     </div>
 
-    <!-- Controles del Mapa Leaflet Windy API (solo cuando hay key) -->
-    <div x-show="apiKey" class="space-y-4">
+    <!-- Controles del Mapa Leaflet Windy API -->
+    <div class="space-y-4">
       
       <!-- Barra de controles API: Localidades y Capas -->
       <div class="bg-white p-3.5 rounded-2xl border border-[#D5DFC9] shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -779,7 +555,6 @@
           </p>
         </div>
 
-
       </div>
 
     </div>
@@ -814,7 +589,7 @@
           <tr>
             <td class="p-3 font-bold">Consumo de Clave / Cuota</td>
             <td class="p-3 text-emerald-800 font-semibold">✅ Gratuito, sin límite de llamadas</td>
-            <td class="p-3 text-[#4E5F36]">Requiere Windy API Key (Plan Free o Comercial)</td>
+            <td class="p-3 text-[#4E5F36]">Utiliza tu Windy API Key oficial</td>
           </tr>
           <tr>
             <td class="p-3 font-bold">Pronóstico Extendido Inferior</td>
@@ -930,7 +705,7 @@
 
       <div class="p-6 space-y-4 text-xs">
         <p class="text-[#4E5F36] leading-relaxed">
-          Ingresa la clave generada en tu cuenta de <a href="https://api.windy.com/" target="_blank" class="text-[#3D4A2A] underline font-bold">api.windy.com</a> para inicializar el mapa Leaflet interactivo del <strong>Diseño 2</strong>.
+          Ingresa o edita la clave generada en tu cuenta de <a href="https://api.windy.com/" target="_blank" class="text-[#3D4A2A] underline font-bold">api.windy.com</a> para inicializar el mapa Leaflet interactivo del <strong>Diseño 2</strong>.
         </p>
 
         <div>
@@ -938,14 +713,14 @@
           <input 
             type="text" 
             x-model="nuevaKey" 
-            placeholder="Pega aquí tu clave (ej: XXXXXXXX...)" 
+            placeholder="Pega aquí tu clave" 
             class="w-full px-3.5 py-2.5 bg-[#F5F7F2] border border-[#D5DFC9] rounded-xl font-mono text-xs text-[#1B2312] focus:bg-white focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A]"
           />
         </div>
 
         <div class="p-3 bg-[#EAEFE3] rounded-xl text-[11px] text-[#3D4A2A] space-y-1 border border-[#B6C7A2]">
-          <div class="font-bold">🔒 Almacenamiento seguro</div>
-          <p>La clave se guardará en tu navegador (localStorage) para que no tengas que escribirla nuevamente en cada inicio de sesión.</p>
+          <div class="font-bold">🔒 Almacenamiento local</div>
+          <p>La clave se guarda en tu navegador para mantener la sesión activa sin necesidad de volver a ingresarla.</p>
         </div>
       </div>
 
@@ -969,4 +744,224 @@
   </div>
 
 </div>
+
+<!-- =========================================================================
+     JAVASCRIPT LIMPIO DEL CONTROLADOR CLIMA (Separado del HTML)
+     ========================================================================= -->
+<script>
+  function climaController() {
+    return {
+      /* === ESTADO DISEÑO 1 (WIDGET EMBEBIDO) === */
+      ubicacionId: '{{ ubicacion_actual.id }}',
+      capaActiva: 'wind',
+      zoomNivel: 10,
+      pantallaCompleta: false,
+      
+      ubicaciones: {
+        chilecito: {
+          nombre: 'Chilecito',
+          departamento: 'Dpto. Chilecito, La Rioja',
+          lat: -29.1619,
+          lon: -67.4965,
+          altitud: '1.080 msnm',
+          valle: 'Valle de Antinaco - Los Colorados',
+          icono: '🏔️',
+          desc: 'Cabecera departamental. Fincas y cuadros al pie del Famatina, con vientos catabáticos nocturnos.'
+        },
+        nonogasta: {
+          nombre: 'Nonogasta',
+          departamento: 'Dpto. Chilecito, La Rioja',
+          lat: -29.3033,
+          lon: -67.4964,
+          altitud: '950 msnm',
+          valle: 'Polo Agroindustrial Central',
+          icono: '🫒',
+          desc: 'Corazón agroindustrial de la olivicultura. Plantaciones intensivas bajo riego localizado por goteo y almazaras.'
+        },
+        vichigasta: {
+          nombre: 'Vichigasta',
+          departamento: 'Dpto. Chilecito, La Rioja',
+          lat: -29.4746,
+          lon: -67.5122,
+          altitud: '860 msnm',
+          valle: 'Valle Sur Olivícola',
+          icono: '🌿',
+          desc: 'Extensa cuenca productiva con excelente acumulación de horas de frío y microclima propicio para variedades aceiteras y de mesa.'
+        }
+      },
+
+      get ubicacionActual() {
+        return this.ubicaciones[this.ubicacionId] || this.ubicaciones.chilecito;
+      },
+
+      get windyUrl() {
+        const u = this.ubicacionActual;
+        return 'https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km/h&zoom=' + 
+               this.zoomNivel + '&overlay=' + this.capaActiva + 
+               '&product=ecmwf&level=surface&lat=' + u.lat + '&lon=' + u.lon + 
+               '&detailLat=' + u.lat + '&detailLon=' + u.lon + 
+               '&detail=true&pressure=true&message=true';
+      },
+
+      seleccionarUbicacion(id) {
+        this.ubicacionId = id;
+      },
+
+      seleccionarCapa(capa) {
+        this.capaActiva = capa;
+      },
+
+      /* === ESTADO DISEÑO 2 (WINDY API + LEAFLET NATIVO) === */
+      apiKey: localStorage.getItem('windy_api_key') || '{{ windy_api_key|default:"lGCxMnOmJKwM4cxE441od9xhzm2l1C6A" }}',
+      apiIniciada: false,
+      apiError: null,
+      apiCapaActiva: 'wind',
+      pickerActivo: false,
+      pickerDatos: null,
+      modalKeyOpen: false,
+      nuevaKey: '',
+
+      init() {
+        const self = this;
+        // Iniciar mapa API automáticamente
+        setTimeout(() => {
+          if (self.apiKey) {
+            self.iniciarMapaWindyAPI();
+          }
+        }, 300);
+      },
+
+      abrirModalKey() {
+        this.nuevaKey = this.apiKey;
+        this.modalKeyOpen = true;
+      },
+
+      guardarKey() {
+        if (this.nuevaKey.trim()) {
+          this.apiKey = this.nuevaKey.trim();
+          localStorage.setItem('windy_api_key', this.apiKey);
+          this.modalKeyOpen = false;
+          this.iniciarMapaWindyAPI();
+        }
+      },
+
+      iniciarMapaWindyAPI() {
+        if (!this.apiKey) {
+          this.apiError = 'Debes ingresar tu clave de Windy API para inicializar la instancia interactiva de Leaflet.';
+          return;
+        }
+        this.apiError = null;
+
+        const self = this;
+        let intentos = 0;
+
+        const intentarInit = () => {
+          if (typeof windyInit === 'function') {
+            ejecutar();
+          } else if (intentos < 25) {
+            intentos++;
+            setTimeout(intentarInit, 200);
+          } else {
+            self.apiError = 'La librería Windy Map Forecast API no se cargó correctamente. Verifica tu conexión a Internet o bloqueadores de script.';
+          }
+        };
+
+        const ejecutar = () => {
+          const options = {
+            key: self.apiKey,
+            lat: -29.3033, // Centrado en el valle central (Nonogasta)
+            lon: -67.4964,
+            zoom: 10,
+            verbose: false,
+          };
+
+          try {
+            windyInit(options, windyAPI => {
+              self.apiIniciada = true;
+              window._windyAPI = windyAPI;
+              const { map, store, picker } = windyAPI;
+
+              // Marcadores Leaflet en las 3 localidades
+              const locs = [
+                { id: 'chilecito', nombre: 'Chilecito', lat: -29.1619, lon: -67.4965, alt: '1.080 msnm', info: 'Fincas Tradicionales y Pie de Monte' },
+                { id: 'nonogasta', nombre: 'Nonogasta', lat: -29.3033, lon: -67.4964, alt: '950 msnm', info: 'Polo Agroindustrial y Almazaras' },
+                { id: 'vichigasta', nombre: 'Vichigasta', lat: -29.4746, lon: -67.5122, alt: '860 msnm', info: 'Gran Cuenca Olivícola Valle Sur' }
+              ];
+
+              // Icono personalizado estilo verde oliva
+              const oliveIcon = L.divIcon({
+                className: 'custom-pin',
+                html: '<div style="background-color:#3D4A2A; border:2px solid #A2B38F; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.4);">🫒</div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+              });
+
+              locs.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lon], { icon: oliveIcon }).addTo(map);
+                marker.bindPopup(
+                  '<div style="padding: 4px; min-width: 170px;">' +
+                    '<div style="font-weight: 800; font-size: 13px; color: #A2B38F;">' + loc.nombre + '</div>' +
+                    '<div style="font-size: 10px; color: #C8D6BC; margin-bottom: 4px;">' + loc.alt + ' • ' + loc.info + '</div>' +
+                    '<div style="font-size: 11px; color: #E5EBDD;">Lat: ' + loc.lat.toFixed(3) + ' | Lon: ' + loc.lon.toFixed(3) + '</div>' +
+                  '</div>'
+                );
+              });
+
+              // Listener de Picker (Sonda meteorológica puntual)
+              picker.on('pickerOpened', params => {
+                self.pickerDatos = params;
+              });
+              picker.on('pickerMoved', params => {
+                self.pickerDatos = params;
+              });
+              picker.on('pickerClosed', () => {
+                self.pickerDatos = null;
+              });
+
+              // Click en el mapa abre el picker si está activo
+              map.on('click', e => {
+                if (self.pickerActivo) {
+                  picker.open({ lat: e.latlng.lat, lon: e.latlng.lng });
+                }
+              });
+            });
+          } catch (err) {
+            self.apiError = 'Error al inicializar Windy API: ' + (err.message || err);
+          }
+        };
+
+        intentarInit();
+      },
+
+      centrarEnLocalidad(lat, lon, zoom = 11) {
+        if (window._windyAPI && window._windyAPI.map) {
+          window._windyAPI.map.setView([lat, lon], zoom);
+          if (this.pickerActivo && window._windyAPI.picker) {
+            window._windyAPI.picker.open({ lat, lon });
+          }
+        }
+      },
+
+      cambiarCapaAPI(capa) {
+        this.apiCapaActiva = capa;
+        if (window._windyAPI && window._windyAPI.store) {
+          window._windyAPI.store.set('overlay', capa);
+        }
+      },
+
+      togglePickerAPI() {
+        this.pickerActivo = !this.pickerActivo;
+        if (window._windyAPI && window._windyAPI.picker) {
+          if (this.pickerActivo) {
+            const center = window._windyAPI.map.getCenter();
+            window._windyAPI.picker.open({ lat: center.lat, lon: center.lng });
+          } else {
+            window._windyAPI.picker.close();
+            this.pickerDatos = null;
+          }
+        }
+      }
+    };
+  }
+</script>
 {% endblock %}
