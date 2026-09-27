@@ -18,13 +18,52 @@
 
     <div 
       x-show="modalPago"
-      class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100"
+      x-data="{
+        medioPago: 'TRANSFERENCIA',
+        chequesSeleccionados: [],
+        importeManual: '',
+        get totalChequesSeleccionados() {
+          return this.chequesSeleccionados.reduce((sum, id) => {
+            const ch = chequesEnCartera.find(c => c.id == id);
+            return sum + (ch ? parseFloat(ch.importe) : 0);
+          }, 0);
+        },
+        get importeEfectivo() {
+          if (this.medioPago === 'CHEQUE_TERCERO') {
+            return this.totalChequesSeleccionados;
+          }
+          return parseFloat(this.importeManual || comprobanteSeleccionado?.saldo || 0);
+        },
+        toggleCheque(id) {
+          const idx = this.chequesSeleccionados.indexOf(id);
+          if (idx === -1) {
+            this.chequesSeleccionados.push(id);
+          } else {
+            this.chequesSeleccionados.splice(idx, 1);
+          }
+        },
+        estaSeleccionado(id) {
+          return this.chequesSeleccionados.includes(id);
+        },
+        seleccionarTodos() {
+          this.chequesSeleccionados = chequesEnCartera.map(c => c.id);
+        },
+        limpiarSeleccion() {
+          this.chequesSeleccionados = [];
+        }
+      }"
+      class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-100"
     >
       <form method="post" action="{% url 'finanzas:comprobante_pago' %}">
         {% csrf_token %}
         <input type="hidden" name="comprobante_id" :value="comprobanteSeleccionado?.id">
         <input type="hidden" name="es_cobro" :value="comprobanteSeleccionado?.es_cobro ? '1' : '0'">
+        <!-- Cheques seleccionados como campos ocultos (múltiples) -->
+        <template x-for="chId in chequesSeleccionados" :key="chId">
+          <input type="hidden" name="cheques_ids" :value="chId">
+        </template>
 
+        <!-- Header -->
         <div class="px-6 py-5 bg-gradient-to-r from-emerald-900 to-emerald-800 text-white flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
@@ -42,7 +81,9 @@
           </button>
         </div>
 
-        <div class="p-6 space-y-4 text-xs">
+        <!-- Cuerpo scrollable -->
+        <div class="p-6 space-y-4 text-xs max-h-[70vh] overflow-y-auto">
+
           <!-- Detalle de la factura -->
           <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
             <div class="flex items-center justify-between">
@@ -59,41 +100,13 @@
             </div>
           </div>
 
-          <!-- Importe a Pagar / Cobrar -->
-          <div>
-            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Importe a Cancelar (ARS) *</label>
-            <input 
-              type="number" 
-              name="importe" 
-              step="0.01" 
-              required 
-              :value="comprobanteSeleccionado?.saldo"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-base text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
-            />
-          </div>
-
-          <!-- Cuenta Financiera (Caja o Banco) -->
-          <div>
-            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
-              <span x-text="comprobanteSeleccionado?.es_cobro ? 'Cuenta Destino (Donde ingresa el dinero) *' : 'Cuenta Origen (De donde sale el dinero) *'"></span>
-            </label>
-            <select 
-              name="cuenta_financiera_id" 
-              required
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
-            >
-              {% for c in cuentas %}
-                <option value="{{ c.id }}">{{ c.nombre }} ({{ c.moneda }} ${{ c.saldo_actual|floatformat:2 }})</option>
-              {% endfor %}
-            </select>
-          </div>
-
           <!-- Medio de Pago -->
           <div>
             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Medio de Pago *</label>
             <select 
               name="medio_pago" 
               required
+              x-model="medioPago"
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
             >
               <option value="TRANSFERENCIA">Transferencia Bancaria Inmediata</option>
@@ -102,6 +115,140 @@
               <option value="CHEQUE_TERCERO">Endoso Cheque de Tercero (Cartera)</option>
             </select>
           </div>
+
+          <!-- ═══════════════════════════════════════════════════════════
+               PANEL DE CHEQUES EN CARTERA
+               Solo visible cuando se selecciona CHEQUE_TERCERO
+               ═══════════════════════════════════════════════════════════ -->
+          <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak class="border border-purple-200 rounded-2xl overflow-hidden">
+            <!-- Header del panel -->
+            <div class="px-4 py-3 bg-purple-50 border-b border-purple-200 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🏦</span>
+                <div>
+                  <span class="text-xs font-extrabold text-purple-900">Cheques en Cartera Disponibles</span>
+                  <p class="text-[10px] text-purple-600 mt-0.5">Seleccioná uno o varios cheques para endosar al proveedor</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" @click="seleccionarTodos()" class="px-2 py-1 text-[10px] font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg transition-colors cursor-pointer">
+                  Todos
+                </button>
+                <button type="button" @click="limpiarSeleccion()" class="px-2 py-1 text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
+                  Limpiar
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de cheques -->
+            <div class="divide-y divide-purple-100 max-h-52 overflow-y-auto">
+              {% for ch in cheques_en_cartera %}
+              <label
+                class="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
+                :class="estaSeleccionado('{{ ch.id }}') ? 'bg-purple-50' : 'bg-white hover:bg-slate-50/70'"
+              >
+                <input 
+                  type="checkbox"
+                  class="rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  :checked="estaSeleccionado('{{ ch.id }}')"
+                  @change="toggleCheque('{{ ch.id }}')"
+                >
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono font-bold text-slate-900 text-xs">#{{ ch.numero }}</span>
+                    <span class="text-[10px] font-semibold text-slate-600">{{ ch.banco_emisor }}</span>
+                    <span class="text-[10px] text-slate-400">•</span>
+                    <span class="text-[10px] text-slate-500">Vence {{ ch.fecha_cobro|date:"d/m/Y" }}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 truncate mt-0.5">{{ ch.emisor_firmante }}</div>
+                </div>
+                <span class="font-mono font-black text-xs text-purple-800 whitespace-nowrap">${{ ch.importe|floatformat:2 }}</span>
+              </label>
+              {% empty %}
+              <div class="px-4 py-8 text-center">
+                <p class="text-xs font-semibold text-slate-500">Sin cheques en cartera disponibles</p>
+                <p class="text-[10px] text-slate-400 mt-1">Cargalos desde <strong>Finanzas → Cheques</strong></p>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Footer resumen del panel -->
+            <div class="px-4 py-3 bg-purple-50 border-t border-purple-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-purple-700">
+                  <span x-text="chequesSeleccionados.length"></span> cheque(s) seleccionado(s)
+                </span>
+                <span class="font-mono font-black text-sm text-purple-900">
+                  $<span x-text="totalChequesSeleccionados.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>
+                </span>
+              </div>
+              <!-- Barra de progreso vs saldo pendiente -->
+              <div x-show="chequesSeleccionados.length > 0">
+                <div class="flex items-center gap-1.5">
+                  <div class="flex-1 bg-purple-200 rounded-full h-1.5">
+                    <div 
+                      class="h-1.5 rounded-full transition-all"
+                      :class="totalChequesSeleccionados > parseFloat(comprobanteSeleccionado?.saldo || 0) ? 'bg-amber-500' : 'bg-purple-600'"
+                      :style="`width: ${Math.min(100, (totalChequesSeleccionados / (parseFloat(comprobanteSeleccionado?.saldo) || 1)) * 100)}%`"
+                    ></div>
+                  </div>
+                  <span 
+                    class="text-[10px] font-semibold whitespace-nowrap"
+                    :class="totalChequesSeleccionados > parseFloat(comprobanteSeleccionado?.saldo || 0) ? 'text-amber-600' : 'text-purple-600'"
+                    x-text="`${Math.min(100, Math.round((totalChequesSeleccionados / (parseFloat(comprobanteSeleccionado?.saldo) || 1)) * 100))}% cubierto`"
+                  ></span>
+                </div>
+              </div>
+              <!-- Aviso excedente -->
+              <p 
+                x-show="chequesSeleccionados.length > 0 && totalChequesSeleccionados > parseFloat(comprobanteSeleccionado?.saldo || 0)"
+                class="text-[10px] text-amber-700 font-semibold"
+              >
+                ⚠️ El total supera el saldo pendiente. El excedente quedará como anticipo en la cuenta corriente.
+              </p>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════════
+               IMPORTE (manual para otros medios, oculto para CHEQUE_TERCERO)
+               ═══════════════════════════════════════════════════════════ -->
+          <div x-show="medioPago !== 'CHEQUE_TERCERO'">
+            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Importe a Cancelar (ARS) *</label>
+            <input 
+              type="number" 
+              name="importe" 
+              step="0.01" 
+              x-model="importeManual"
+              :value="comprobanteSeleccionado?.saldo"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-base text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
+            />
+          </div>
+          <!-- Importe calculado automáticamente para CHEQUE_TERCERO -->
+          <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak>
+            <input type="hidden" name="importe" :value="totalChequesSeleccionados.toFixed(2)">
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════════
+               CUENTA FINANCIERA (solo para no-cheques)
+               ═══════════════════════════════════════════════════════════ -->
+          <div x-show="medioPago !== 'CHEQUE_TERCERO'">
+            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <span x-text="comprobanteSeleccionado?.es_cobro ? 'Cuenta Destino (Donde ingresa el dinero) *' : 'Cuenta Origen (De donde sale el dinero) *'"></span>
+            </label>
+            <select 
+              name="cuenta_financiera_id" 
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
+            >
+              {% for c in cuentas %}
+                <option value="{{ c.id }}">{{ c.nombre }} ({{ c.moneda }} ${{ c.saldo_actual|floatformat:2 }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <!-- Cuenta dummy oculta para CHEQUE_TERCERO (backend la ignora) -->
+          <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak>
+            <input type="hidden" name="cuenta_financiera_id" value="{{ cuentas.0.id|default:'' }}">
+          </div>
+
 
           <!-- Fecha -->
           <div>
@@ -115,7 +262,7 @@
             />
           </div>
 
-          <!-- Beneficiario y Observaciones -->
+          <!-- Beneficiario -->
           <div>
             <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Beneficiario / Aclaración</label>
             <input 
@@ -125,25 +272,57 @@
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
             />
           </div>
+
+          <!-- Aviso cheque endosado -->
+          <div 
+            x-show="medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length > 0"
+            x-cloak
+            class="p-3 bg-purple-50 rounded-2xl border border-purple-200 flex items-start gap-2"
+          >
+            <span class="text-base leading-none mt-0.5">ℹ️</span>
+            <p class="text-[10px] text-purple-800">
+              Los cheques seleccionados pasarán a estado <strong>Endosado a Proveedor</strong> y reducirán la deuda en cuenta corriente. Podés ver el historial en <strong>Finanzas → Cheques</strong>.
+            </p>
+          </div>
         </div>
 
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
-          <button 
-            type="button" 
-            @click="$dispatch('cerrar-modal'); modalPago = false"
-            class="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit" 
-            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-2"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Confirmar y Emitir Comprobante
-          </button>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+          <div class="text-xs">
+            <span x-show="medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length === 0" class="text-amber-600 font-semibold">
+              ⚠️ Seleccioná al menos un cheque
+            </span>
+            <span x-show="medioPago !== 'CHEQUE_TERCERO' || chequesSeleccionados.length > 0" class="text-slate-500">
+              Total: <strong class="font-mono text-slate-800 text-sm">$<span x-text="importeEfectivo.toLocaleString('es-AR', {minimumFractionDigits: 2})"></span></strong>
+            </span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button 
+              type="button" 
+              @click="$dispatch('cerrar-modal'); modalPago = false"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              :disabled="medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length === 0"
+              :class="(medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length === 0) ? 'opacity-50 cursor-not-allowed bg-emerald-600' : 'cursor-pointer bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'"
+              class="px-5 py-2.5 rounded-xl text-white font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Confirmar y Emitir Comprobante
+            </button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<!-- Variable JS global para cheques en cartera (consumida por Alpine.js) -->
+<script>
+  var chequesEnCartera = [
+    {% for ch in cheques_en_cartera %}{ id: '{{ ch.id }}', importe: '{{ ch.importe }}', numero: '{{ ch.numero }}', banco: '{{ ch.banco_emisor }}' }{% if not forloop.last %},{% endif %}{% endfor %}
+  ];
+</script>

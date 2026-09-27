@@ -1,7 +1,23 @@
 <div class="p-6 bg-white rounded-3xl" x-data="{
   proveedorId: '',
   proveedorNombre: '',
-  saldoDeuda: 0
+  saldoDeuda: 0,
+  medioPago: 'TRANSFERENCIA',
+  chequesSeleccionados: [],
+  get totalChequesSeleccionados() {
+    return this.chequesSeleccionados.reduce((sum, id) => {
+      const ch = (typeof chequesEnCartera !== 'undefined' ? chequesEnCartera : []).find(c => c.id == id);
+      return sum + (ch ? parseFloat(ch.importe) : 0);
+    }, 0);
+  },
+  toggleCheque(id) {
+    const idx = this.chequesSeleccionados.indexOf(id);
+    if (idx === -1) { this.chequesSeleccionados.push(id); }
+    else { this.chequesSeleccionados.splice(idx, 1); }
+  },
+  estaSeleccionado(id) { return this.chequesSeleccionados.includes(id); },
+  seleccionarTodos() { this.chequesSeleccionados = (typeof chequesEnCartera !== 'undefined' ? chequesEnCartera : []).map(c => c.id); },
+  limpiarSeleccion() { this.chequesSeleccionados = []; }
 }">
   <div class="flex items-center justify-between pb-4 border-b border-slate-100">
     <div class="flex items-center space-x-3">
@@ -21,6 +37,11 @@
   <form method="post" action="{% url 'finanzas:proveedor_pagar' %}" class="mt-5 space-y-4">
     {% csrf_token %}
 
+    <!-- Cheques seleccionados como campos hidden -->
+    <template x-for="chId in chequesSeleccionados" :key="chId">
+      <input type="hidden" name="cheques_ids" :value="chId">
+    </template>
+
     <div>
       <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Contratista Destino</label>
       <select 
@@ -37,12 +58,81 @@
       </select>
     </div>
 
+    <!-- Medio de Pago -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 mb-1">Medio de Pago</label>
+      <select
+        name="medio_pago"
+        x-model="medioPago"
+        class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-500"
+      >
+        <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+        <option value="EFECTIVO">Efectivo en Caja</option>
+        <option value="CHEQUE_PROPIO">Cheque Propio Emitido</option>
+        <option value="CHEQUE_TERCERO">Endoso Cheque de Tercero (Cartera)</option>
+      </select>
+    </div>
+
+    <!-- Panel de Cheques en Cartera (solo CHEQUE_TERCERO) -->
+    <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak class="border border-purple-200 rounded-2xl overflow-hidden">
+      <div class="px-4 py-3 bg-purple-50 border-b border-purple-200 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>🏦</span>
+          <div>
+            <span class="text-xs font-extrabold text-purple-900">Cheques en Cartera</span>
+            <p class="text-[10px] text-purple-600">Seleccioná los cheques a endosar</p>
+          </div>
+        </div>
+        <div class="flex gap-1.5">
+          <button type="button" @click="seleccionarTodos()" class="px-2 py-1 text-[10px] font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-lg cursor-pointer">Todos</button>
+          <button type="button" @click="limpiarSeleccion()" class="px-2 py-1 text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="divide-y divide-purple-100 max-h-48 overflow-y-auto">
+        {% for ch in cheques_en_cartera %}
+        <label
+          class="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
+          :class="estaSeleccionado('{{ ch.id }}') ? 'bg-purple-50' : 'bg-white hover:bg-slate-50/70'"
+        >
+          <input 
+            type="checkbox"
+            class="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+            :checked="estaSeleccionado('{{ ch.id }}')"
+            @change="toggleCheque('{{ ch.id }}')"
+          >
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-mono font-bold text-slate-900 text-[11px]">#{{ ch.numero }}</span>
+              <span class="text-[10px] text-slate-500">{{ ch.banco_emisor }}</span>
+              <span class="text-[10px] text-slate-400">• Vence {{ ch.fecha_cobro|date:"d/m/Y" }}</span>
+            </div>
+            <div class="text-[10px] text-slate-400 truncate">{{ ch.emisor_firmante }}</div>
+          </div>
+          <span class="font-mono font-black text-xs text-purple-800">${{ ch.importe|floatformat:2 }}</span>
+        </label>
+        {% empty %}
+        <div class="px-4 py-6 text-center">
+          <p class="text-xs text-slate-400 font-semibold">Sin cheques en cartera</p>
+          <p class="text-[10px] text-slate-400 mt-1">Registralos desde <strong>Finanzas → Cheques</strong></p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="px-4 py-3 bg-purple-50 border-t border-purple-200">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-purple-700"><span x-text="chequesSeleccionados.length"></span> cheque(s)</span>
+          <span class="font-mono font-black text-sm text-purple-900">$<span x-text="totalChequesSeleccionados.toLocaleString('es-AR', {minimumFractionDigits: 2})"></span></span>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div>
+      <!-- Caja / Banco origen (oculto si es CHEQUE_TERCERO) -->
+      <div x-show="medioPago !== 'CHEQUE_TERCERO'">
         <label class="block text-xs font-bold text-slate-700 mb-1">Caja / Banco de Origen (Fondos)</label>
         <select 
           name="cuenta_id" 
-          required 
           class="w-full text-xs font-semibold rounded-xl border-slate-200 bg-slate-50 focus:bg-white px-3 py-2.5 focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-500"
         >
           <option value="">-- Cuenta de Pago --</option>
@@ -51,6 +141,10 @@
           {% endfor %}
         </select>
       </div>
+      <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak>
+        <input type="hidden" name="cuenta_id" value="{{ cuentas.0.id|default:'' }}">
+      </div>
+
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Importe a Pagar ($ ARS)</label>
@@ -60,11 +154,20 @@
             type="number" 
             step="0.01" 
             min="0.01"
-            name="importe" 
+            name="importe"
+            x-show="medioPago !== 'CHEQUE_TERCERO'"
             required 
             placeholder="0.00" 
             class="w-full pl-7 pr-3 py-2.5 text-xs font-mono font-extrabold text-slate-900 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-500"
           >
+          <!-- Importe auto si es cheque -->
+          <div x-show="medioPago === 'CHEQUE_TERCERO'" x-cloak>
+            <input type="hidden" name="importe" :value="totalChequesSeleccionados.toFixed(2)">
+            <div class="w-full pl-7 pr-3 py-2.5 text-xs font-mono font-extrabold text-purple-900 bg-purple-50 border border-purple-200 rounded-xl">
+              $<span x-text="totalChequesSeleccionados.toLocaleString('es-AR', {minimumFractionDigits: 2})"></span>
+              <span class="text-[10px] font-normal text-purple-500 ml-1">(auto)</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -103,9 +206,13 @@
       >
     </div>
 
-    <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-800 flex items-start space-x-2">
+    <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-800 flex items-start space-x-2" x-show="medioPago !== 'CHEQUE_TERCERO'">
       <span class="text-base leading-none">ℹ️</span>
       <p>El importe egresará automáticamente de la caja seleccionada y reducirá la deuda en la cuenta corriente del proveedor.</p>
+    </div>
+    <div class="p-3 bg-purple-50 rounded-2xl border border-purple-200 text-xs text-purple-800 flex items-start space-x-2" x-show="medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length > 0" x-cloak>
+      <span class="text-base leading-none">🏦</span>
+      <p>Los cheques seleccionados pasarán a estado <strong>Endosado a Proveedor</strong> y reducirán la deuda en la cuenta corriente.</p>
     </div>
 
     <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
@@ -117,8 +224,10 @@
         Cancelar
       </button>
       <button 
-        type="submit" 
-        class="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+        type="submit"
+        :disabled="medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length === 0"
+        :class="(medioPago === 'CHEQUE_TERCERO' && chequesSeleccionados.length === 0) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-rose-800'"
+        class="px-4 py-2 bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
       >
         Confirmar Pago
       </button>

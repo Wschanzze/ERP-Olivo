@@ -633,8 +633,15 @@ class FinanzasDashboardView(TemplateView):
         ctx['proveedores'] = CuentaCorriente.objects.filter(tipo_entidad='PROVEEDOR', activo=True)
         ctx['clientes'] = CuentaCorriente.objects.filter(tipo_entidad='CLIENTE', activo=True)
         ctx['cheques'] = Cheque.objects.all()[:15]
+        ctx['cheques_en_cartera'] = Cheque.objects.filter(
+            estado=Cheque.EstadoCheque.EN_CARTERA,
+            tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
+        ).order_by('fecha_cobro')
+
         ctx['movimientos_recientes'] = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente')[:20]
         ctx['active_tab'] = self.request.GET.get('tab', 'flujo')
+        ctx['fecha_hoy'] = timezone.now().date()
+
 
         # Coeficiente de Tipo de Cambio mensual fijado
         tc_vigente = TipoCambioMensual.get_tc(empresa=empresa, ano=2026, mes=3)
@@ -1032,7 +1039,8 @@ class ChequesListView(ListView):
 
 class ChequeCreateView(CreateView):
     model = Cheque
-    fields = ['tipo', 'banco_emisor_emisor', 'numero', 'emisor_firmante', 'cuit_emisor', 'fecha_emision', 'fecha_cobro', 'importe', 'cuenta_bancaria_origen', 'cuenta_corriente', 'estado', 'observaciones']
+    fields = ['tipo', 'banco_emisor', 'numero', 'emisor_firmante', 'cuit_emisor', 'fecha_emision', 'fecha_cobro', 'importe', 'cuenta_bancaria_origen', 'cuenta_corriente', 'estado', 'observaciones']
+
     template_name = 'finanzas/partials/cheque_form_modal.html'
 
     def get_success_url(self):
@@ -1602,18 +1610,70 @@ class PagoProveedorView(View):
     """Registra una Orden de Pago a Proveedor con impacto en caja y saldo de cuenta corriente."""
     def post(self, request):
         proveedor_id = request.POST.get('proveedor_id')
-        cuenta_id = request.POST.get('cuenta_id')
-        importe = Decimal(request.POST.get('importe', '0'))
+        medio_pago = request.POST.get('medio_pago', 'TRANSFERENCIA')
         fecha_str = request.POST.get('fecha')
         concepto = request.POST.get('concepto', 'Pago a Proveedor')
         comprobante_nro = request.POST.get('comprobante_nro', '')
-        
+
         proveedor = get_object_or_404(CuentaCorriente, id=proveedor_id, tipo_entidad=CuentaCorriente.TipoEntidad.PROVEEDOR)
-        cuenta = get_object_or_404(Cuenta, id=cuenta_id)
-        
         fecha = datetime.date.fromisoformat(fecha_str) if fecha_str else timezone.now().date()
-        
-        mov = registrar_movimiento_financiero(
+
+        # ─── Pago con cheques de cartera ──────────────────────────────────
+        if medio_pago == 'CHEQUE_TERCERO':
+            cheques_ids = request.POST.getlist('cheques_ids')
+            if not cheques_ids:
+                messages.error(request, "Debés seleccionar al menos un cheque de cartera.")
+                return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+
+            cheques_obj = list(Cheque.objects.filter(
+                pk__in=cheques_ids,
+                estado=Cheque.EstadoCheque.EN_CARTERA,
+                tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
+            ))
+            if not cheques_obj:
+                messages.error(request, "Los cheques seleccionados no están disponibles en cartera.")
+                return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+
+            importe = sum(ch.importe for ch in cheques_obj)
+            cuenta = cheques_obj[0].cuenta_bancaria_origen or Cuenta.objects.filter(activa=True).first()
+
+            registrar_movimiento_financiero(
+                cuenta=cuenta,
+                tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+                fecha=fecha,
+                importe=importe,
+                moneda='ARS',
+                concepto=concepto or f"Pago a {proveedor.razon_social} - {len(cheques_obj)} Cheque(s) Endosado(s)",
+                comprobante_tipo="ORDEN_PAGO_CHEQUE",
+                comprobante_nro=comprobante_nro,
+                cuenta_corriente=proveedor,
+                usuario=request.user if request.user.is_authenticated else None
+            )
+
+            # Actualizar saldo cuenta corriente
+            proveedor.saldo_actual += importe
+            proveedor.save(update_fields=['saldo_actual', 'updated_at'])
+
+            # Marcar cheques como endosados
+            for ch in cheques_obj:
+                ch.estado = Cheque.EstadoCheque.ENTREGADO_PROVEEDOR
+                ch.cuenta_corriente = proveedor
+                ch.observaciones = (ch.observaciones or '') + f"\nEndosado a {proveedor.razon_social} el {fecha}"
+                ch.save(update_fields=['estado', 'cuenta_corriente', 'observaciones', 'updated_at'])
+
+            messages.success(
+                request,
+                f"✅ Pago de ${importe:,.2f} registrado a {proveedor.razon_social} "
+                f"mediante {len(cheques_obj)} cheque(s) endosado(s)."
+            )
+            return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+
+        # ─── Pago convencional (transferencia, efectivo, etc.) ────────────
+        cuenta_id = request.POST.get('cuenta_id')
+        importe = Decimal(request.POST.get('importe', '0'))
+        cuenta = get_object_or_404(Cuenta, id=cuenta_id)
+
+        registrar_movimiento_financiero(
             cuenta=cuenta,
             tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
             fecha=fecha,
@@ -1627,6 +1687,8 @@ class PagoProveedorView(View):
         )
         messages.success(request, f"Pago de ${importe:,.2f} registrado exitosamente a {proveedor.razon_social}.")
         return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
+
+
 
 
 class CobroClienteView(View):
@@ -1766,7 +1828,8 @@ class ChequeCambiarEstadoView(View):
                 fecha=timezone.now().date(),
                 importe=cheque.importe,
                 moneda=cuenta.moneda,
-                concepto=f"Acreditación Cheque {cheque.banco_emisor_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
+                concepto=f"Acreditación Cheque {cheque.banco_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
+
                 comprobante_tipo="CHEQUE_COBRADO",
                 comprobante_nro=cheque.numero,
                 usuario=request.user if request.user.is_authenticated else None
@@ -1936,16 +1999,102 @@ class ComprobantePagoCobroView(View):
     def post(self, request):
         try:
             comprobante_id = request.POST.get('comprobante_id')
-            importe = Decimal(request.POST.get('importe') or '0.00')
-            cuenta_financiera_id = request.POST.get('cuenta_financiera_id')
             medio_pago = request.POST.get('medio_pago', 'TRANSFERENCIA')
             fecha = request.POST.get('fecha') or timezone.now().date()
             beneficiario = request.POST.get('beneficiario_firmante', '').strip()
             es_cobro = request.POST.get('es_cobro') == '1'
 
             comprobante = get_object_or_404(ComprobanteFiscal, pk=comprobante_id)
-            cuenta_financiera = get_object_or_404(Cuenta, pk=cuenta_financiera_id)
             cuenta_corriente = comprobante.cuenta_corriente
+
+            # ─── Modo cheque de tercero: múltiple selección ───────────────
+            if medio_pago == 'CHEQUE_TERCERO' and not es_cobro:
+                cheques_ids = request.POST.getlist('cheques_ids')
+                if not cheques_ids:
+                    messages.error(request, "Debés seleccionar al menos un cheque de cartera.")
+                    return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+                cheques_obj = list(Cheque.objects.filter(
+                    pk__in=cheques_ids,
+                    estado=Cheque.EstadoCheque.EN_CARTERA,
+                    tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
+                ))
+                if not cheques_obj:
+                    messages.error(request, "Los cheques seleccionados no están disponibles en cartera.")
+                    return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+                importe = sum(ch.importe for ch in cheques_obj)
+
+                tipo_doc = 'OP'
+                count = OrdenPagoRecibo.objects.filter(tipo=tipo_doc).count() + 1
+                numero = f"OP-2026-{count:04d}"
+                concepto = f"Pago Factura {comprobante.numero_completo} ({comprobante.razon_social}) - {len(cheques_obj)} Cheque(s) Endosado(s)"
+
+                # Primer cheque como referencia para la orden (modelo tiene FK single)
+                cheque_principal = cheques_obj[0]
+                cuenta_financiera = cheque_principal.cuenta_bancaria_origen or Cuenta.objects.filter(activa=True).first()
+
+                # Movimiento financiero (egreso simbólico por cheques)
+                mov_fin = MovimientoFinanciero.objects.create(
+                    cuenta=cuenta_financiera,
+                    tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+                    fecha=fecha,
+                    importe=importe,
+                    moneda='ARS',
+                    concepto=concepto,
+                    comprobante_tipo=comprobante.get_tipo_comprobante_display(),
+                    comprobante_nro=comprobante.numero_completo,
+                    cuenta_corriente=cuenta_corriente,
+                    usuario=request.user if request.user.is_authenticated else None
+                )
+
+                # Actualizar saldo cuenta corriente proveedor
+                cuenta_corriente.saldo_actual += importe
+                cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
+
+                # Actualizar comprobante fiscal
+                comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe)
+                if comprobante.saldo_pendiente == 0:
+                    comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGADA
+                else:
+                    comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGO_PARCIAL
+                comprobante.save(update_fields=['saldo_pendiente', 'estado_pago', 'updated_at'])
+
+                # Marcar todos los cheques como ENTREGADO_PROVEEDOR
+                for ch in cheques_obj:
+                    ch.estado = Cheque.EstadoCheque.ENTREGADO_PROVEEDOR
+                    ch.cuenta_corriente = cuenta_corriente
+                    ch.observaciones = (ch.observaciones or '') + f"\nEndosado en pago OP {numero} ({comprobante.razon_social}) el {fecha}"
+                    ch.save(update_fields=['estado', 'cuenta_corriente', 'observaciones', 'updated_at'])
+
+                # Crear Orden de Pago
+                orden = OrdenPagoRecibo.objects.create(
+                    tipo=tipo_doc,
+                    numero=numero,
+                    fecha=fecha,
+                    cuenta_corriente=cuenta_corriente,
+                    cuenta_financiera=cuenta_financiera,
+                    importe_total=importe,
+                    medio_pago=medio_pago,
+                    cheque=cheque_principal,
+                    comprobante_fiscal=comprobante,
+                    movimiento_financiero=mov_fin,
+                    concepto=concepto,
+                    beneficiario_firmante=beneficiario or cuenta_corriente.razon_social,
+                    usuario=request.user if request.user.is_authenticated else None
+                )
+
+                messages.success(
+                    request,
+                    f"✅ Orden de Pago {orden.numero} por ${importe:,.2f} registrada. "
+                    f"{len(cheques_obj)} cheque(s) endosado(s) a {cuenta_corriente.razon_social}."
+                )
+                return redirect('finanzas:orden_pago_print', pk=orden.id)
+
+            # ─── Modo normal: transferencia, efectivo, cheque propio ──────
+            importe = Decimal(request.POST.get('importe') or '0.00')
+            cuenta_financiera_id = request.POST.get('cuenta_financiera_id')
+            cuenta_financiera = get_object_or_404(Cuenta, pk=cuenta_financiera_id)
 
             tipo_doc = 'RC' if es_cobro else 'OP'
             count = OrdenPagoRecibo.objects.filter(tipo=tipo_doc).count() + 1
@@ -1968,7 +2117,7 @@ class ComprobantePagoCobroView(View):
                 usuario=request.user if request.user.is_authenticated else None
             )
 
-            # Actualizar saldos de caja/banco_emisor y cta cte
+            # Actualizar saldos de caja/banco y cta cte
             if es_cobro:
                 cuenta_financiera.saldo_actual += importe
                 cuenta_corriente.saldo_actual -= importe
@@ -2007,6 +2156,8 @@ class ComprobantePagoCobroView(View):
         except Exception as e:
             messages.error(request, f"Error al procesar pago/cobro: {str(e)}")
             return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
+
+
 
 
 class ArqueoCajaCreateView(View):
