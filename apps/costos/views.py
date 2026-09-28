@@ -379,24 +379,16 @@ class CostosDashboardView(ListView):
         ctx['tab_activa'] = self.request.GET.get('tab', 'imputaciones')
 
         # ── 7. Analítica Rendimiento & Rentabilidad (Tab 5) ───────────────────
-        if ctx['tab_activa'] == 'rendimiento':
-            analitica = obtener_analitica_rendimiento(
-                finca_id=self.request.GET.get('finca') or None,
-                cuadro_id=self.request.GET.get('cuadro') or None,
-            )
-            ctx['analitica_por_cuadro'] = analitica['analitica_por_cuadro']
-            ctx['campanas_disponibles'] = analitica['campanas_disponibles']
-            ctx['ranking_rendimiento'] = analitica['ranking_rendimiento']
-            ctx['ranking_rentabilidad'] = analitica['ranking_rentabilidad']
-            ctx['evolucion_historica_json'] = json.dumps(analitica['evolucion_historica'])
-            ctx['costos_sin_campana_count'] = analitica.get('costos_sin_campana_count', 0)
-        else:
-            ctx['analitica_por_cuadro'] = []
-            ctx['campanas_disponibles'] = []
-            ctx['ranking_rendimiento'] = []
-            ctx['ranking_rentabilidad'] = []
-            ctx['evolucion_historica_json'] = json.dumps({'labels': [], 'datasets': []})
-            ctx['costos_sin_campana_count'] = 0
+        analitica = obtener_analitica_rendimiento(
+            finca_id=self.request.GET.get('finca') or None,
+            cuadro_id=self.request.GET.get('cuadro') or None,
+        )
+        ctx['analitica_por_cuadro'] = analitica['analitica_por_cuadro']
+        ctx['campanas_disponibles'] = analitica['campanas_disponibles']
+        ctx['ranking_rendimiento'] = analitica['ranking_rendimiento']
+        ctx['ranking_rentabilidad'] = analitica['ranking_rentabilidad']
+        ctx['evolucion_historica_json'] = json.dumps(analitica['evolucion_historica'])
+        ctx['costos_sin_campana_count'] = analitica.get('costos_sin_campana_count', 0)
 
         # ── 8. Enriquecer los items de la página actual ───────────────────────
 

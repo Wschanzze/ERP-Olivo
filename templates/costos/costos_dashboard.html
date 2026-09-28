@@ -942,7 +942,7 @@
   <!-- ===================================================================== -->
   <!-- TAB 5: RENDIMIENTO & RENTABILIDAD (kg/ha, histórico, margen)          -->
   <!-- ===================================================================== -->
-  <div x-show="activeTab === 'rendimiento'" class="space-y-6">
+  <div x-show="activeTab === 'rendimiento'" x-effect="if (activeTab === 'rendimiento') setTimeout(() => { window.initRendimientoChart && window.initRendimientoChart() }, 50)" class="space-y-6">
 
     {% if not campanas_disponibles %}
     <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
@@ -1117,25 +1117,35 @@
   'use strict';
   var data = {{ evolucion_historica_json|safe }};
   if (!data || !data.labels || data.labels.length === 0) return;
-  var canvas = document.getElementById('chartEvolucionRendimiento');
-  if (!canvas) return;
-  new Chart(canvas, {
-    type: 'line',
-    data: { labels: data.labels, datasets: data.datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { font: { size: 11 }, padding: 16, boxWidth: 12, boxHeight: 12 } },
-        tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + ' kg/ha' : 'sin dato'); } } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: { beginAtZero: true, grid: { color: '#F1F5F0' }, ticks: { font: { size: 11 }, callback: function(v) { return v + ' kg/ha'; } } }
-      }
+  var chartInstance = null;
+
+  window.initRendimientoChart = function() {
+    var canvas = document.getElementById('chartEvolucionRendimiento');
+    if (!canvas) return;
+    if (chartInstance) {
+      chartInstance.resize();
+      return;
     }
-  });
+    chartInstance = new Chart(canvas, {
+      type: 'line',
+      data: { labels: data.labels, datasets: data.datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 }, padding: 16, boxWidth: 12, boxHeight: 12 } },
+          tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + ' kg/ha' : 'sin dato'); } } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, grid: { color: '#F1F5F0' }, ticks: { font: { size: 11 }, callback: function(v) { return v + ' kg/ha'; } } }
+        }
+      }
+    });
+  };
+
+  setTimeout(window.initRendimientoChart, 100);
 })();
 </script>
 {% endblock %}
