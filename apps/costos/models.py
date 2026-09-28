@@ -106,6 +106,13 @@ class CostoPorCentro(TimeStampedModel):
         blank=True, 
         verbose_name=_("ID de Documento Origen")
     )
+    campana = models.CharField(
+        max_length=20,
+        blank=True,
+        db_index=True,
+        verbose_name=_("Campaña Agrícola"),
+        help_text=_("Ciclo jul-jun, ej: 2025/2026. Se asigna automáticamente desde la fecha si no se especifica.")
+    )
 
     class Meta:
         verbose_name = _("Costo por Centro")
@@ -115,8 +122,10 @@ class CostoPorCentro(TimeStampedModel):
             models.Index(fields=['centro_de_costo', 'fecha']),
             models.Index(fields=['finca', 'fecha']),
             models.Index(fields=['cuadro', 'fecha']),
+            models.Index(fields=['cuadro', 'campana']),
             models.Index(fields=['cuenta_contable', 'fecha']),
             models.Index(fields=['documento_origen_tipo', 'documento_origen_id']),
+            models.Index(fields=['campana']),
         ]
 
     def __str__(self):

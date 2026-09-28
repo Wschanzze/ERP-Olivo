@@ -927,23 +927,21 @@
       <a href="{% url 'campos:campos_list' %}" class="inline-flex items-center gap-1.5 mt-4 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
     </div>
     {% else %}
+
+        {% if costos_sin_campana_count > 0 %}
     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
       <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
       <div>
-        <p class="text-sm font-bold text-amber-800">Nota metodologica — costo por campana es estimacion proporcional</p>
+        <p class="text-sm font-bold text-amber-800">Costos sin campaña asignada</p>
         <p class="text-xs text-amber-700 mt-1">
-          Los valores de <strong>Costo/ha</strong> y <strong>Costo/kg</strong> por campana son una
-          <strong>estimacion proporcional</strong> basada en el porcentaje de kilos cosechados de cada campana
-          sobre el total historico del cuadro, ya que las imputaciones de costos aun no estan asociadas
-          a una campana especifica. No reflejan el costo real de ese periodo exacto. El rendimiento (kg/ha),
-          el ingreso estimado y el margen si son datos reales o cargados directamente.
-          La asignacion de campana a cada imputacion de costo esta pendiente como mejora futura.
+          Hay <strong>{{ costos_sin_campana_count }}</strong> imputaciones de costos que no tienen una campaña asignada. 
+          Estos costos no están incluidos en el análisis por campaña de abajo.
         </p>
       </div>
     </div>
+    {% endif %}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
         <div class="flex items-center justify-between mb-4">
@@ -1034,8 +1032,8 @@
                 <th class="py-2 px-6">Campana</th>
                 <th class="py-2 px-4 text-right">Kg Cosechados</th>
                 <th class="py-2 px-4 text-right">Rinde (kg/ha)</th>
-                <th class="py-2 px-4 text-right">Costo/ha <span class="text-amber-400 font-normal normal-case" title="Estimacion proporcional">~</span></th>
-                <th class="py-2 px-4 text-right">Costo/kg <span class="text-amber-400 font-normal normal-case" title="Estimacion proporcional">~</span></th>
+                <th class="py-2 px-4 text-right">Costo/ha</th>
+                <th class="py-2 px-4 text-right">Costo/kg</th>
                 <th class="py-2 px-4 text-right">Precio Venta/kg</th>
                 <th class="py-2 px-4 text-right">Ingreso Est.</th>
                 <th class="py-2 px-4 text-right">Margen/ha</th>
@@ -1048,8 +1046,8 @@
                 <td class="py-2.5 px-6 font-mono font-bold text-slate-700">{{ c.campana }}</td>
                 <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-700">{% if c.kg_cosechados %}{{ c.kg_cosechados|floatformat:0 }} kg{% else %}-{% endif %}</td>
                 <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-[#3D4A2A]">{% if c.rinde_kg_ha %}{{ c.rinde_kg_ha|floatformat:1 }} kg/ha{% else %}-{% endif %}</td>
-                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-700">{% if c.costo_ha %}<span class="inline-flex items-center justify-end gap-0.5">${{ c.costo_ha|floatformat:2 }} <span title="Estimacion proporcional, no exacta" class="inline-flex items-center ml-0.5 cursor-help"><svg class="w-3 h-3 text-amber-500 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></span></span>{% else %}-{% endif %}</td>
-                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">{% if c.costo_kg %}<span class="inline-flex items-center justify-end gap-0.5">${{ c.costo_kg|floatformat:2 }} <span title="Estimacion proporcional, no exacta" class="inline-flex items-center ml-0.5 cursor-help"><svg class="w-3 h-3 text-amber-500 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></span></span>{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-700">{% if c.costo_ha %}${{ c.costo_ha|floatformat:2 }}{% else %}-{% endif %}</td>
+                <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">{% if c.costo_kg %}${{ c.costo_kg|floatformat:2 }}{% else %}-{% endif %}</td>
                 <td class="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">{% if c.precio_venta_kg %}${{ c.precio_venta_kg|floatformat:2 }}{% else %}<span class="text-slate-300 italic text-[10px]">Sin precio</span>{% endif %}</td>
                 <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-slate-800">{% if c.ingreso_estimado %}${{ c.ingreso_estimado|floatformat:0 }}{% else %}-{% endif %}</td>
                 <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums">

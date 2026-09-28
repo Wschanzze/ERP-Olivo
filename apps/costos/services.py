@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 from decimal import Decimal
 from django.db import transaction
 from django.db.models import Sum
@@ -39,6 +39,22 @@ def resolver_cuenta_contable_defecto(tipo_origen: str, centro_de_costo: CentroDe
     if not cta:
         cta = CuentaContable.objects.filter(codigo__startswith='4.2.', es_imputable=True).first()
     return cta
+
+
+def calcular_campana_desde_fecha(fecha) -> str:
+    """Calcula la campana agricola (jul N-1 -> jun N) a partir de una fecha."""
+    if isinstance(fecha, str):
+        try:
+            fecha_obj = datetime.datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            return ""
+    else:
+        fecha_obj = fecha
+    
+    if getattr(fecha_obj, 'month', 1) >= 7:
+        return f"{getattr(fecha_obj, 'year', 2000)}/{getattr(fecha_obj, 'year', 2000) + 1}"
+    else:
+        return f"{getattr(fecha_obj, 'year', 2000) - 1}/{getattr(fecha_obj, 'year', 2000)}"
 
 
 @transaction.atomic
@@ -124,6 +140,22 @@ def registrar_costo(
     return costo
 
 
+def calcular_campana_desde_fecha(fecha) -> str:
+    """Calcula la campana agricola (jul N-1 -> jun N) a partir de una fecha."""
+    if isinstance(fecha, str):
+        try:
+            fecha_obj = datetime.datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            return ""
+    else:
+        fecha_obj = fecha
+    
+    if getattr(fecha_obj, 'month', 1) >= 7:
+        return f"{getattr(fecha_obj, 'year', 2000)}/{getattr(fecha_obj, 'year', 2000) + 1}"
+    else:
+        return f"{getattr(fecha_obj, 'year', 2000) - 1}/{getattr(fecha_obj, 'year', 2000)}"
+
+
 @transaction.atomic
 def prorratear_costo_indirecto(costo: CostoPorCentro, usuario=None) -> int:
     """
@@ -196,6 +228,22 @@ def prorratear_costo_indirecto(costo: CostoPorCentro, usuario=None) -> int:
         pass
 
     return len(items_generados)
+
+
+def calcular_campana_desde_fecha(fecha) -> str:
+    """Calcula la campana agricola (jul N-1 -> jun N) a partir de una fecha."""
+    if isinstance(fecha, str):
+        try:
+            fecha_obj = datetime.datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            return ""
+    else:
+        fecha_obj = fecha
+    
+    if getattr(fecha_obj, 'month', 1) >= 7:
+        return f"{getattr(fecha_obj, 'year', 2000)}/{getattr(fecha_obj, 'year', 2000) + 1}"
+    else:
+        return f"{getattr(fecha_obj, 'year', 2000) - 1}/{getattr(fecha_obj, 'year', 2000)}"
 
 
 @transaction.atomic
