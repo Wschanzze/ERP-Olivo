@@ -28,7 +28,8 @@ from apps.finanzas.models import (
 )
 from apps.finanzas.services import poblar_lineas_cuadro
 from apps.costos.models import CostoPorCentro
-from apps.costos.services import resolver_cuenta_contable_defecto
+from django.db import models
+from apps.costos.services import resolver_cuenta_contable_defecto, calcular_campana_desde_fecha
 
 User = get_user_model()
 
@@ -129,6 +130,36 @@ def poblar_datos_demo_q1_2026():
         }
     )
 
+    finca_chi = Finca.objects.filter(models.Q(codigo__icontains="CHILECITO") | models.Q(nombre__icontains="Chilecito")).first()
+    if not finca_chi:
+        finca_chi, _ = Finca.objects.get_or_create(
+            codigo="CHILECITO",
+            defaults={
+                'empresa': empresa,
+                'nombre': "Finca Chilecito",
+                'superficie_total_ha': Decimal("65.00"),
+                'ubicacion': "Chilecito, La Rioja",
+                'tipo_riego_principal': 'GOTEO',
+                'activa': True
+            }
+        )
+
+    cuadro_d4, _ = Cuadro.objects.get_or_create(
+        finca=finca_chi,
+        codigo="C-MANZ-01",
+        defaults={
+            'nombre': "Cuadro Chilecito - Manzanilla",
+            'hectareas_netas': Decimal("28.00"),
+            'variedad_olivo': Cuadro.VariedadOlivo.MANZANILLA,
+            'ano_plantacion': 2014,
+            'densidad_plantas_ha': 400,
+            'marco_plantacion': "6x4 m",
+            'sistema_riego': 'GOTEO',
+            'estado_fitosanitario': 'Excelente',
+            'observaciones': '[DEMO] Aceituna de doble propósito en valle de Chilecito.'
+        }
+    )
+
     # 3. Cuentas Contables y Centros de Costo
     cta_fert = CuentaContable.objects.filter(codigo='4.2.1.02.000000').first()
     cta_jornal = CuentaContable.objects.filter(codigo='4.2.1.01.000000').first()
@@ -152,6 +183,16 @@ def poblar_datos_demo_q1_2026():
             'nombre': "Producción Agrícola Finca Valle Vicioso",
             'tipo': 'PRODUCTIVO_CAMPO',
             'finca': finca_sur,
+            'cuenta_contable_defecto': cta_jornal
+        }
+    )
+    cc_prod_chi, _ = CentroDeCosto.objects.get_or_create(
+        codigo="CC-PROD-FCHILECITO",
+        defaults={
+            'empresa': empresa,
+            'nombre': "Producción Agrícola Finca Chilecito",
+            'tipo': 'PRODUCTIVO_CAMPO',
+            'finca': finca_chi,
             'cuenta_contable_defecto': cta_jornal
         }
     )
@@ -574,7 +615,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Inyección de 150 kg de nitrato de potasio durante 8 horas de riego nocturno."
     )
     pd_riego_ene = ParteDiario.objects.create(
-        orden_de_trabajo=ot_riego_ene,
         finca=finca_norte,
         cuadro=cuadro_b2,
         fecha=datetime.date(2026, 1, 18),
@@ -620,7 +660,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Desmalezado mecánico y pasada de rastra de discos entre hileras."
     )
     pd_laboreo = ParteDiario.objects.create(
-        orden_de_trabajo=ot_laboreo,
         finca=finca_norte,
         cuadro=cuadro_a1,
         fecha=datetime.date(2026, 1, 22),
@@ -844,7 +883,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Aplicación con atomizadora a 400 L/ha de caldo."
     )
     pd_cura_feb = ParteDiario.objects.create(
-        orden_de_trabajo=ot_cura_feb,
         finca=finca_norte,
         cuadro=cuadro_a1,
         fecha=datetime.date(2026, 2, 16),
@@ -882,7 +920,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Aplicación dirigida de herbicida en ruedo y borduras con pulverizadora."
     )
     pd_desm = ParteDiario.objects.create(
-        orden_de_trabajo=ot_desm,
         finca=finca_norte,
         cuadro=cuadro_b2,
         fecha=datetime.date(2026, 2, 20),
@@ -1059,8 +1096,66 @@ def poblar_datos_demo_q1_2026():
             }
         )
 
-    # Lotes de Cosecha Marzo
-    lote_arauco, _ = LoteDeCosecha.objects.get_or_create(
+    # Lotes de Cosecha Campaña 2024/2025 (Histórica comparativa)
+    LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_a1,
+        campana="2024/2025",
+        defaults={
+            'fecha_inicio': datetime.date(2025, 3, 5),
+            'fecha_fin': datetime.date(2025, 3, 20),
+            'kg_cosechados': Decimal("42000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITUNA_MESA_VERDE,
+            'rendimiento_graso_porcentaje': Decimal("16.00"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("1050.00"),
+            'calidad_observaciones': '[DEMO] Cosecha manual Arauco 2024/2025.'
+        }
+    )
+    LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_b2,
+        campana="2024/2025",
+        defaults={
+            'fecha_inicio': datetime.date(2025, 3, 15),
+            'fecha_fin': datetime.date(2025, 3, 30),
+            'kg_cosechados': Decimal("85000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITE_ALMAZARA,
+            'rendimiento_graso_porcentaje': Decimal("17.20"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("820.00"),
+            'calidad_observaciones': '[DEMO] Cosecha mecánica Arbequina 2024/2025.'
+        }
+    )
+    LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_c3,
+        campana="2024/2025",
+        defaults={
+            'fecha_inicio': datetime.date(2025, 3, 20),
+            'fecha_fin': datetime.date(2025, 3, 31),
+            'kg_cosechados': Decimal("45000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITE_ALMAZARA,
+            'rendimiento_graso_porcentaje': Decimal("18.50"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("890.00"),
+            'calidad_observaciones': '[DEMO] Cosecha Picual Finca Sur 2024/2025.'
+        }
+    )
+    LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_d4,
+        campana="2024/2025",
+        defaults={
+            'fecha_inicio': datetime.date(2025, 3, 10),
+            'fecha_fin': datetime.date(2025, 3, 25),
+            'kg_cosechados': Decimal("38000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITUNA_MESA_VERDE,
+            'rendimiento_graso_porcentaje': Decimal("15.50"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("950.00"),
+            'calidad_observaciones': '[DEMO] Cosecha Manzanilla Chilecito 2024/2025.'
+        }
+    )
+
+    # Lotes de Cosecha Campaña 2025/2026 (Actual)
+    lote_arauco, _ = LoteDeCosecha.objects.update_or_create(
         cuadro=cuadro_a1,
         campana="2025/2026",
         defaults={
@@ -1070,10 +1165,11 @@ def poblar_datos_demo_q1_2026():
             'destino': LoteDeCosecha.Destino.ACEITUNA_MESA_VERDE,
             'rendimiento_graso_porcentaje': Decimal("16.80"),
             'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("1250.00"),
             'calidad_observaciones': '[DEMO] Cosecha manual en fresco variedad Arauco, calibre comercial 140-160.'
         }
     )
-    lote_arbequina, _ = LoteDeCosecha.objects.get_or_create(
+    lote_arbequina, _ = LoteDeCosecha.objects.update_or_create(
         cuadro=cuadro_b2,
         campana="2025/2026",
         defaults={
@@ -1083,7 +1179,36 @@ def poblar_datos_demo_q1_2026():
             'destino': LoteDeCosecha.Destino.ACEITE_ALMAZARA,
             'rendimiento_graso_porcentaje': Decimal("17.80"),
             'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("980.00"),
             'calidad_observaciones': '[DEMO] Cosecha mecánica cabalgante con traslado inmediato a molienda almazara.'
+        }
+    )
+    lote_picual, _ = LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_c3,
+        campana="2025/2026",
+        defaults={
+            'fecha_inicio': datetime.date(2026, 3, 20),
+            'fecha_fin': datetime.date(2026, 3, 31),
+            'kg_cosechados': Decimal("52000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITE_ALMAZARA,
+            'rendimiento_graso_porcentaje': Decimal("19.20"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("1100.00"),
+            'calidad_observaciones': '[DEMO] Cosecha Picual Pomán, alta concentración polifenólica.'
+        }
+    )
+    lote_manzanilla, _ = LoteDeCosecha.objects.update_or_create(
+        cuadro=cuadro_d4,
+        campana="2025/2026",
+        defaults={
+            'fecha_inicio': datetime.date(2026, 3, 12),
+            'fecha_fin': datetime.date(2026, 3, 26),
+            'kg_cosechados': Decimal("44000.00"),
+            'destino': LoteDeCosecha.Destino.ACEITUNA_MESA_VERDE,
+            'rendimiento_graso_porcentaje': Decimal("16.20"),
+            'estado': LoteDeCosecha.Estado.FINALIZADO,
+            'precio_venta_estimado_por_kg': Decimal("1180.00"),
+            'calidad_observaciones': '[DEMO] Cosecha Manzanilla Finca Chilecito mesa y conserva.'
         }
     )
 
@@ -1152,7 +1277,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Cuadrilla de cosecha manual con canastos de tela y vaciado en bins de 400kg."
     )
     pd_cosecha = ParteDiario.objects.create(
-        orden_de_trabajo=ot_cosecha,
         finca=finca_norte,
         cuadro=cuadro_a1,
         fecha=datetime.date(2026, 3, 8),
@@ -1191,7 +1315,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Cosecha intensiva con cosechadora cabalgante vibradora y acarreo a tolva."
     )
     pd_cos_mec = ParteDiario.objects.create(
-        orden_de_trabajo=ot_cos_mec,
         finca=finca_norte,
         cuadro=cuadro_b2,
         fecha=datetime.date(2026, 3, 18),
@@ -1229,7 +1352,6 @@ def poblar_datos_demo_q1_2026():
         instrucciones_tecnicas="[DEMO] Riego de recuperación post-cosecha con urea soluble."
     )
     pd_riego_post = ParteDiario.objects.create(
-        orden_de_trabajo=ot_riego_post,
         finca=finca_norte,
         cuadro=cuadro_a1,
         fecha=datetime.date(2026, 3, 22),
@@ -1404,6 +1526,16 @@ def poblar_datos_demo_q1_2026():
         (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 3, 24), Decimal("950000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla de cosecha manual variedad Picual Pomán", "ParteDiario", None),
         (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda, batido y centrífuga almazara", "FacturaServicio", 302),
         (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura, logística y aduana exportación", "LiquidacionGasto", 303),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 1, 24), Decimal("310000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante soluble NPK Finca Chilecito", "ParteDiario", None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 2, 22), Decimal("295000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales poda y desbrote Cuadro Manzanilla Chilecito", "ParteDiario", None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 3, 14), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla cosecha manual Manzanilla Chilecito", "ParteDiario", None),
+        # ── CAMPAÑA ANTERIOR 2024/2025 (Histórico para comparativas) ─────────
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2024, 11, 20), Decimal("450000.00"), Decimal("920.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante foliar Cuadro Arauco 2024/2025", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2025, 3, 10), Decimal("1850000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha manual Arauco 2024/2025", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2024, 12, 15), Decimal("520000.00"), Decimal("930.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil labores mecanizadas Arbequina 2024/2025", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2025, 3, 18), Decimal("2150000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha mecánica cabalgante Arbequina 2024/2025", "ParteDiario", None),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2025, 3, 22), Decimal("1320000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Picual Pomán 2024/2025", "ParteDiario", None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2025, 3, 15), Decimal("1100000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Manzanilla Chilecito 2024/2025", "ParteDiario", None),
     ]
     for cc, fin, cua, fec, imp, tc_mes, torig, desc, d_tipo, d_id in costos_q1_data:
         CostoPorCentro.objects.get_or_create(
@@ -1419,6 +1551,7 @@ def poblar_datos_demo_q1_2026():
                 'descripcion': desc,
                 'documento_origen_tipo': d_tipo,
                 'documento_origen_id': d_id,
+                'campana': calcular_campana_desde_fecha(fec),
             }
         )
 
@@ -1555,7 +1688,10 @@ def limpiar_datos_demo_q1_2026():
     Insumo.objects.filter(codigo__in=['INS-GASOIL-AGRO', 'INS-UREA-46']).delete()
 
     # 10. Lotes de Cosecha, Eventos de Cuadro y Fenología
-    q_lotes = LoteDeCosecha.objects.filter(campana="2025/2026", fecha_inicio__gte=desde, fecha_inicio__lte=hasta)
+    q_lotes = LoteDeCosecha.objects.filter(
+        models.Q(calidad_observaciones__startswith='[DEMO]') |
+        models.Q(campana__in=["2024/2025", "2025/2026"])
+    )
     reporte['lotes_cosecha'] = q_lotes.count()
     q_lotes.delete()
 
@@ -1573,7 +1709,10 @@ def limpiar_datos_demo_q1_2026():
     q_mants.delete()
 
     # 11.1 Costos por Centro
-    q_costos = CostoPorCentro.objects.filter(fecha__gte=desde, fecha__lte=hasta)
+    q_costos = CostoPorCentro.objects.filter(
+        models.Q(descripcion__startswith='[DEMO]') |
+        models.Q(fecha__gte=datetime.date(2024, 7, 1), fecha__lte=hasta)
+    )
     reporte['costos_por_centro'] = q_costos.count()
     q_costos.delete()
 

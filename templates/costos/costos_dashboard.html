@@ -94,6 +94,33 @@
         </svg>
         <span>Plan de Cuentas</span>
       </a>
+
+      <!-- Acciones de Datos de Prueba (Demo) -->
+      {% if hay_datos_demo %}
+      <form method="post" action="{% url 'finanzas:demo_limpiar' %}" class="inline" onsubmit="return confirm('¿Confirma que desea eliminar de forma segura todos los datos de prueba [DEMO]?');">
+        {% csrf_token %}
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          title="Elimina todos los datos de demostración cargados en el sistema"
+        >
+          <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Limpiar Demo</span>
+        </button>
+      </form>
+      {% else %}
+      <form method="post" action="{% url 'finanzas:demo_poblar' %}" class="inline">
+        {% csrf_token %}
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 bg-[#EAEFE3] border border-[#A2B38F] text-[#3D4A2A] hover:bg-[#D5DFC9] text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          title="Siembra datos de prueba coherentes para todas las fincas y el Plan de Cuentas"
+        >
+          <svg class="w-3.5 h-3.5 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Cargar Datos Demo</span>
+        </button>
+      </form>
+      {% endif %}
     </div>
   </div>
 
@@ -924,7 +951,16 @@
       </svg>
       <p class="font-semibold text-slate-600">Sin datos de cosecha registrados</p>
       <p class="text-xs text-slate-400 mt-1">Registra lotes de cosecha en los cuadros para ver el analisis de rendimiento.</p>
-      <a href="{% url 'campos:cuadros_list' %}" class="inline-flex items-center gap-1.5 mt-4 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
+      <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+        <a href="{% url 'campos:cuadros_list' %}" class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
+        <form method="post" action="{% url 'finanzas:demo_poblar' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center gap-1.5 bg-[#EAEFE3] border border-[#A2B38F] text-[#3D4A2A] hover:bg-[#D5DFC9] text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Cargar Datos de Ejemplo</span>
+          </button>
+        </form>
+      </div>
     </div>
     {% else %}
 

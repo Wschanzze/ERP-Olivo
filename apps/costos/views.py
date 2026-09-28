@@ -412,6 +412,8 @@ class CostosDashboardView(ListView):
             else:
                 item.costo_por_ha = None
 
+        ctx['hay_datos_demo'] = CostoPorCentro.objects.filter(descripcion__startswith='[DEMO]').exists()
+
         return ctx
 
 
