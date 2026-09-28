@@ -24,7 +24,8 @@ from apps.parte_diario.models import (
 from apps.liquidacion.models import PeriodoLiquidacion, LiquidacionEmpleado, ItemLiquidacion
 from apps.finanzas.models import (
     CuentaContable, Cuenta, CuentaCorriente, MovimientoFinanciero, Cheque,
-    ConciliacionBancaria, CuadroResultado, LineaCuadroResultado, TipoCambioMensual
+    ConciliacionBancaria, CuadroResultado, LineaCuadroResultado, TipoCambioMensual,
+    ComprobanteFiscal, ArqueoCaja, OrdenPagoRecibo
 )
 from apps.finanzas.services import poblar_lineas_cuadro
 from apps.costos.models import CostoPorCentro
@@ -443,9 +444,13 @@ def poblar_datos_demo_q1_2026():
             'moneda': Cuenta.Moneda.ARS,
             'banco_nombre': "Banco Galicia",
             'numero_cuenta': "009-000012345/6",
-            'saldo_actual': Decimal("28450000.00")
+            'cbu_cvu': "0070009220000012345601",
+            'saldo_actual': Decimal("70814400.00")
         }
     )
+    cta_banco_ars.saldo_actual = Decimal("70814400.00")
+    cta_banco_ars.save(update_fields=['saldo_actual'])
+
     cta_banco_usd, _ = Cuenta.objects.get_or_create(
         nombre="Banco Santander CC Exportacion USD",
         defaults={
@@ -454,9 +459,13 @@ def poblar_datos_demo_q1_2026():
             'moneda': Cuenta.Moneda.USD,
             'banco_nombre': "Banco Santander",
             'numero_cuenta': "072-000098765/4",
+            'cbu_cvu': "0720072120000009876542",
             'saldo_actual': Decimal("142500.00")
         }
     )
+    cta_banco_usd.saldo_actual = Decimal("142500.00")
+    cta_banco_usd.save(update_fields=['saldo_actual'])
+
     caja_finca, _ = Cuenta.objects.get_or_create(
         nombre="Caja Chica Finca Aimogasta",
         defaults={
@@ -466,51 +475,152 @@ def poblar_datos_demo_q1_2026():
             'saldo_actual': Decimal("1850000.00")
         }
     )
+    caja_finca.saldo_actual = Decimal("1850000.00")
+    caja_finca.save(update_fields=['saldo_actual'])
 
-    prov_agroquimica, _ = CuentaCorriente.objects.get_or_create(
+    caja_admin, _ = Cuenta.objects.get_or_create(
+        nombre="Caja Administración Central",
+        defaults={
+            'empresa': empresa,
+            'tipo': Cuenta.TipoCuenta.CAJA_EFECTIVO,
+            'moneda': Cuenta.Moneda.ARS,
+            'saldo_actual': Decimal("650000.00")
+        }
+    )
+    caja_admin.saldo_actual = Decimal("650000.00")
+    caja_admin.save(update_fields=['saldo_actual'])
+
+    # Proveedores de Insumos y Servicios Agrícolas
+    prov_agroquimica, _ = CuentaCorriente.objects.update_or_create(
         cuit="30-71234567-0",
         defaults={
             'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
             'razon_social': "Agroquímica Cuyo & Cía S.A.",
             'nombre_comercial': "AgroQuím Cuyo",
-            'saldo_actual': Decimal("-3200000.00")
+            'email': "ventas@agroquimicacuyo.com.ar",
+            'telefono': "+54 261 4981200",
+            'direccion': "Acceso Sur Km 14, Luján de Cuyo, Mendoza",
+            'saldo_actual': Decimal("-9957800.00"),
+            'activo': True
         }
     )
-    prov_ypf, _ = CuentaCorriente.objects.get_or_create(
+    prov_ypf, _ = CuentaCorriente.objects.update_or_create(
         cuit="30-54668997-1",
         defaults={
             'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
             'razon_social': "YPF Directo Agro La Rioja S.A.",
             'nombre_comercial': "YPF Directo",
-            'saldo_actual': Decimal("-1450000.00")
+            'email': "agro.larioja@redypf.com.ar",
+            'telefono': "+54 380 4429900",
+            'direccion': "Ruta 38 Km 432, Parque Industrial La Rioja",
+            'saldo_actual': Decimal("-5132000.00"),
+            'activo': True
         }
     )
-    prov_envases, _ = CuentaCorriente.objects.get_or_create(
+    prov_edelar, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-67891234-9",
+        defaults={
+            'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
+            'razon_social': "EDELAR S.A.",
+            'nombre_comercial': "EDELAR Distribuidora Eléctrica",
+            'email': "grandesclientes@edelar.com.ar",
+            'telefono': "+54 380 4468000",
+            'direccion': "San Nicolás de Bari 520, La Rioja",
+            'saldo_actual': Decimal("-1244600.00"),
+            'activo': True
+        }
+    )
+    prov_edecat, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-69123456-7",
+        defaults={
+            'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
+            'razon_social': "Energía Catamarca SAPEM",
+            'nombre_comercial': "EC SAPEM Catamarca",
+            'email': "facturacion@ecsapem.com.ar",
+            'telefono': "+54 383 4458000",
+            'direccion': "Av. Ocampo 890, San Fernando del Valle de Catamarca",
+            'saldo_actual': Decimal("0.00"),
+            'activo': True
+        }
+    )
+    prov_taller, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-65432198-7",
+        defaults={
+            'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
+            'razon_social': "Taller Metalúrgico e Hidráulica Aimogasta",
+            'nombre_comercial': "Taller Aimogasta",
+            'email': "taller.aimogasta@gmail.com",
+            'telefono': "+54 3827 421500",
+            'direccion': "Av. San Francisco 120, Aimogasta, La Rioja",
+            'saldo_actual': Decimal("0.00"),
+            'activo': True
+        }
+    )
+    prov_envases, _ = CuentaCorriente.objects.update_or_create(
         cuit="30-68901234-5",
         defaults={
             'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
             'razon_social': "Envases y Cristales Cuyanos S.A.",
             'nombre_comercial': "Envases Cuyanos",
-            'saldo_actual': Decimal("-2100000.00")
+            'email': "contacto@envasescuyanos.com.ar",
+            'telefono': "+54 264 4238000",
+            'direccion': "Parque Industrial San Juan",
+            'saldo_actual': Decimal("-6495000.00"),
+            'activo': True
+        }
+    )
+    prov_contratista, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-71987654-3",
+        defaults={
+            'tipo_entidad': CuentaCorriente.TipoEntidad.PROVEEDOR,
+            'razon_social': "Servicios Agro-Mecánicos del Valle S.R.L.",
+            'nombre_comercial': "Agro-Mecánicos Valle",
+            'email': "servicios@agromecanicosvalle.com.ar",
+            'telefono': "+54 3827 493000",
+            'direccion': "Ruta 60 Km 1135, Aimogasta",
+            'saldo_actual': Decimal("0.00"),
+            'activo': True
         }
     )
 
-    cli_exterior, _ = CuentaCorriente.objects.get_or_create(
-        cuit="30-99876543-2",
+    # Clientes Mayoristas y de Exportación
+    cli_gourmet, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-70891234-5",
         defaults={
             'tipo_entidad': CuentaCorriente.TipoEntidad.CLIENTE,
-            'razon_social': "Mediterráneo Trading Imports LLC / Suc. Arg.",
-            'nombre_comercial': "Mediterráneo Trading",
-            'saldo_actual': Decimal("24500000.00")
+            'razon_social': "Aceitunas Riojanas Gourmet S.A.",
+            'nombre_comercial': "Riojanas Gourmet",
+            'email': "compras@riojanasgourmet.com.ar",
+            'telefono': "+54 380 4431200",
+            'direccion': "Ruta 38 Km 440, Parque Industrial La Rioja",
+            'saldo_actual': Decimal("16300000.00"),
+            'activo': True
         }
     )
-    cli_local, _ = CuentaCorriente.objects.get_or_create(
+    cli_local, _ = CuentaCorriente.objects.update_or_create(
         cuit="30-55443322-1",
         defaults={
             'tipo_entidad': CuentaCorriente.TipoEntidad.CLIENTE,
             'razon_social': "Aceites del Sol Mayorista S.A.",
             'nombre_comercial': "Aceites del Sol",
-            'saldo_actual': Decimal("8900000.00")
+            'email': "adquisiciones@aceitesdelsol.com.ar",
+            'telefono': "+54 11 48903300",
+            'direccion': "Av. Belgrano 1450, CABA",
+            'saldo_actual': Decimal("29093600.00"),
+            'activo': True
+        }
+    )
+    cli_exterior, _ = CuentaCorriente.objects.update_or_create(
+        cuit="30-99876543-2",
+        defaults={
+            'tipo_entidad': CuentaCorriente.TipoEntidad.CLIENTE,
+            'razon_social': "Mediterráneo Trading Imports LLC / Suc. Arg.",
+            'nombre_comercial': "Mediterráneo Trading",
+            'email': "imports@mediterraneantrading.com",
+            'telefono': "+1 305 8901234",
+            'direccion': "Brickell Ave 1200, Miami, FL, USA",
+            'saldo_actual': Decimal("117700000.00"),
+            'activo': True
         }
     )
 
@@ -738,30 +848,195 @@ def poblar_datos_demo_q1_2026():
         ItemLiquidacion.objects.get_or_create(liquidacion=liq, codigo_concepto="501", defaults={'descripcion': "Aportes Jubilación y Ley 19032 (14%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.14")})
         ItemLiquidacion.objects.get_or_create(liquidacion=liq, codigo_concepto="502", defaults={'descripcion': "Obra Social OSPRERA (3%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.03")})
 
-    # Movimientos Financieros Enero
-    MovimientoFinanciero.objects.create(
+    # Comprobantes Fiscales Enero 2026 (Facturas de Compra)
+    fact_agroquimica_ene, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00004",
+        numero_comprobante="00054129",
+        cuit="30-71234567-0",
+        defaults={
+            'cuenta_corriente': prov_agroquimica,
+            'razon_social': "Agroquímica Cuyo & Cía S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 1, 12),
+            'fecha_vencimiento': datetime.date(2026, 2, 12),
+            'concepto': "[DEMO] Factura A Fertilizantes Solubles (Urea 46% y Nitrato de Potasio 13-0-45)",
+            'neto_gravado_21': Decimal("5025000.00"),
+            'iva_21': Decimal("1055250.00"),
+            'percepcion_iibb': Decimal("150750.00"),
+            'total': Decimal("6231000.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74011294821034",
+            'vto_cae': datetime.date(2026, 1, 22),
+            'es_oficial': True,
+            'cuenta_contable': cta_fert_act,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_ypf_ene, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00031890",
+        cuit="30-54668997-1",
+        defaults={
+            'cuenta_corriente': prov_ypf,
+            'razon_social': "YPF Directo Agro La Rioja S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 1, 16),
+            'fecha_vencimiento': datetime.date(2026, 1, 26),
+            'concepto': "[DEMO] Factura A 5.000 L Gasoil Grado 2 Agro para tractores y grupos electrógenos",
+            'neto_gravado_21': Decimal("5600000.00"),
+            'iva_21': Decimal("1176000.00"),
+            'total': Decimal("6776000.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74011690123456",
+            'vto_cae': datetime.date(2026, 1, 26),
+            'es_oficial': True,
+            'cuenta_contable': cta_agro_act,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_edelar_ene, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00012",
+        numero_comprobante="00451020",
+        cuit="30-67891234-9",
+        defaults={
+            'cuenta_corriente': prov_edelar,
+            'razon_social': "EDELAR S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 1, 25),
+            'fecha_vencimiento': datetime.date(2026, 2, 5),
+            'concepto': "[DEMO] Suministro de Energía Eléctrica Riego Pozo 1 Finca Norte - Enero 2026",
+            'neto_gravado_27': Decimal("520000.00"),
+            'iva_27': Decimal("140400.00"),
+            'total': Decimal("660400.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74012589012345",
+            'vto_cae': datetime.date(2026, 2, 4),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_edecat_ene, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00005",
+        numero_comprobante="00129040",
+        cuit="30-69123456-7",
+        defaults={
+            'cuenta_corriente': prov_edecat,
+            'razon_social': "Energía Catamarca SAPEM",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 1, 26),
+            'fecha_vencimiento': datetime.date(2026, 2, 10),
+            'concepto': "[DEMO] Energía Eléctrica Riego Pozo Pomán Finca Sur - Enero 2026",
+            'neto_gravado_27': Decimal("380000.00"),
+            'iva_27': Decimal("102600.00"),
+            'total': Decimal("482600.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74012698712345",
+            'vto_cae': datetime.date(2026, 2, 5),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_sur
+        }
+    )
+
+    # Movimientos Financieros Enero 2026
+    mov_pago_ypf_ene = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
         tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
-        fecha=datetime.date(2026, 1, 20),
-        importe=Decimal("5025000.00"),
+        fecha=datetime.date(2026, 1, 25),
+        importe=Decimal("6776000.00"),
         moneda="ARS",
-        concepto="[DEMO] Pago Factura Insumos Agroquímica Cuyo S.A.",
+        concepto="[DEMO] Transferencia Pago Factura A 0001-00031890 Gasoil Grado 2 - YPF Directo",
+        cuenta_corriente=prov_ypf,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-889102",
+        usuario=usuario
+    )
+    mov_pago_agro_ene = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 1, 28),
+        importe=Decimal("4000000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Pago a Cuenta Factura A 0004-00054129 Fertilizantes - Agroquímica Cuyo",
         cuenta_corriente=prov_agroquimica,
         centro_de_costo=cc_prod_norte,
         finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-889340",
         usuario=usuario
     )
-    MovimientoFinanciero.objects.create(
-        cuenta=cta_banco_usd,
-        tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
-        fecha=datetime.date(2026, 1, 28),
-        importe=Decimal("45000.00"),
-        moneda="USD",
-        tipo_cambio=Decimal("1050.00"),
-        concepto="[DEMO] Anticipo Carta de Crédito Exportación Aceite Virgendeheza a Mediterráneo Trading",
-        cuenta_corriente=cli_exterior,
-        centro_de_costo=cc_admin,
+    mov_pago_sueldos_ene = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 1, 31),
+        importe=Decimal("5850000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Pago Haberes y Jornales Rurales UATRE Finca Norte - Diciembre 2025",
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Acreditación Haberes",
+        comprobante_nro="HAB-202601",
         usuario=usuario
+    )
+    mov_caja_repuestos_ene = MovimientoFinanciero.objects.create(
+        cuenta=caja_finca,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 1, 20),
+        importe=Decimal("120000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Compra repuestos menores y accesorios de riego en efectivo",
+        cuenta_corriente=prov_taller,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Ticket",
+        comprobante_nro="TK-00912",
+        usuario=usuario
+    )
+
+    # Orden de Pago Enero
+    OrdenPagoRecibo.objects.create(
+        tipo=OrdenPagoRecibo.TipoDocumento.ORDEN_PAGO,
+        numero="OP-2026-0001",
+        fecha=datetime.date(2026, 1, 25),
+        cuenta_corriente=prov_ypf,
+        cuenta_financiera=cta_banco_ars,
+        importe_total=Decimal("6776000.00"),
+        medio_pago=OrdenPagoRecibo.MedioPago.TRANSFERENCIA,
+        comprobante_fiscal=fact_ypf_ene,
+        movimiento_financiero=mov_pago_ypf_ene,
+        concepto="[DEMO] Cancelación total Factura A 0001-00031890 Gasoil 5.000 L",
+        beneficiario_firmante="YPF Directo Agro La Rioja S.A.",
+        usuario=usuario
+    )
+
+    # Conciliación Bancaria Enero 2026 (Cerrada)
+    ConciliacionBancaria.objects.get_or_create(
+        cuenta=cta_banco_ars,
+        fecha_extracto=datetime.date(2026, 1, 31),
+        defaults={
+            'saldo_extracto': Decimal("24800000.00"),
+            'saldo_sistema': Decimal("24800000.00"),
+            'diferencia': Decimal("0.00"),
+            'estado': 'CERRADA',
+            'observaciones': "[DEMO] Conciliación Enero 2026 cerrada y verificada con extracto Banco Galicia.",
+            'usuario': usuario
+        }
     )
 
     # ═════════════════════════════════════════════════════════════════════════
@@ -1008,70 +1283,199 @@ def poblar_datos_demo_q1_2026():
         ItemLiquidacion.objects.get_or_create(liquidacion=liq_feb, codigo_concepto="501", defaults={'descripcion': "Aportes Jubilación y Ley 19032 (14%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.14")})
         ItemLiquidacion.objects.get_or_create(liquidacion=liq_feb, codigo_concepto="502", defaults={'descripcion': "Obra Social OSPRERA (3%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.03")})
 
-    # Movimientos Financieros Febrero
-    MovimientoFinanciero.objects.create(
+    # Comprobantes Fiscales Febrero 2026 (Facturas de Compra)
+    fact_taller_feb, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00002",
+        numero_comprobante="00004520",
+        cuit="30-65432198-7",
+        defaults={
+            'cuenta_corriente': prov_taller,
+            'razon_social': "Taller Metalúrgico e Hidráulica Aimogasta",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 2, 10),
+            'fecha_vencimiento': datetime.date(2026, 2, 15),
+            'concepto': "[DEMO] Service preventivo 1.800 hs, lubricantes, filtros y puesta a punto John Deere 5075E",
+            'neto_gravado_21': Decimal("480000.00"),
+            'iva_21': Decimal("100800.00"),
+            'total': Decimal("580800.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74021098123456",
+            'vto_cae': datetime.date(2026, 2, 20),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_agroquimica_feb, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00004",
+        numero_comprobante="00055012",
+        cuit="30-71234567-0",
+        defaults={
+            'cuenta_corriente': prov_agroquimica,
+            'razon_social': "Agroquímica Cuyo & Cía S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 2, 14),
+            'fecha_vencimiento': datetime.date(2026, 3, 14),
+            'concepto': "[DEMO] Factura A Curas Repilo y Herbicidas (Oxicloruro de Cobre y Glifosato)",
+            'neto_gravado_21': Decimal("11070000.00"),
+            'iva_21': Decimal("2324700.00"),
+            'percepcion_iibb': Decimal("332100.00"),
+            'total': Decimal("13726800.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGO_PARCIAL,
+            'saldo_pendiente': Decimal("7726800.00"),
+            'cae': "74021482910382",
+            'vto_cae': datetime.date(2026, 2, 24),
+            'es_oficial': True,
+            'cuenta_contable': cta_fung_act,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_edelar_feb, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00012",
+        numero_comprobante="00458900",
+        cuit="30-67891234-9",
+        defaults={
+            'cuenta_corriente': prov_edelar,
+            'razon_social': "EDELAR S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 2, 22),
+            'fecha_vencimiento': datetime.date(2026, 3, 8),
+            'concepto': "[DEMO] Suministro Trifásico Riego Pozo 1 Finca Norte - Febrero 2026",
+            'neto_gravado_27': Decimal("1250000.00"),
+            'iva_27': Decimal("337500.00"),
+            'total': Decimal("1587500.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74022290128374",
+            'vto_cae': datetime.date(2026, 3, 4),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    # Movimientos Financieros Febrero 2026
+    mov_pago_edelar_feb = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 2, 5),
+        importe=Decimal("660400.00"),
+        moneda="ARS",
+        concepto="[DEMO] Débito Directo Factura EDELAR Suministro Pozo 1 Enero",
+        cuenta_corriente=prov_edelar,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Débito Automático",
+        comprobante_nro="DEB-EDELAR-01",
+        usuario=usuario
+    )
+    mov_pago_edecat_feb = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 2, 10),
+        importe=Decimal("482600.00"),
+        moneda="ARS",
+        concepto="[DEMO] Pago Factura Energía Catamarca SAPEM Riego Pomán Enero",
+        cuenta_corriente=prov_edecat,
+        centro_de_costo=cc_prod_sur,
+        finca=finca_sur,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-901412",
+        usuario=usuario
+    )
+    mov_pago_taller_feb = MovimientoFinanciero.objects.create(
+        cuenta=caja_finca,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 2, 12),
+        importe=Decimal("580800.00"),
+        moneda="ARS",
+        concepto="[DEMO] Pago contado efectivo Service preventivo Tractor John Deere Factura A 0002-00004520",
+        cuenta_corriente=prov_taller,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Factura A",
+        comprobante_nro="0002-00004520",
+        usuario=usuario
+    )
+    mov_cobro_aceite_feb = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
         tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
-        fecha=datetime.date(2026, 2, 12),
-        importe=Decimal("14200000.00"),
+        fecha=datetime.date(2026, 2, 15),
+        importe=Decimal("7500000.00"),
         moneda="ARS",
-        concepto="[DEMO] Cobranza Venta Aceite Fraccionado Botellas Dorica - Factura A0001-0000115",
+        concepto="[DEMO] Cobranza Cheque #77124098 BBVA Venta Aceite Virgen Extra Fraccionado",
         cuenta_corriente=cli_local,
         centro_de_costo=cc_almazara,
         finca=finca_norte,
+        comprobante_tipo="Acreditación Cheque",
+        comprobante_nro="CHQ-77124098",
         usuario=usuario
     )
-    MovimientoFinanciero.objects.create(
+    mov_pago_sueldos_feb = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
         tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
-        fecha=datetime.date(2026, 2, 18),
-        importe=Decimal("5820000.00"),
+        fecha=datetime.date(2026, 2, 20),
+        importe=Decimal("5980000.00"),
         moneda="ARS",
         concepto="[DEMO] Pago Liquidación Haberes UATRE Enero 2026",
         centro_de_costo=cc_prod_norte,
         finca=finca_norte,
-        usuario=usuario
-    )
-    MovimientoFinanciero.objects.create(
-        cuenta=cta_banco_ars,
-        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
-        fecha=datetime.date(2026, 2, 22),
-        importe=Decimal("1250000.00"),
-        moneda="ARS",
-        concepto="[DEMO] Pago Factura Energía Eléctrica Bombeo Pozo 1 - EDELAR",
-        centro_de_costo=cc_prod_norte,
-        finca=finca_norte,
+        comprobante_tipo="Acreditación Haberes",
+        comprobante_nro="HAB-202602",
         usuario=usuario
     )
 
-    # Cheques Febrero
-    Cheque.objects.get_or_create(
-        numero="CH-GAL-00458921",
+    # Cheques Febrero 2026
+    cheque_cobrado_feb, _ = Cheque.objects.update_or_create(
+        numero="77124098",
+        banco_emisor="Banco BBVA Argentina",
         defaults={
             'cuenta_bancaria_origen': cta_banco_ars,
-            'banco_emisor': "Banco Galicia",
+            'emisor_firmante': "Distribuidora Los Olivos S.R.L.",
+            'cuit_emisor': "30-66442211-8",
+            'tipo': Cheque.TipoCheque.RECIBIDO_TERCERO,
+            'cuenta_corriente': cli_local,
+            'importe': Decimal("7500000.00"),
+            'fecha_emision': datetime.date(2026, 2, 15),
+            'fecha_cobro': datetime.date(2026, 2, 15),
+            'estado': Cheque.EstadoCheque.COBRADO,
+            'observaciones': "[DEMO] Cobro anticipado aceite fraccionado en botella UVAG 500ml"
+        }
+    )
+    cheque_propio_feb, _ = Cheque.objects.update_or_create(
+        numero="88341201",
+        banco_emisor="Banco Galicia",
+        defaults={
+            'cuenta_bancaria_origen': cta_banco_ars,
             'emisor_firmante': "Olivar del Valle Agroindustrial S.A.",
             'cuit_emisor': "30-71458923-4",
-            'tipo': 'EMITIDO',
-            'cuenta_corriente': prov_envases,
-            'importe': Decimal("3500000.00"),
-            'fecha_emision': datetime.date(2026, 2, 15),
-            'fecha_cobro': datetime.date(2026, 3, 20),
-            'estado': 'EN_CARTERA',
-            'observaciones': "[DEMO] Pago diferido a 30 días factura envases"
+            'tipo': Cheque.TipoCheque.EMITIDO_PROPIO,
+            'cuenta_corriente': prov_agroquimica,
+            'importe': Decimal("6000000.00"),
+            'fecha_emision': datetime.date(2026, 2, 26),
+            'fecha_cobro': datetime.date(2026, 3, 25),
+            'estado': Cheque.EstadoCheque.COBRADO,
+            'observaciones': "[DEMO] Cheque de pago diferido 30 días a Agroquímica Cuyo por fertilizantes y fitosanitarios"
         }
     )
 
-    # Conciliación Bancaria Enero 2026 (Cerrada)
+    # Conciliación Bancaria Febrero 2026 (Cerrada)
     ConciliacionBancaria.objects.get_or_create(
         cuenta=cta_banco_ars,
-        fecha_extracto=datetime.date(2026, 1, 31),
+        fecha_extracto=datetime.date(2026, 2, 28),
         defaults={
             'saldo_extracto': Decimal("28450000.00"),
             'saldo_sistema': Decimal("28450000.00"),
             'diferencia': Decimal("0.00"),
             'estado': 'CERRADA',
-            'observaciones': "[DEMO] Conciliación bancaria cerrada conforme extracto Galicia Enero 2026.",
+            'observaciones': "[DEMO] Conciliación Febrero 2026 cerrada y verificada.",
             'usuario': usuario
         }
     )
@@ -1429,32 +1833,222 @@ def poblar_datos_demo_q1_2026():
         ItemLiquidacion.objects.get_or_create(liquidacion=liq_mar, codigo_concepto="501", defaults={'descripcion': "Aportes Jubilación y Ley 19032 (14%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.14")})
         ItemLiquidacion.objects.get_or_create(liquidacion=liq_mar, codigo_concepto="502", defaults={'descripcion': "Obra Social OSPRERA (3%)", 'tipo': ItemLiquidacion.TipoConcepto.RETENCION, 'importe_ars': bruto * Decimal("0.03")})
 
-    # Movimientos Financieros Marzo
-    MovimientoFinanciero.objects.create(
+    # Comprobantes Fiscales Marzo 2026 (Compras)
+    fact_ypf_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00034100",
+        cuit="30-54668997-1",
+        defaults={
+            'cuenta_corriente': prov_ypf,
+            'razon_social': "YPF Directo Agro La Rioja S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 5),
+            'fecha_vencimiento': datetime.date(2026, 3, 20),
+            'concepto': "[DEMO] Factura A Gasoil Grado 2 Cosecha (5.000 L a $1.150)",
+            'neto_gravado_21': Decimal("5750000.00"),
+            'iva_21': Decimal("1207500.00"),
+            'total': Decimal("6957500.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGO_PARCIAL,
+            'saldo_pendiente': Decimal("5132000.00"),
+            'cae': "74030511223344",
+            'vto_cae': datetime.date(2026, 3, 15),
+            'es_oficial': True,
+            'cuenta_contable': cta_agro_act,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_envases_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00003",
+        numero_comprobante="00018940",
+        cuit="30-68901234-5",
+        defaults={
+            'cuenta_corriente': prov_envases,
+            'razon_social': "Envases y Cristales Cuyanos S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 12),
+            'fecha_vencimiento': datetime.date(2026, 4, 12),
+            'concepto': "[DEMO] Compra 350 Bines plásticos apilables 500kg cosecha y bidones",
+            'neto_gravado_21': Decimal("5367768.60"),
+            'iva_21': Decimal("1127231.40"),
+            'total': Decimal("6495000.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PENDIENTE,
+            'saldo_pendiente': Decimal("6495000.00"),
+            'cae': "74031299887766",
+            'vto_cae': datetime.date(2026, 3, 22),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_contratista_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00000840",
+        cuit="30-71987654-3",
+        defaults={
+            'cuenta_corriente': prov_contratista,
+            'razon_social': "Servicios Agro-Mecánicos del Valle S.R.L.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 24),
+            'fecha_vencimiento': datetime.date(2026, 3, 25),
+            'concepto': "[DEMO] Servicio Cosecha Mecánica Vibradora y Flete a Tolva",
+            'neto_gravado_21': Decimal("1980000.00"),
+            'iva_21': Decimal("415800.00"),
+            'total': Decimal("2395800.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGADA,
+            'saldo_pendiente': Decimal("0.00"),
+            'cae': "74032412345678",
+            'vto_cae': datetime.date(2026, 4, 3),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_edelar_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.COMPRA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00012",
+        numero_comprobante="00465100",
+        cuit="30-67891234-9",
+        defaults={
+            'cuenta_corriente': prov_edelar,
+            'razon_social': "EDELAR S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 22),
+            'fecha_vencimiento': datetime.date(2026, 4, 8),
+            'concepto': "[DEMO] Suministro Energía Eléctrica Riego y Almazara - Marzo 2026",
+            'neto_gravado_27': Decimal("980000.00"),
+            'iva_27': Decimal("264600.00"),
+            'total': Decimal("1244600.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PENDIENTE,
+            'saldo_pendiente': Decimal("1244600.00"),
+            'cae': "74032288990011",
+            'vto_cae': datetime.date(2026, 4, 1),
+            'es_oficial': True,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    # Ventas Marzo (Libro IVA Ventas y Cuentas por Cobrar)
+    cta_vtas_fresco = CuentaContable.objects.filter(codigo='4.1.1.01.000000').first()
+    cta_vtas_aceite = CuentaContable.objects.filter(codigo='4.1.2.01.000000').first()
+    cta_vtas_export = CuentaContable.objects.filter(codigo='4.1.2.03.000000').first()
+
+    fact_venta_gourmet_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.VENTA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00000127",
+        cuit="30-70891234-5",
+        defaults={
+            'cuenta_corriente': cli_gourmet,
+            'razon_social': "Aceitunas Riojanas Gourmet S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 15),
+            'fecha_vencimiento': datetime.date(2026, 4, 15),
+            'concepto': "[DEMO] Venta 15.000 kg Aceituna Arauco Verde Mesa Calibre 120/140",
+            'neto_gravado_21': Decimal("20000000.00"),
+            'iva_21': Decimal("4200000.00"),
+            'total': Decimal("24200000.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGO_PARCIAL,
+            'saldo_pendiente': Decimal("16300000.00"),
+            'cae': "74031544556677",
+            'vto_cae': datetime.date(2026, 3, 25),
+            'es_oficial': True,
+            'cuenta_contable': cta_vtas_fresco,
+            'centro_de_costo': cc_prod_norte
+        }
+    )
+
+    fact_venta_aceites_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.VENTA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00000128",
+        cuit="30-55443322-1",
+        defaults={
+            'cuenta_corriente': cli_local,
+            'razon_social': "Aceites del Sol Mayorista S.A.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO,
+            'fecha_emision': datetime.date(2026, 3, 20),
+            'fecha_vencimiento': datetime.date(2026, 4, 20),
+            'concepto': "[DEMO] Venta 40.000 L Aceite de Oliva Virgen Extra Granel en Cisterna",
+            'neto_gravado_21': Decimal("38000000.00"),
+            'iva_21': Decimal("7980000.00"),
+            'percepcion_iibb': Decimal("1140000.00"),
+            'percepcion_iva': Decimal("473600.00"),
+            'total': Decimal("47593600.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGO_PARCIAL,
+            'saldo_pendiente': Decimal("29093600.00"),
+            'cae': "74032011223344",
+            'vto_cae': datetime.date(2026, 3, 30),
+            'es_oficial': True,
+            'cuenta_contable': cta_vtas_aceite,
+            'centro_de_costo': cc_almazara
+        }
+    )
+
+    fact_venta_export_mar, _ = ComprobanteFiscal.objects.update_or_create(
+        tipo_operacion=ComprobanteFiscal.TipoOperacion.VENTA,
+        tipo_comprobante=ComprobanteFiscal.TipoComprobante.FACTURA_A,
+        punto_de_venta="00001",
+        numero_comprobante="00000015",
+        cuit="30-99876543-2",
+        defaults={
+            'cuenta_corriente': cli_exterior,
+            'razon_social': "Mediterráneo Trading Imports LLC / Suc. Arg.",
+            'condicion_iva': ComprobanteFiscal.CondicionIVA.EXENTO,
+            'fecha_emision': datetime.date(2026, 3, 24),
+            'fecha_vencimiento': datetime.date(2026, 4, 24),
+            'concepto': "[DEMO] Factura E 00001-00000015 Exportación Aceite Virgen Extra a Granel",
+            'exento': Decimal("176000000.00"),
+            'total': Decimal("176000000.00"),
+            'estado_pago': ComprobanteFiscal.EstadoPago.PAGO_PARCIAL,
+            'saldo_pendiente': Decimal("117700000.00"),
+            'cae': "74032499112233",
+            'vto_cae': datetime.date(2026, 4, 3),
+            'es_oficial': True,
+            'cuenta_contable': cta_vtas_export,
+            'centro_de_costo': cc_admin
+        }
+    )
+
+    # Movimientos Financieros Marzo 2026
+    mov_pago_ypf_mar = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
-        tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
-        fecha=datetime.date(2026, 3, 22),
-        importe=Decimal("18500000.00"),
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 3, 8),
+        importe=Decimal("1825500.00"),
         moneda="ARS",
-        concepto="[DEMO] Cobranza Venta Aceituna Fresca Mercado Interno - Factura A0001-0000128",
-        cuenta_corriente=cli_local,
+        concepto="[DEMO] Pago anticipo suministro Gasoil Cosecha Factura A 0001-00034100",
+        cuenta_corriente=prov_ypf,
         centro_de_costo=cc_prod_norte,
         finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-912845",
         usuario=usuario
     )
-    MovimientoFinanciero.objects.create(
-        cuenta=cta_banco_usd,
-        tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
-        fecha=datetime.date(2026, 3, 27),
-        importe=Decimal("68000.00"),
-        moneda="USD",
-        tipo_cambio=Decimal("1050.00"),
-        concepto="[DEMO] Liquidación Divisas Exportación Aceite Virgen Extra a Granel - Permiso Embarque 26001",
-        cuenta_corriente=cli_exterior,
-        centro_de_costo=cc_admin,
+    mov_caja_flete_mar = MovimientoFinanciero.objects.create(
+        cuenta=caja_finca,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 3, 14),
+        importe=Decimal("350000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Anticipo viáticos y combustible camionetas cuadrilla cosecha",
+        cuenta_corriente=prov_contratista,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Recibo",
+        comprobante_nro="RC-0012",
         usuario=usuario
     )
-    MovimientoFinanciero.objects.create(
+    mov_pago_sueldos_mar = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
         tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
         fecha=datetime.date(2026, 3, 20),
@@ -1463,30 +2057,187 @@ def poblar_datos_demo_q1_2026():
         concepto="[DEMO] Pago Liquidación Haberes UATRE Febrero 2026",
         centro_de_costo=cc_prod_norte,
         finca=finca_norte,
+        comprobante_tipo="Acreditación Haberes",
+        comprobante_nro="HAB-202603",
         usuario=usuario
     )
-    MovimientoFinanciero.objects.create(
+    mov_cobro_local_mar = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
+        fecha=datetime.date(2026, 3, 22),
+        importe=Decimal("18500000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Cobranza Venta Aceite de Oliva Virgen Extra - Factura A 0001-00000128",
+        cuenta_corriente=cli_local,
+        centro_de_costo=cc_almazara,
+        finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-889012",
+        usuario=usuario
+    )
+    mov_pago_contratista_mar = MovimientoFinanciero.objects.create(
         cuenta=cta_banco_ars,
         tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
         fecha=datetime.date(2026, 3, 25),
+        importe=Decimal("2395800.00"),
+        moneda="ARS",
+        concepto="[DEMO] Transferencia CBU Pago Factura A 0001-00000840 Cosecha Mecánica y Flete",
+        cuenta_corriente=prov_contratista,
+        centro_de_costo=cc_prod_norte,
+        finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-931084",
+        usuario=usuario
+    )
+    mov_pago_flete_mar = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_ars,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 3, 26),
         importe=Decimal("1980000.00"),
         moneda="ARS",
         concepto="[DEMO] Pago Flete y Servicio de Cosecha Mecánica Vibradora",
+        cuenta_corriente=prov_contratista,
         centro_de_costo=cc_prod_norte,
         finca=finca_norte,
+        comprobante_tipo="Transferencia",
+        comprobante_nro="TRF-934500",
+        usuario=usuario
+    )
+    mov_cobro_export_mar = MovimientoFinanciero.objects.create(
+        cuenta=cta_banco_usd,
+        tipo=MovimientoFinanciero.TipoMovimiento.INGRESO,
+        fecha=datetime.date(2026, 3, 27),
+        importe=Decimal("68000.00"),
+        moneda="USD",
+        tipo_cambio=Decimal("1100.00"),
+        concepto="[DEMO] Liquidación Divisas Cobranza Exportación Aceite Virgen Extra Permiso 26001",
+        cuenta_corriente=cli_exterior,
+        centro_de_costo=cc_admin,
+        comprobante_tipo="Transferencia SWIFT",
+        comprobante_nro="SWIFT-689102",
+        usuario=usuario
+    )
+    mov_caja_admin_mar = MovimientoFinanciero.objects.create(
+        cuenta=caja_admin,
+        tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
+        fecha=datetime.date(2026, 3, 28),
+        importe=Decimal("180000.00"),
+        moneda="ARS",
+        concepto="[DEMO] Gastos de courier internacional y certificaciones de origen para exportación",
+        centro_de_costo=cc_admin,
+        comprobante_tipo="Ticket",
+        comprobante_nro="TK-00452",
         usuario=usuario
     )
 
-    # Conciliación Bancaria Febrero 2026 (Cerrada)
+    # Cheques Marzo 2026 (Cartera y Emitidos)
+    cheque_gourmet_mar, _ = Cheque.objects.update_or_create(
+        numero="33445566",
+        banco_emisor="Banco Santander Río",
+        defaults={
+            'cuenta_bancaria_origen': cta_banco_ars,
+            'emisor_firmante': "Aceitunas Riojanas Gourmet S.A.",
+            'cuit_emisor': "30-70891234-5",
+            'tipo': Cheque.TipoCheque.RECIBIDO_TERCERO,
+            'cuenta_corriente': cli_gourmet,
+            'importe': Decimal("7900000.00"),
+            'fecha_emision': datetime.date(2026, 3, 15),
+            'fecha_cobro': datetime.date(2026, 4, 15),
+            'estado': Cheque.EstadoCheque.EN_CARTERA,
+            'observaciones': "[DEMO] Cheque de pago diferido 30 días recibido por venta de aceituna Arauco verde mesa"
+        }
+    )
+
+    cheque_aceites_mar, _ = Cheque.objects.update_or_create(
+        numero="44556677",
+        banco_emisor="Banco Macro",
+        defaults={
+            'cuenta_bancaria_origen': cta_banco_ars,
+            'emisor_firmante': "Aceites del Sol Mayorista S.A.",
+            'cuit_emisor': "30-55443322-1",
+            'tipo': Cheque.TipoCheque.RECIBIDO_TERCERO,
+            'cuenta_corriente': cli_local,
+            'importe': Decimal("10000000.00"),
+            'fecha_emision': datetime.date(2026, 3, 20),
+            'fecha_cobro': datetime.date(2026, 4, 20),
+            'estado': Cheque.EstadoCheque.EN_CARTERA,
+            'observaciones': "[DEMO] Cheque diferido recibido a cuenta Factura A 0001-00000128"
+        }
+    )
+
+    cheque_envases_mar, _ = Cheque.objects.update_or_create(
+        numero="88341202",
+        banco_emisor="Banco Galicia",
+        defaults={
+            'cuenta_bancaria_origen': cta_banco_ars,
+            'emisor_firmante': "Olivar del Valle Agroindustrial S.A.",
+            'cuit_emisor': "30-71458923-4",
+            'tipo': Cheque.TipoCheque.EMITIDO_PROPIO,
+            'cuenta_corriente': prov_envases,
+            'importe': Decimal("3500000.00"),
+            'fecha_emision': datetime.date(2026, 3, 25),
+            'fecha_cobro': datetime.date(2026, 4, 25),
+            'estado': Cheque.EstadoCheque.ENTREGADO_PROVEEDOR,
+            'observaciones': "[DEMO] Cheque de pago diferido emitido a Envases Cuyanos S.A. a 30 días"
+        }
+    )
+
+    # Orden de Pago y Recibo Marzo 2026
+    OrdenPagoRecibo.objects.create(
+        tipo=OrdenPagoRecibo.TipoDocumento.ORDEN_PAGO,
+        numero="OP-2026-0002",
+        fecha=datetime.date(2026, 3, 25),
+        cuenta_corriente=prov_contratista,
+        cuenta_financiera=cta_banco_ars,
+        importe_total=Decimal("2395800.00"),
+        medio_pago=OrdenPagoRecibo.MedioPago.TRANSFERENCIA,
+        comprobante_fiscal=fact_contratista_mar,
+        movimiento_financiero=mov_pago_contratista_mar,
+        concepto="[DEMO] Pago total Servicio Cosecha Mecánica Factura A 0001-00000840",
+        beneficiario_firmante="Servicios Agro-Mecánicos del Valle S.R.L.",
+        usuario=usuario
+    )
+
+    OrdenPagoRecibo.objects.create(
+        tipo=OrdenPagoRecibo.TipoDocumento.RECIBO_COBRANZA,
+        numero="RC-2026-0001",
+        fecha=datetime.date(2026, 3, 15),
+        cuenta_corriente=cli_gourmet,
+        cuenta_financiera=cta_banco_ars,
+        importe_total=Decimal("7900000.00"),
+        medio_pago=OrdenPagoRecibo.MedioPago.CHEQUE_TERCERO,
+        cheque=cheque_gourmet_mar,
+        comprobante_fiscal=fact_venta_gourmet_mar,
+        concepto="[DEMO] Cobro parcial Factura A 0001-00000127 mediante Cheque Santander #33445566",
+        beneficiario_firmante="Aceitunas Riojanas Gourmet S.A.",
+        usuario=usuario
+    )
+
+    # Conciliación Bancaria Marzo 2026 (En Proceso / Borrador con $5M de diferencia)
     ConciliacionBancaria.objects.get_or_create(
         cuenta=cta_banco_ars,
-        fecha_extracto=datetime.date(2026, 2, 28),
+        fecha_extracto=datetime.date(2026, 3, 31),
         defaults={
-            'saldo_extracto': Decimal("28450000.00"),
-            'saldo_sistema': Decimal("28450000.00"),
+            'saldo_extracto': Decimal("75814400.00"),
+            'saldo_sistema': Decimal("70814400.00"),
+            'diferencia': Decimal("5000000.00"),
+            'estado': 'EN_PROCESO',
+            'observaciones': "[DEMO] Conciliación Marzo 2026 en proceso. Diferencia de $5.000.000 por depósito pendiente de acreditación en 48hs.",
+            'usuario': usuario
+        }
+    )
+
+    # Arqueo de Caja Finca Marzo 2026 (Cerrado)
+    ArqueoCaja.objects.get_or_create(
+        cuenta=caja_finca,
+        fecha=datetime.date(2026, 3, 31),
+        defaults={
+            'hora': datetime.time(18, 0),
+            'saldo_sistema': Decimal("1850000.00"),
+            'saldo_real_contado': Decimal("1850000.00"),
             'diferencia': Decimal("0.00"),
-            'estado': 'CERRADA',
-            'observaciones': "[DEMO] Conciliación Febrero 2026 cerrada y verificada.",
+            'estado': ArqueoCaja.Estado.CERRADO,
+            'observaciones': "[DEMO] Arqueo fin de mes Marzo 2026 verificado sin faltantes ni sobrantes.",
             'usuario': usuario
         }
     )
@@ -1494,66 +2245,82 @@ def poblar_datos_demo_q1_2026():
     # 7.1 Imputación de Costos por Centro (Q1 2026) - Calidad y Trazabilidad Completa
     costos_q1_data = [
         # ── ENERO 2026 ────────────────────────────────────────────────────────
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("320000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales fertirriego nocturno Cuadro Arbequina", "ParteDiario", pd_riego_ene.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("247500.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Nitrato de potasio soluble aplicado en fertirriego", "ParteDiario", pd_riego_ene.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("35000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista pasada de rastra Cuadro Arauco", "ParteDiario", pd_laboreo.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("392000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor John Deere laboreo y desmalezado", "ParteDiario", pd_laboreo.id),
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 1, 25), Decimal("520000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR bombeo Pozo 1 - Enero 2026", "FacturaServicio", 101),
-        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 1, 20), Decimal("280000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales de riego y mantenimiento de goteros Finca Sur", "ParteDiario", None),
-        (cc_prod_sur, finca_sur, None, datetime.date(2026, 1, 26), Decimal("380000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica trifásica bombeo de pozo Finca Sur", "FacturaServicio", 102),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("320000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales fertirriego nocturno Cuadro Arbequina", "ParteDiario", pd_riego_ene.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 1, 18), Decimal("247500.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Nitrato de potasio soluble aplicado en fertirriego", "ParteDiario", pd_riego_ene.id, prov_agroquimica, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("35000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista pasada de rastra Cuadro Arauco", "ParteDiario", pd_laboreo.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 1, 22), Decimal("392000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor John Deere laboreo y desmalezado", "ParteDiario", pd_laboreo.id, prov_ypf, mov_pago_ypf_ene),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 1, 25), Decimal("520000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR bombeo Pozo 1 - Enero 2026", "FacturaServicio", 101, prov_edelar, mov_pago_edelar_feb),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 1, 20), Decimal("280000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales de riego y mantenimiento de goteros Finca Sur", "ParteDiario", None, None, None),
+        (cc_prod_sur, finca_sur, None, datetime.date(2026, 1, 26), Decimal("380000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica trifásica bombeo de pozo Finca Sur", "FacturaServicio", 102, prov_edecat, mov_pago_edecat_feb),
 
         # ── FEBRERO 2026 ──────────────────────────────────────────────────────
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 10), Decimal("480000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANTENIMIENTO, "[DEMO] Service preventivo, lubricantes y filtros Tractor John Deere", "FacturaTaller", 201),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("48125.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista atomizadora cura repilo", "ParteDiario", pd_cura_feb.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("1015000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre 50% cura sanitaria repilo", "ParteDiario", pd_cura_feb.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("35000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista aplicación herbicida", "ParteDiario", pd_desm.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("368000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Glifosato 48% control de malezas en ruedo", "ParteDiario", pd_desm.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("280000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor pulverizador malezas", "ParteDiario", pd_desm.id),
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 22), Decimal("1250000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR energía eléctrica bombeo Pozo 1 - Febrero 2026", "FacturaServicio", 202),
-        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("310000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Tratamiento preventivo repilo en Cuadro Picual Pomán", "ParteDiario", None),
-        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("725000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre aplicado en Finca Sur", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 10), Decimal("480000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANTENIMIENTO, "[DEMO] Service preventivo, lubricantes y filtros Tractor John Deere", "FacturaTaller", 201, prov_taller, mov_pago_taller_feb),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("48125.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista atomizadora cura repilo", "ParteDiario", pd_cura_feb.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 2, 16), Decimal("1015000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre 50% cura sanitaria repilo", "ParteDiario", pd_cura_feb.id, prov_agroquimica, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("35000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornal tractorista aplicación herbicida", "ParteDiario", pd_desm.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("368000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Glifosato 48% control de malezas en ruedo", "ParteDiario", pd_desm.id, prov_agroquimica, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 2, 20), Decimal("280000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractor pulverizador malezas", "ParteDiario", pd_desm.id, prov_ypf, None),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 2, 22), Decimal("1250000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Factura EDELAR energía eléctrica bombeo Pozo 1 - Febrero 2026", "FacturaServicio", 202, prov_edelar, None),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("310000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Tratamiento preventivo repilo en Cuadro Picual Pomán", "ParteDiario", None, None, None),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 2, 18), Decimal("725000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Oxicloruro de cobre aplicado en Finca Sur", "ParteDiario", None, prov_agroquimica, None),
 
         # ── MARZO 2026 ────────────────────────────────────────────────────────
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("114000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales cuadrilla cosecha manual aceituna Arauco", "ParteDiario", pd_cosecha.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("517500.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractores acarreo de bines de cosecha a playón", "ParteDiario", pd_cosecha.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 12), Decimal("1336000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Continuación cuadrilla cosecha manual aceituna verde mesa", "ParteDiario", None),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("48125.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operador cosechadora cabalgante vibradora", "ParteDiario", pd_cos_mec.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("1035000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil cosechadora vibradora y tractores acarreadores", "ParteDiario", pd_cos_mec.id),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 20), Decimal("1841875.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operadores y choferes cierre de cosecha mecánica", "ParteDiario", None),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("32000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Regador turno fertirriego post-cosecha", "ParteDiario", pd_riego_post.id),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("170000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Urea soluble fertirriego recuperador post-cosecha", "ParteDiario", pd_riego_post.id),
-        (cc_prod_norte, finca_norte, None, datetime.date(2026, 3, 25), Decimal("1980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.SERVICIO_CONTRATISTA, "[DEMO] Servicio contratado de cosecha mecánica cabalgante y flete", "FacturaProveedor", 301),
-        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 3, 24), Decimal("950000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla de cosecha manual variedad Picual Pomán", "ParteDiario", None),
-        (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda, batido y centrífuga almazara", "FacturaServicio", 302),
-        (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura, logística y aduana exportación", "LiquidacionGasto", 303),
-        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 1, 24), Decimal("310000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante soluble NPK Finca Chilecito", "ParteDiario", None),
-        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 2, 22), Decimal("295000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales poda y desbrote Cuadro Manzanilla Chilecito", "ParteDiario", None),
-        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 3, 14), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla cosecha manual Manzanilla Chilecito", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("114000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales cuadrilla cosecha manual aceituna Arauco", "ParteDiario", pd_cosecha.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 8), Decimal("517500.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil tractores acarreo de bines de cosecha a playón", "ParteDiario", pd_cosecha.id, prov_ypf, mov_pago_ypf_mar),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 12), Decimal("1336000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Continuación cuadrilla cosecha manual aceituna verde mesa", "ParteDiario", None, None, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("48125.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operador cosechadora cabalgante vibradora", "ParteDiario", pd_cos_mec.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 18), Decimal("1035000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil cosechadora vibradora y tractores acarreadores", "ParteDiario", pd_cos_mec.id, prov_ypf, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2026, 3, 20), Decimal("1841875.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Operadores y choferes cierre de cosecha mecánica", "ParteDiario", None, None, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("32000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Regador turno fertirriego post-cosecha", "ParteDiario", pd_riego_post.id, None, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2026, 3, 22), Decimal("170000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Urea soluble fertirriego recuperador post-cosecha", "ParteDiario", pd_riego_post.id, prov_agroquimica, None),
+        (cc_prod_norte, finca_norte, None, datetime.date(2026, 3, 25), Decimal("1980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.SERVICIO_CONTRATISTA, "[DEMO] Servicio contratado de cosecha mecánica cabalgante y flete", "FacturaProveedor", 301, prov_contratista, mov_pago_contratista_mar),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2026, 3, 24), Decimal("950000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla de cosecha manual variedad Picual Pomán", "ParteDiario", None, None, None),
+        (cc_almazara, finca_norte, None, datetime.date(2026, 3, 25), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ENERGIA_RIEGO, "[DEMO] Energía eléctrica molienda, batido y centrífuga almazara", "FacturaServicio", 302, prov_edelar, None),
+        (cc_admin, finca_norte, None, datetime.date(2026, 3, 28), Decimal("750000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.ESTRUCTURA_ADMIN, "[DEMO] Gastos operativos de estructura, logística y aduana exportación", "LiquidacionGasto", 303, None, mov_caja_admin_mar),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 1, 24), Decimal("310000.00"), Decimal("1050.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante soluble NPK Finca Chilecito", "ParteDiario", None, prov_agroquimica, None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 2, 22), Decimal("295000.00"), Decimal("1080.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Jornales poda y desbrote Cuadro Manzanilla Chilecito", "ParteDiario", None, None, None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2026, 3, 14), Decimal("980000.00"), Decimal("1100.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cuadrilla cosecha manual Manzanilla Chilecito", "ParteDiario", None, None, None),
         # ── CAMPAÑA ANTERIOR 2024/2025 (Histórico para comparativas) ─────────
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2024, 11, 20), Decimal("450000.00"), Decimal("920.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante foliar Cuadro Arauco 2024/2025", "ParteDiario", None),
-        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2025, 3, 10), Decimal("1850000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha manual Arauco 2024/2025", "ParteDiario", None),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2024, 12, 15), Decimal("520000.00"), Decimal("930.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil labores mecanizadas Arbequina 2024/2025", "ParteDiario", None),
-        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2025, 3, 18), Decimal("2150000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha mecánica cabalgante Arbequina 2024/2025", "ParteDiario", None),
-        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2025, 3, 22), Decimal("1320000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Picual Pomán 2024/2025", "ParteDiario", None),
-        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2025, 3, 15), Decimal("1100000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Manzanilla Chilecito 2024/2025", "ParteDiario", None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2024, 11, 20), Decimal("450000.00"), Decimal("920.00"), CostoPorCentro.TipoOrigen.INSUMO, "[DEMO] Fertilizante foliar Cuadro Arauco 2024/2025", "ParteDiario", None, prov_agroquimica, None),
+        (cc_prod_norte, finca_norte, cuadro_a1, datetime.date(2025, 3, 10), Decimal("1850000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha manual Arauco 2024/2025", "ParteDiario", None, None, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2024, 12, 15), Decimal("520000.00"), Decimal("930.00"), CostoPorCentro.TipoOrigen.COMBUSTIBLE_MAQUINARIA, "[DEMO] Gasoil labores mecanizadas Arbequina 2024/2025", "ParteDiario", None, prov_ypf, None),
+        (cc_prod_norte, finca_norte, cuadro_b2, datetime.date(2025, 3, 18), Decimal("2150000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha mecánica cabalgante Arbequina 2024/2025", "ParteDiario", None, None, None),
+        (cc_prod_sur, finca_sur, cuadro_c3, datetime.date(2025, 3, 22), Decimal("1320000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Picual Pomán 2024/2025", "ParteDiario", None, None, None),
+        (cc_prod_chi, finca_chi, cuadro_d4, datetime.date(2025, 3, 15), Decimal("1100000.00"), Decimal("950.00"), CostoPorCentro.TipoOrigen.MANO_DE_OBRA, "[DEMO] Cosecha Manzanilla Chilecito 2024/2025", "ParteDiario", None, None, None),
     ]
-    for cc, fin, cua, fec, imp, tc_mes, torig, desc, d_tipo, d_id in costos_q1_data:
-        CostoPorCentro.objects.get_or_create(
+    for cc, fin, cua, fec, imp, tc_mes, torig, desc, d_tipo, d_id, prov_obj, mov_obj in costos_q1_data:
+        costo_existente = CostoPorCentro.objects.filter(
             centro_de_costo=cc,
             finca=fin,
             cuadro=cua,
             fecha=fec,
             tipo_origen=torig,
-            defaults={
-                'importe_ars': imp,
-                'importe_usd': round(imp / tc_mes, 2),
-                'cuenta_contable': resolver_cuenta_contable_defecto(torig, cc),
-                'descripcion': desc,
-                'documento_origen_tipo': d_tipo,
-                'documento_origen_id': d_id,
-                'campana': calcular_campana_desde_fecha(fec),
-            }
-        )
+            descripcion=desc
+        ).first()
+        if not costo_existente:
+            CostoPorCentro.objects.create(
+                centro_de_costo=cc,
+                finca=fin,
+                cuadro=cua,
+                fecha=fec,
+                tipo_origen=torig,
+                importe_ars=imp,
+                importe_usd=round(imp / tc_mes, 2),
+                cuenta_contable=resolver_cuenta_contable_defecto(torig, cc),
+                proveedor=prov_obj,
+                movimiento_financiero=mov_obj,
+                descripcion=desc,
+                documento_origen_tipo=d_tipo,
+                documento_origen_id=d_id,
+                campana=calcular_campana_desde_fecha(fec),
+            )
+        else:
+            costo_existente.proveedor = prov_obj
+            costo_existente.movimiento_financiero = mov_obj
+            costo_existente.importe_ars = imp
+            costo_existente.importe_usd = round(imp / tc_mes, 2)
+            costo_existente.campana = calcular_campana_desde_fecha(fec)
+            costo_existente.save()
 
     # 7.1 Tipos de Cambio Mensuales Oficiales Q1 2026
     tcs_demo = [
@@ -1634,17 +2401,50 @@ def limpiar_datos_demo_q1_2026():
     q_tc.delete()
 
     # 2. Conciliaciones Bancarias
-    q_concil = ConciliacionBancaria.objects.filter(fecha_extracto__gte=desde, fecha_extracto__lte=hasta)
+    q_concil = ConciliacionBancaria.objects.filter(
+        models.Q(observaciones__startswith='[DEMO]') |
+        models.Q(fecha_extracto__gte=desde, fecha_extracto__lte=hasta)
+    )
     reporte['conciliaciones'] = q_concil.count()
     q_concil.delete()
 
     # 3. Cheques
-    q_cheques = Cheque.objects.filter(fecha_emision__gte=desde, fecha_emision__lte=hasta)
+    q_cheques = Cheque.objects.filter(
+        models.Q(observaciones__startswith='[DEMO]') |
+        models.Q(fecha_emision__gte=desde, fecha_emision__lte=hasta)
+    )
     reporte['cheques'] = q_cheques.count()
     q_cheques.delete()
 
+    # 3.1 Comprobantes Fiscales (Libro de IVA Compras y Ventas)
+    q_facturas = ComprobanteFiscal.objects.filter(
+        models.Q(concepto__startswith='[DEMO]') |
+        models.Q(fecha_emision__gte=desde, fecha_emision__lte=hasta)
+    )
+    reporte['comprobantes_fiscales'] = q_facturas.count()
+    q_facturas.delete()
+
+    # 3.2 Órdenes de Pago y Recibos
+    q_ops = OrdenPagoRecibo.objects.filter(
+        models.Q(concepto__startswith='[DEMO]') |
+        models.Q(fecha__gte=desde, fecha__lte=hasta)
+    )
+    reporte['ordenes_pago_recibos'] = q_ops.count()
+    q_ops.delete()
+
+    # 3.3 Arqueos de Caja
+    q_arq = ArqueoCaja.objects.filter(
+        models.Q(observaciones__startswith='[DEMO]') |
+        models.Q(fecha__gte=desde, fecha__lte=hasta)
+    )
+    reporte['arqueos_caja'] = q_arq.count()
+    q_arq.delete()
+
     # 4. Movimientos Financieros
-    q_movs = MovimientoFinanciero.objects.filter(fecha__gte=desde, fecha__lte=hasta)
+    q_movs = MovimientoFinanciero.objects.filter(
+        models.Q(concepto__startswith='[DEMO]') |
+        models.Q(fecha__gte=desde, fecha__lte=hasta)
+    )
     reporte['movimientos_financieros'] = q_movs.count()
     q_movs.delete()
 
@@ -1720,6 +2520,22 @@ def limpiar_datos_demo_q1_2026():
     q_emp_cosecha = Empleado.objects.filter(legajo__in=['LEG-007', 'LEG-008'])
     reporte['empleados_temporarios'] = q_emp_cosecha.count()
     q_emp_cosecha.delete()
+
+    # 13. Restablecer saldos de entidades y cuentas demo a cero
+    CuentaCorriente.objects.filter(
+        cuit__in=[
+            '30-71234567-0', '30-54668997-1', '30-67891234-9', '30-69123456-7',
+            '30-68901234-5', '30-71987654-3', '30-65432198-7', '30-70891234-5',
+            '30-55443322-1', '30-99876543-2'
+        ]
+    ).update(saldo_actual=Decimal('0.00'))
+
+    Cuenta.objects.filter(
+        nombre__in=[
+            "Banco Galicia CC Operativa ARS", "Banco Santander CC Exportacion USD",
+            "Caja Chica Finca Aimogasta", "Caja Administración Central"
+        ]
+    ).update(saldo_actual=Decimal('0.00'))
 
     reporte['estado'] = 'OK'
     reporte['mensaje'] = "Limpieza completada: todos los registros de prueba del 1° Trimestre 2026 fueron eliminados exitosamente."

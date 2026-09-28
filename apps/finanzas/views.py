@@ -639,7 +639,7 @@ class FinanzasDashboardView(TemplateView):
             tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
         ).order_by('fecha_cobro')
 
-        ctx['movimientos_recientes'] = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente')[:20]
+        ctx['movimientos_recientes'] = MovimientoFinanciero.objects.select_related('cuenta', 'cuenta_corriente')[:100]
         ctx['active_tab'] = self.request.GET.get('tab', 'flujo')
         ctx['fecha_hoy'] = timezone.now().date()
 
@@ -847,7 +847,10 @@ class FinanzasDashboardView(TemplateView):
         if cuadro_id and str(cuadro_id).isdigit():
             cuadro_activo = cuadros.filter(id=int(cuadro_id)).first()
         if not cuadro_activo:
-            if cuadros.exists():
+            cuadro_q1_demo = cuadros.filter(titulo__icontains="1° Trimestre 2026").first()
+            if cuadro_q1_demo:
+                cuadro_activo = cuadro_q1_demo
+            elif cuadros.exists():
                 cuadro_activo = cuadros.first()
             elif empresa:
                 cuadro_activo = get_or_create_cuadro_default(empresa)
@@ -1756,10 +1759,12 @@ class CuentaCorrienteDetalleModalView(View):
         entidad = get_object_or_404(CuentaCorriente, pk=pk)
         movimientos = MovimientoFinanciero.objects.filter(cuenta_corriente=entidad).select_related('cuenta').order_by('-fecha', '-created_at')[:50]
         cheques = Cheque.objects.filter(cuenta_corriente=entidad).order_by('-fecha_cobro')[:20]
+        comprobantes = ComprobanteFiscal.objects.filter(cuenta_corriente=entidad).order_by('-fecha_emision', '-id')[:30]
         return render(request, 'finanzas/partials/cuenta_corriente_movimientos_modal.html', {
             'entidad': entidad,
             'movimientos': movimientos,
-            'cheques': cheques
+            'cheques': cheques,
+            'comprobantes': comprobantes,
         })
 
 
