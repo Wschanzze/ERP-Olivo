@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Control de Gestión y Costos Agrícolas | ERP Olivícola{% endblock %}
@@ -924,7 +924,7 @@
       </svg>
       <p class="font-semibold text-slate-600">Sin datos de cosecha registrados</p>
       <p class="text-xs text-slate-400 mt-1">Registra lotes de cosecha en los cuadros para ver el analisis de rendimiento.</p>
-      <a href="{% url 'campos:campos_list' %}" class="inline-flex items-center gap-1.5 mt-4 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
+      <a href="{% url 'campos:cuadros_list' %}" class="inline-flex items-center gap-1.5 mt-4 bg-[#3D4A2A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#323d22] transition-colors">ir a Campos y Cuadros</a>
     </div>
     {% else %}
 
