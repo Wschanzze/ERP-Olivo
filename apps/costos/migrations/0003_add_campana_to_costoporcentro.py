@@ -35,7 +35,6 @@ class Migration(migrations.Migration):
         ('campos', '0006_add_precio_venta_estimado_lotecosecha'),
         ('core', '0004_empresa_condicion_iva_empresa_ingresos_brutos_and_more'),
         ('costos', '0002_relaciones_plan_cuentas'),
-        ('finanzas', '0010_add_campana_to_costoporcentro'),
     ]
 
     operations = [

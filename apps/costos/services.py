@@ -140,22 +140,6 @@ def registrar_costo(
     return costo
 
 
-def calcular_campana_desde_fecha(fecha) -> str:
-    """Calcula la campana agricola (jul N-1 -> jun N) a partir de una fecha."""
-    if isinstance(fecha, str):
-        try:
-            fecha_obj = datetime.datetime.strptime(fecha, '%Y-%m-%d').date()
-        except ValueError:
-            return ""
-    else:
-        fecha_obj = fecha
-    
-    if getattr(fecha_obj, 'month', 1) >= 7:
-        return f"{getattr(fecha_obj, 'year', 2000)}/{getattr(fecha_obj, 'year', 2000) + 1}"
-    else:
-        return f"{getattr(fecha_obj, 'year', 2000) - 1}/{getattr(fecha_obj, 'year', 2000)}"
-
-
 @transaction.atomic
 def prorratear_costo_indirecto(costo: CostoPorCentro, usuario=None) -> int:
     """
@@ -228,22 +212,6 @@ def prorratear_costo_indirecto(costo: CostoPorCentro, usuario=None) -> int:
         pass
 
     return len(items_generados)
-
-
-def calcular_campana_desde_fecha(fecha) -> str:
-    """Calcula la campana agricola (jul N-1 -> jun N) a partir de una fecha."""
-    if isinstance(fecha, str):
-        try:
-            fecha_obj = datetime.datetime.strptime(fecha, '%Y-%m-%d').date()
-        except ValueError:
-            return ""
-    else:
-        fecha_obj = fecha
-    
-    if getattr(fecha_obj, 'month', 1) >= 7:
-        return f"{getattr(fecha_obj, 'year', 2000)}/{getattr(fecha_obj, 'year', 2000) + 1}"
-    else:
-        return f"{getattr(fecha_obj, 'year', 2000) - 1}/{getattr(fecha_obj, 'year', 2000)}"
 
 
 @transaction.atomic
@@ -348,21 +316,15 @@ def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) 
         .values('cuadro_id', 'campana', 'kg_cosechados', 'precio_venta_estimado_por_kg')
     )
 
-    # Costos: suma de importe_ars por cuadro + campaña (usando año de la fecha)
-    costos_raw = costos_qs.values('cuadro_id', 'cuadro__campana_cosecha' if False else 'cuadro_id').annotate(
-        total_ars=Sum('importe_ars')
-    )
-    # Nota: costos no tienen campo campaña directo; los asociamos por finca/cuadro global
-    costos_por_cuadro = {}
-    for r in CostoPorCentro.objects.filter(prorrateo_realizado=False, cuadro__isnull=False).values(
-        'cuadro_id'
-    ).annotate(total_ars=Sum('importe_ars')):
-        costos_por_cuadro[r['cuadro_id']] = r['total_ars'] or Decimal('0.00')
+    costos_por_cuadro_campana = {}
+    for r in CostoPorCentro.objects.filter(
+        prorrateo_realizado=False, cuadro__isnull=False, campana__in=campanas_disponibles
+    ).values('cuadro_id', 'campana').annotate(total_ars=Sum('importe_ars')):
+        costos_por_cuadro_campana[(r['cuadro_id'], r['campana'])] = r['total_ars'] or Decimal('0.00')
 
-    if finca_id:
-        costos_por_cuadro = {
-            k: v for k, v in costos_por_cuadro.items()
-        }
+    costos_sin_campana_count = CostoPorCentro.objects.filter(
+        prorrateo_realizado=False, cuadro__isnull=False, campana=''
+    ).count()
 
     # Map: (cuadro_id, campana) -> total_kg
     cosecha_map = {(r['cuadro_id'], r['campana']): r['total_kg'] or Decimal('0.00') for r in cosecha_raw}
@@ -396,7 +358,6 @@ def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) 
     analitica_por_cuadro = []
     for cuadro_id_key, cuadro in cuadros.items():
         ha = cuadro.hectareas_netas or Decimal('0.00')
-        costo_global = costos_por_cuadro.get(cuadro_id_key, Decimal('0.00'))
 
         campanas_data = []
         mejor_rinde = Decimal('0.00')
@@ -408,16 +369,10 @@ def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) 
             kg = cosecha_map.get(key, Decimal('0.00'))
             rinde_kg_ha = round(kg / ha, 2) if ha > 0 and kg > 0 else Decimal('0.00')
 
-            # Costo: distribuimos el costo global entre campañas por proporción de kg
-            # (aproximación razonable cuando costos no tienen campo campaña)
-            total_kg_cuadro = sum(
-                v for (cid, _), v in cosecha_map.items() if cid == cuadro_id_key
-            ) or Decimal('1')
-            costo_campana = round(costo_global * kg / total_kg_cuadro, 2) if total_kg_cuadro > 0 else Decimal('0.00')
+            costo_campana = costos_por_cuadro_campana.get(key, Decimal('0.00'))
 
             costo_ha = round(costo_campana / ha, 2) if ha > 0 and costo_campana > 0 else Decimal('0.00')
             costo_kg = round(costo_campana / kg, 2) if kg > 0 and costo_campana > 0 else None
-
             # Ingreso estimado
             pm = precio_map.get(key)
             if pm and pm['kg_sum'] > 0:
