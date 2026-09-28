@@ -352,6 +352,7 @@ def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) 
             'ranking_rendimiento': [],
             'ranking_rentabilidad': [],
             'evolucion_historica': {'labels': [], 'datasets': []},
+            'costos_sin_campana_count': costos_sin_campana_count,
         }
 
     # ── Construir analítica por cuadro ────────────────────────────────────────
@@ -462,5 +463,6 @@ def obtener_analitica_rendimiento(finca_id=None, cuadro_id=None, campanas=None) 
         'ranking_rendimiento': ranking_rendimiento,
         'ranking_rentabilidad': ranking_rentabilidad,
         'evolucion_historica': evolucion_historica,
+        'costos_sin_campana_count': costos_sin_campana_count,
     }
 
