@@ -45,27 +45,27 @@
     <!-- Saldo ARS -->
     <div class="bg-gradient-to-br from-oliva-700 to-oliva-900 rounded-2xl p-5 text-white shadow">
       <p class="text-[10px] font-bold uppercase tracking-widest text-oliva-200">Liquidez ARS</p>
-      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">${{ total_ars|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">${{ total_ars|floatformat:2|intcomma }}</p>
       <p class="text-[11px] text-oliva-300 mt-1">Saldo en cuentas en pesos</p>
     </div>
 
     <!-- Saldo USD -->
     <div class="bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-2xl p-5 text-white shadow">
       <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Liquidez USD</p>
-      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">u$s{{ total_usd|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold font-mono mt-2 tabular-nums">u$s{{ total_usd|floatformat:2|intcomma }}</p>
       <p class="text-[11px] text-emerald-300 mt-1">Saldo en cuentas en dólares</p>
     </div>
 
     <!-- Ingresos del Período -->
     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ingresos del Período</p>
-      <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2 tabular-nums">${{ ingresos_periodo_total|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold font-mono text-emerald-600 mt-2 tabular-nums">${{ ingresos_periodo_total|floatformat:2|intcomma }}</p>
       <div class="flex items-center mt-1 space-x-1">
         <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
         </svg>
         <span class="text-[11px] text-slate-500 font-medium">
-          {% if ingresos_usd_total > 0 %}Incluye u$s{{ ingresos_usd_total|floatformat:0 }}{% else %}Cobros y ventas{% endif %}
+          {% if ingresos_usd_puro > 0 %}Incluye u$s{{ ingresos_usd_puro|floatformat:0|intcomma }} exportación{% else %}Cobros y ventas en pesos{% endif %}
         </span>
       </div>
     </div>
@@ -73,12 +73,12 @@
     <!-- Egresos del Período -->
     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Egresos del Período</p>
-      <p class="text-2xl font-extrabold font-mono text-rose-500 mt-2 tabular-nums">${{ egresos_periodo_total|floatformat:2 }}</p>
+      <p class="text-2xl font-extrabold font-mono text-rose-500 mt-2 tabular-nums">${{ egresos_periodo_total|floatformat:2|intcomma }}</p>
       <div class="flex items-center mt-1 space-x-1">
         <svg class="w-3 h-3 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
         </svg>
-        <span class="text-[11px] text-slate-400">Insumos, haberes y servicios</span>
+        <span class="text-[11px] text-slate-400">Insumos, haberes y servicios (u$s{{ egresos_usd_total|floatformat:0|intcomma }})</span>
       </div>
     </div>
 
@@ -86,11 +86,11 @@
     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs col-span-1 sm:col-span-2 lg:col-span-1">
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Flujo Neto del Período</p>
       <p class="text-2xl font-extrabold font-mono {% if flujo_neto_periodo >= 0 %}text-emerald-700{% else %}text-rose-600{% endif %} mt-2 tabular-nums">
-        {% if flujo_neto_periodo >= 0 %}+{% endif %}${{ flujo_neto_periodo|floatformat:2 }}
+        {% if flujo_neto_periodo >= 0 %}+{% endif %}${{ flujo_neto_periodo|floatformat:2|intcomma }}
       </p>
       <div class="flex items-center mt-1 space-x-1">
         <span class="text-[11px] font-semibold {% if flujo_neto_periodo >= 0 %}text-emerald-600{% else %}text-rose-500{% endif %}">
-          {% if flujo_neto_periodo >= 0 %}Superávit operativo{% else %}Déficit del período{% endif %}
+          {% if flujo_neto_periodo >= 0 %}Superávit operativo (+u$s{{ flujo_neto_usd|floatformat:0|intcomma }}){% else %}Déficit del período (-u$s{{ flujo_neto_usd|floatformat:0|intcomma }}){% endif %}
         </span>
       </div>
     </div>
@@ -208,7 +208,7 @@
           </div>
           <div class="text-right ml-3 shrink-0">
             <p class="text-sm font-extrabold font-mono {% if c.saldo_actual >= 0 %}text-slate-900{% else %}text-red-500{% endif %} tabular-nums">
-              {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2 }}
+              {% if c.moneda == 'USD' %}u$s{% else %}${% endif %}{{ c.saldo_actual|floatformat:2|intcomma }}
             </p>
             <span class="text-[10px] font-mono font-bold text-slate-400">{{ c.moneda }}</span>
           </div>
@@ -256,7 +256,7 @@
             <td class="py-3 px-4 font-medium text-slate-800">{{ mov.cuenta.nombre }}</td>
             <td class="py-3 px-4 text-slate-600 max-w-md truncate">{{ mov.concepto }}</td>
             <td class="py-3 px-4 text-right font-mono font-bold tabular-nums whitespace-nowrap {% if mov.tipo == 'INGRESO' %}text-emerald-700{% else %}text-rose-600{% endif %}">
-              {% if mov.tipo == 'INGRESO' %}+{% else %}-{% endif %}{% if mov.moneda == 'USD' %}u$s{% else %}${% endif %}{{ mov.importe|floatformat:2 }}
+              {% if mov.tipo == 'INGRESO' %}+{% else %}-{% endif %}{% if mov.moneda == 'USD' %}u$s{% else %}${% endif %}{{ mov.importe|floatformat:2|intcomma }}
             </td>
             <td class="py-3 px-4 text-center font-mono text-[10px] font-bold text-slate-500">{{ mov.moneda }}</td>
           </tr>

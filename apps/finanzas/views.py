@@ -670,6 +670,8 @@ class FinanzasDashboardView(TemplateView):
         total_consolidado_ars = total_ars + (total_usd * tc_vigente)
         total_consolidado_usd = round(total_consolidado_ars / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
         
+        ctx['total_ars'] = total_ars
+        ctx['total_usd'] = total_usd
         ctx['total_consolidado_ars'] = total_consolidado_ars
         ctx['total_consolidado_usd'] = total_consolidado_usd
 
@@ -759,33 +761,33 @@ class FinanzasDashboardView(TemplateView):
         
         # Desglose de ingresos y egresos
         ingresos_ars = Decimal('0')
-        ingresos_usd = Decimal('0')
+        ingresos_usd_puro = Decimal('0')
         egresos_ars = Decimal('0')
-        egresos_usd = Decimal('0')
+        egresos_usd_puro = Decimal('0')
 
         for m in movs_periodo:
             tc_m = m.tipo_cambio if m.tipo_cambio > 0 else tc_dict.get((m.fecha.year, m.fecha.month), tc_vigente)
             if m.tipo == 'INGRESO':
                 if m.moneda == 'USD':
-                    ingresos_usd += m.importe
+                    ingresos_usd_puro += m.importe
                     ingresos_ars += (m.importe * tc_m)
                 else:
                     ingresos_ars += m.importe
-                    ingresos_usd += round(m.importe / tc_m, 2) if tc_m > 0 else Decimal('0')
             elif m.tipo == 'EGRESO':
                 if m.moneda == 'USD':
-                    egresos_usd += m.importe
+                    egresos_usd_puro += m.importe
                     egresos_ars += (m.importe * tc_m)
                 else:
                     egresos_ars += m.importe
-                    egresos_usd += round(m.importe / tc_m, 2) if tc_m > 0 else Decimal('0')
 
         ctx['ingresos_periodo_total'] = ingresos_ars
-        ctx['ingresos_usd_total'] = ingresos_usd
+        ctx['ingresos_usd_total'] = round(ingresos_ars / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
+        ctx['ingresos_usd_puro'] = ingresos_usd_puro
         ctx['egresos_periodo_total'] = egresos_ars
-        ctx['egresos_usd_total'] = egresos_usd
+        ctx['egresos_usd_total'] = round(egresos_ars / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
+        ctx['egresos_usd_puro'] = egresos_usd_puro
         ctx['flujo_neto_periodo'] = ingresos_ars - egresos_ars
-        ctx['flujo_neto_usd'] = ingresos_usd - egresos_usd
+        ctx['flujo_neto_usd'] = round((ingresos_ars - egresos_ars) / tc_vigente, 2) if tc_vigente > 0 else Decimal('0')
         ctx['ingresos_mes'] = ingresos_ars
         ctx['egresos_mes'] = egresos_ars
 

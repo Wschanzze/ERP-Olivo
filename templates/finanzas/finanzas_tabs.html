@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Finanzas y Tesorería | ERP Olivícola{% endblock %}
 
@@ -139,9 +140,9 @@
       <div class="flex items-center justify-between sm:justify-start gap-2 px-3.5 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono w-full sm:w-auto">
         <span class="text-slate-400 text-[11px] sm:text-xs">Total Cajas &amp; Bancos:</span>
         <div class="flex items-center gap-1.5">
-          <strong class="text-slate-800">${{ total_consolidado_ars|floatformat:0 }} ARS</strong>
+          <strong class="text-slate-800">${{ total_consolidado_ars|floatformat:0|intcomma }} ARS</strong>
           <span class="text-slate-300">•</span>
-          <span class="text-slate-500 text-[11px] sm:text-xs">(u$s{{ total_consolidado_usd|floatformat:0 }})</span>
+          <span class="text-slate-500 text-[11px] sm:text-xs">(u$s{{ total_consolidado_usd|floatformat:0|intcomma }})</span>
         </div>
       </div>
     </div>
