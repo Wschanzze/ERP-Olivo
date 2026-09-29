@@ -4,11 +4,12 @@
 {% block title %}Control de Gestión y Costos Agrícolas | ERP Olivícola{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ 
+<div class="space-y-4 sm:space-y-6" x-data="{ 
   activeTab: '{{ tab_activa|default:'imputaciones' }}',
   modalRegistrarCosto: false,
   modalEditarCosto: false,
   modalProrratear: false,
+  showMobileFiltros: {% if filtro_finca or filtro_cuadro or filtro_centro or filtro_tipo or filtro_mes or filtro_cuenta_id or filtro_q %}true{% else %}false{% endif %},
   editCostoId: '',
   editCostoDesc: '',
   editCostoImporte: '',
@@ -22,102 +23,102 @@
 }">
   
   <!-- Header Principal -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
     <div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-slate-500">Gestión &amp; Finanzas</span>
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <span class="text-[11px] sm:text-xs font-semibold text-slate-500">Gestión &amp; Finanzas</span>
         <span class="text-slate-300">/</span>
-        <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
+        <span class="text-[10px] sm:text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2 sm:px-2.5 py-0.5 rounded-full">
           Imputación ABC por Cuadro &amp; Plan de Cuentas
         </span>
       </div>
-      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">Control de Gestión y Costos Agrícolas</h1>
-      <p class="text-sm text-slate-500 mt-1">
+      <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-1">Control de Gestión y Costos Agrícolas</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
         Imputación directa de mano de obra, insumos fitosanitarios, riego, contratistas y combustible por cuadro productivo, articulado con el
         <span class="font-semibold text-slate-700">Rubro 4.2.1 (Costo de la Producción Agrícola)</span>.
       </p>
     </div>
 
     <!-- Acciones Rápidas -->
-    <div class="flex flex-wrap items-center gap-2.5">
+    <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
       <!-- Botón Nuevo Costo -->
       <button 
         @click="modalRegistrarCosto = true" 
         type="button" 
-        class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white hover:bg-[#323d22] text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#3D4A2A] text-white hover:bg-[#323d22] active:scale-[0.98] text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         <span>+ Registrar Costo</span>
       </button>
 
       <!-- Botón Sincronizar P&L -->
-      <form method="post" action="{% url 'costos:sincronizar_pl' %}" class="inline">
+      <form method="post" action="{% url 'costos:sincronizar_pl' %}" class="inline-flex flex-1 sm:flex-initial">
         {% csrf_token %}
         <button 
           type="submit" 
-          class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          class="w-full inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300 text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
           title="Sincroniza los costos acumulados con el Estado de Resultados (P&L)"
           onclick="return confirm('¿Sincronizar las imputaciones de costos con el Cuadro de Resultados activo?');"
         >
-          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          <span>Sincronizar P&amp;L</span>
+          <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="whitespace-nowrap">Sincronizar P&amp;L</span>
         </button>
       </form>
 
       <a 
         href="{% url 'costos:exportar_excel' %}?finca={{ filtro_finca }}&cuadro={{ filtro_cuadro }}&centro={{ filtro_centro }}&tipo={{ filtro_tipo }}&mes={{ filtro_mes }}&cuenta_id={{ filtro_cuenta_id }}&q={{ filtro_q }}" 
-        class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:text-[#3D4A2A] hover:border-[#3D4A2A]/40 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+        class="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-[#3D4A2A] hover:border-[#3D4A2A]/40 text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors"
         title="Descargar listado en formato Excel (.xlsx)"
       >
-        <svg class="w-4 h-4 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-[#3D4A2A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <span>Exportar Excel</span>
+        <span class="whitespace-nowrap">Excel</span>
       </a>
 
       <a 
         href="{% url 'parte_diario:partes_list' %}" 
-        class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+        class="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors"
       >
-        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
-        <span>Partes Diarios</span>
+        <span class="whitespace-nowrap">Partes</span>
       </a>
 
       <a 
         href="{% url 'finanzas:plan_cuentas' %}" 
-        class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
+        class="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors"
       >
-        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
-        <span>Plan de Cuentas</span>
+        <span class="whitespace-nowrap">Plan Cuentas</span>
       </a>
 
       <!-- Acciones de Datos de Prueba (Demo) -->
       {% if hay_datos_demo %}
-      <form method="post" action="{% url 'finanzas:demo_limpiar' %}" class="inline" onsubmit="return confirm('¿Confirma que desea eliminar de forma segura todos los datos de prueba [DEMO]?');">
+      <form method="post" action="{% url 'finanzas:demo_limpiar' %}" class="inline-flex flex-1 sm:flex-initial" onsubmit="return confirm('¿Confirma que desea eliminar de forma segura todos los datos de prueba [DEMO]?');">
         {% csrf_token %}
         <button 
           type="submit" 
-          class="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          class="w-full inline-flex items-center justify-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
           title="Elimina todos los datos de demostración cargados en el sistema"
         >
-          <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          <span>Limpiar Demo</span>
+          <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span class="whitespace-nowrap">Limpiar Demo</span>
         </button>
       </form>
       {% else %}
-      <form method="post" action="{% url 'finanzas:demo_poblar' %}" class="inline">
+      <form method="post" action="{% url 'finanzas:demo_poblar' %}" class="inline-flex flex-1 sm:flex-initial">
         {% csrf_token %}
         <button 
           type="submit" 
-          class="inline-flex items-center gap-1.5 bg-[#EAEFE3] border border-[#A2B38F] text-[#3D4A2A] hover:bg-[#D5DFC9] text-xs font-bold px-3 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+          class="w-full inline-flex items-center justify-center gap-1.5 bg-[#EAEFE3] border border-[#A2B38F] text-[#3D4A2A] hover:bg-[#D5DFC9] text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
           title="Siembra datos de prueba coherentes para todas las fincas y el Plan de Cuentas"
         >
-          <svg class="w-3.5 h-3.5 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          <span>Cargar Datos Demo</span>
+          <svg class="w-3.5 h-3.5 text-[#3D4A2A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span class="whitespace-nowrap">Cargar Demo</span>
         </button>
       </form>
       {% endif %}
@@ -125,46 +126,46 @@
   </div>
 
   <!-- KPI Cards Ejecutivos Superiores -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
     <!-- Costo Total Acumulado -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Costo Total Acumulado</span>
-        <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] px-2 py-0.5 rounded-full font-mono">Q1 2026</span>
+    <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between">
+      <div class="flex items-center justify-between gap-1">
+        <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Acumulado</span>
+        <span class="text-[9px] sm:text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] px-1.5 sm:px-2 py-0.5 rounded-full font-mono shrink-0">Q1 2026</span>
       </div>
-      <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-2 tabular-nums">
+      <p class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-slate-900 font-mono mt-1.5 sm:mt-2 tabular-nums leading-tight">
         ${{ total_costos_ars|floatformat:2 }}
       </p>
-      <div class="mt-2 flex items-center justify-between text-xs">
-        <span class="text-slate-500 font-mono font-medium">≈ USD {{ total_costos_usd|floatformat:2 }}</span>
-        <span class="text-slate-400 font-medium">{{ total_registros }} imputaciones</span>
+      <div class="mt-1.5 sm:mt-2 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] sm:text-xs gap-0.5 text-slate-500">
+        <span class="font-mono font-medium truncate">≈ USD {{ total_costos_usd|floatformat:2 }}</span>
+        <span class="text-slate-400 font-medium">{{ total_registros }} reg.</span>
       </div>
     </div>
 
     <!-- Costo Agrícola por Hectárea -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Costo Promedio Agrícola</span>
-        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono">$/ha</span>
+    <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden flex flex-col justify-between">
+      <div class="flex items-center justify-between gap-1">
+        <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Promedio $/ha</span>
+        <span class="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded-full font-mono shrink-0">Campo</span>
       </div>
-      <p class="text-2xl sm:text-3xl font-extrabold text-[#3D4A2A] font-mono mt-2 tabular-nums">
-        ${{ costo_promedio_ha|floatformat:2 }}<span class="text-sm font-sans font-medium text-slate-500">/ha</span>
+      <p class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-[#3D4A2A] font-mono mt-1.5 sm:mt-2 tabular-nums leading-tight">
+        ${{ costo_promedio_ha|floatformat:2 }}<span class="text-xs sm:text-sm font-sans font-medium text-slate-500">/ha</span>
       </p>
-      <div class="mt-2 flex items-center justify-between text-xs">
-        <span class="text-slate-500">Sobre {{ total_ha_analizadas|floatformat:1 }} ha productivas</span>
+      <div class="mt-1.5 sm:mt-2 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] sm:text-xs gap-0.5 text-slate-500">
+        <span class="truncate">{{ total_ha_analizadas|floatformat:1 }} ha prod.</span>
         <span class="font-bold text-emerald-700 font-mono">{{ pct_agricola }}% total</span>
       </div>
     </div>
 
     <!-- Distribución por Destino / Proceso -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+    <div class="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
       <div class="flex items-center justify-between">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Distribución por Proceso</span>
+        <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Distribución Proceso</span>
         <span class="text-[10px] font-mono text-slate-400">ABC</span>
       </div>
-      <div class="mt-3 space-y-2">
+      <div class="mt-2.5 sm:mt-3 space-y-2">
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+          <div class="flex justify-between text-[11px] sm:text-xs font-semibold text-slate-700 mb-0.5">
             <span>Agrícola (Campo)</span>
             <span class="font-mono text-[#3D4A2A]">{{ pct_agricola }}% (${{ costo_agricola_ars|floatformat:0 }})</span>
           </div>
@@ -173,7 +174,7 @@
           </div>
         </div>
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+          <div class="flex justify-between text-[11px] sm:text-xs font-semibold text-slate-700 mb-0.5">
             <span>Almazara / Industrial</span>
             <span class="font-mono text-amber-700">{{ pct_almazara }}% (${{ costo_almazara_ars|floatformat:0 }})</span>
           </div>
@@ -182,7 +183,7 @@
           </div>
         </div>
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+          <div class="flex justify-between text-[11px] sm:text-xs font-semibold text-slate-700 mb-0.5">
             <span>Estructura / Admin</span>
             <span class="font-mono text-slate-600">{{ pct_admin }}% (${{ costo_admin_ars|floatformat:0 }})</span>
           </div>
@@ -194,31 +195,63 @@
     </div>
 
     <!-- Gastos Comunes de Campo (Riego/Energía Pozo) -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+    <div class="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
       <div class="flex items-center justify-between">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Común Campo (Riego/Pozo)</span>
-        <span class="text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full font-bold">Indirecto</span>
+        <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Común Campo (Riego)</span>
+        <span class="text-[9px] sm:text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full font-bold">Indirecto</span>
       </div>
-      <p class="text-2xl sm:text-3xl font-extrabold text-cyan-900 font-mono mt-2 tabular-nums">
+      <p class="text-lg sm:text-2xl lg:text-3xl font-extrabold text-cyan-900 font-mono mt-1.5 sm:mt-2 tabular-nums leading-tight">
         ${{ costos_generales_campo|floatformat:2 }}
       </p>
-      <div class="mt-2 flex items-center justify-between text-xs">
+      <div class="mt-1.5 sm:mt-2 flex items-center justify-between text-[11px] sm:text-xs">
         <span class="text-slate-500 font-mono">≈ ${{ costo_general_ha|floatformat:2 }}/ha común</span>
-        <span class="text-cyan-700 font-medium">Bomba &amp; Riego Gral</span>
+        <span class="text-cyan-700 font-medium">Bomba &amp; Pozo</span>
       </div>
     </div>
   </div>
 
   <!-- Barra de Filtros Interactiva -->
-  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-xs">
-    <form method="get" class="space-y-4">
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 shadow-xs">
+    <form method="get" class="space-y-3 sm:space-y-4">
       <input type="hidden" name="tab" :value="activeTab">
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      <!-- Fila Superior Mobile: Búsqueda rápida + Botón Toggle Filtros -->
+      <div class="flex items-center gap-2 sm:hidden">
+        <div class="relative flex-1">
+          <input 
+            type="text" 
+            name="q" 
+            value="{{ filtro_q }}" 
+            placeholder="Buscar concepto o insumo..." 
+            class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2.5 pl-8 pr-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors"
+          >
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button 
+          @click="showMobileFiltros = !showMobileFiltros" 
+          type="button" 
+          class="shrink-0 inline-flex items-center gap-1.5 py-2.5 px-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer"
+          :class="showMobileFiltros ? 'bg-[#EAEFE3] border-[#3D4A2A] text-[#3D4A2A]' : 'bg-slate-50 border-slate-200 text-slate-600'"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          <span>Filtros</span>
+          {% if filtro_finca or filtro_cuadro or filtro_centro or filtro_tipo or filtro_mes or filtro_cuenta_id %}
+          <span class="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+          {% endif %}
+        </button>
+      </div>
+
+      <!-- Grid de Filtros (Expandible en mobile, siempre visible en sm+) -->
+      <div 
+        :class="showMobileFiltros ? 'grid' : 'hidden sm:grid'" 
+        class="grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 sm:gap-3"
+      >
         <!-- Finca -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Finca</label>
-          <select name="finca" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Finca</label>
+          <select name="finca" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
             <option value="">Todas las Fincas</option>
             {% for f in fincas %}
             <option value="{{ f.id }}" {% if filtro_finca == f.id|stringformat:"s" %}selected{% endif %}>{{ f.nombre }}</option>
@@ -228,13 +261,13 @@
 
         <!-- Cuadro -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cuadro</label>
-          <select name="cuadro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cuadro</label>
+          <select name="cuadro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
             <option value="">Todos los Cuadros</option>
-            <option value="general" {% if filtro_cuadro == 'general' %}selected{% endif %}>[General] Sin Cuadro Específico</option>
+            <option value="general" {% if filtro_cuadro == 'general' %}selected{% endif %}>[General] Sin Cuadro</option>
             {% for cua in cuadros %}
             <option value="{{ cua.id }}" {% if filtro_cuadro == cua.id|stringformat:"s" %}selected{% endif %}>
-              {{ cua.finca.nombre|slice:":4" }} - {{ cua.codigo }} ({{ cua.get_variedad_olivo_display|default:cua.nombre }})
+              {{ cua.finca.nombre|slice:":4" }} - {{ cua.codigo }}
             </option>
             {% endfor %}
           </select>
@@ -242,12 +275,12 @@
 
         <!-- Centro de Costo -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Centro de Costo</label>
-          <select name="centro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
-            <option value="">Todos los Centros</option>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Centro Costo</label>
+          <select name="centro" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todos</option>
             {% for cc in centros_costo %}
             <option value="{{ cc.id }}" {% if filtro_centro == cc.id|stringformat:"s" %}selected{% endif %}>
-              {{ cc.nombre }} ({{ cc.codigo }})
+              {{ cc.nombre }}
             </option>
             {% endfor %}
           </select>
@@ -255,9 +288,9 @@
 
         <!-- Tipo / Categoría -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipo de Gasto</label>
-          <select name="tipo" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
-            <option value="">Todos los Tipos</option>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo Gasto</label>
+          <select name="tipo" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+            <option value="">Todos</option>
             {% for code, label in tipos_origen %}
             <option value="{{ code }}" {% if filtro_tipo == code %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -265,9 +298,9 @@
         </div>
 
         <!-- Cuenta Contable -->
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cuenta Contable</label>
-          <select name="cuenta_id" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+        <div class="col-span-2 sm:col-span-1">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cuenta Contable</label>
+          <select name="cuenta_id" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
             <option value="">Todas las Cuentas</option>
             {% for cta in cuentas_contables %}
             <option value="{{ cta.id }}" {% if filtro_cuenta_id == cta.id|stringformat:"s" %}selected{% endif %}>
@@ -279,8 +312,8 @@
 
         <!-- Mes -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Período (Mes)</label>
-          <select name="mes" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Período</label>
+          <select name="mes" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 px-2.5 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors">
             <option value="">Todo Q1 2026</option>
             <option value="1" {% if filtro_mes == '1' %}selected{% endif %}>Enero 2026</option>
             <option value="2" {% if filtro_mes == '2' %}selected{% endif %}>Febrero 2026</option>
@@ -288,15 +321,15 @@
           </select>
         </div>
 
-        <!-- Búsqueda Libre -->
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Buscar Concepto</label>
+        <!-- Búsqueda Libre (Visible solo en sm+) -->
+        <div class="hidden sm:block">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Buscar Concepto</label>
           <div class="relative">
             <input 
               type="text" 
               name="q" 
               value="{{ filtro_q }}" 
-              placeholder="Ej: Glifosato, poda, EDELAR..." 
+              placeholder="Ej: Glifosato, poda..." 
               class="w-full text-xs rounded-xl border-slate-200 bg-slate-50/50 py-2 pl-8 pr-3 focus:bg-white focus:border-[#3D4A2A] focus:ring-[#3D4A2A] transition-colors"
             >
             <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,18 +339,18 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-        <div class="text-xs text-slate-400">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+        <div class="text-[11px] sm:text-xs text-slate-400 text-center sm:text-left">
           Mostrando <strong class="text-slate-700 font-mono">{{ total_registros }}</strong> imputaciones registradas.
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center justify-end gap-2">
           {% if filtro_finca or filtro_cuadro or filtro_centro or filtro_tipo or filtro_mes or filtro_cuenta_id or filtro_q %}
-          <a href="{% url 'costos:dashboard' %}" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline px-3 py-1.5">
+          <a href="{% url 'costos:dashboard' %}" class="flex-1 sm:flex-initial text-center text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline px-3 py-2">
             Limpiar Filtros
           </a>
           {% endif %}
-          <button type="submit" class="inline-flex items-center gap-1.5 bg-[#3D4A2A] hover:bg-[#323d22] text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button type="submit" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-[#3D4A2A] hover:bg-[#323d22] text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <span>Aplicar Filtros</span>
@@ -327,68 +360,68 @@
     </form>
   </div>
 
-  <!-- Navegación de Pestañas Analíticas -->
-  <div class="border-b border-slate-200">
-    <nav class="flex space-x-6">
+  <!-- Navegación de Pestañas Analíticas (Scroll Horizontal en Mobile) -->
+  <div class="border-b border-slate-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+    <nav class="flex space-x-3 sm:space-x-6 min-w-max pb-px">
       <button 
         @click="activeTab = 'imputaciones'" 
         :class="activeTab === 'imputaciones' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
-        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+        class="pb-2.5 sm:pb-3 px-1 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
-        <span>Imputaciones Detalladas</span>
-        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">{{ total_registros }}</span>
+        <span>Imputaciones</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 font-semibold">{{ total_registros }}</span>
       </button>
 
       <button 
         @click="activeTab = 'cuadros'" 
         :class="activeTab === 'cuadros' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
-        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+        class="pb-2.5 sm:pb-3 px-1 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-        <span>Costos por Cuadro &amp; $/ha</span>
+        <span>Costos por Cuadro</span>
       </button>
 
       <button 
         @click="activeTab = 'categorias'" 
         :class="activeTab === 'categorias' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
-        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+        class="pb-2.5 sm:pb-3 px-1 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
         </svg>
-        <span>Estructura de Costos (Pareto)</span>
+        <span>Estructura (Pareto)</span>
       </button>
 
       <button 
         @click="activeTab = 'contabilidad'" 
         :class="activeTab === 'contabilidad' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
-        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+        class="pb-2.5 sm:pb-3 px-1 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
-        <span>Articulación Plan de Cuentas</span>
+        <span>Plan de Cuentas (P&amp;L)</span>
         {% if cuadro_resultado_activo %}
-          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">P&amp;L Q1</span>
+          <span class="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-full">P&amp;L</span>
         {% endif %}
       </button>
 
       <button 
         @click="activeTab = 'rendimiento'" 
         :class="activeTab === 'rendimiento' ? 'border-[#3D4A2A] text-[#3D4A2A] font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 font-medium'"
-        class="pb-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors cursor-pointer"
+        class="pb-2.5 sm:pb-3 px-1 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <span>Rendimiento &amp; Rentabilidad</span>
-        <span class="text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2 py-0.5 rounded-full">kg/ha</span>
+        <span>Rendimiento &amp; Rinde</span>
+        <span class="text-[9px] sm:text-[10px] font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-1.5 py-0.2 rounded-full">kg/ha</span>
       </button>
     </nav>
   </div>
@@ -398,17 +431,158 @@
   <!-- ===================================================================== -->
   <div x-show="activeTab === 'imputaciones'" class="space-y-4">
     <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Libro Auxiliar de Costos por Centro &amp; Cuadro</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Asignaciones directas derivadas de labores, facturas de compras, contratistas y amortizaciones.</p>
+          <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Asignaciones directas derivadas de labores, facturas de compras, contratistas y amortizaciones.</p>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-xs text-slate-500 font-mono">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <!-- Vista Móvil: Tarjetas Nativas para Celular (block md:hidden) -->
+      <div class="block md:hidden divide-y divide-slate-100">
+        {% for c in costos %}
+        <div class="p-3.5 sm:p-4 hover:bg-slate-50/70 transition-colors {% if c.prorrateo_realizado %}opacity-60 bg-slate-50/40{% endif %}">
+          <!-- Fila superior: Tipo Badge + Fecha + Monto ARS -->
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border {{ c.meta.badge_bg }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ c.meta.dot_bg }}"></span>
+                <span>{{ c.meta.label }}</span>
+              </span>
+              <span class="font-mono text-[11px] text-slate-500 tabular-nums">{{ c.fecha|date:"d/m/Y" }}</span>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="font-mono font-extrabold text-slate-900 text-sm sm:text-base tabular-nums">${{ c.importe_ars|floatformat:2 }}</div>
+              <div class="text-[10px] font-mono text-slate-400">≈ USD ${{ c.importe_usd|floatformat:2 }}</div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <p class="font-semibold text-xs text-slate-800 mt-2">{{ c.descripcion }}</p>
+
+          <!-- Finca, Cuadro & Centro de Costo -->
+          <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">{{ c.finca.nombre }}</span>
+            {% if c.cuadro %}
+            <span class="font-mono font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2 py-0.5 rounded-md">
+              {{ c.cuadro.codigo }} ({{ c.cuadro.hectareas_netas }} ha)
+            </span>
+            {% else %}
+            <span class="text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md font-medium">General / Pozo</span>
+            {% endif %}
+            <span class="text-slate-500">• {{ c.centro_de_costo.nombre }}</span>
+          </div>
+
+          <!-- Cuenta contable & $/ha -->
+          <div class="mt-2 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500">
+            <div class="flex items-center gap-1 truncate max-w-[200px]" title="{{ c.cuenta_contable.nombre }}">
+              <span class="font-mono font-bold text-slate-700">{{ c.cuenta_contable.codigo|default:'4.2.1' }}</span>
+              <span class="truncate text-[10px]">{{ c.cuenta_contable.nombre|default:'Costo Producción' }}</span>
+            </div>
+            {% if c.costo_por_ha %}
+            <div class="font-mono font-semibold text-slate-700 shrink-0">
+              ${{ c.costo_por_ha|floatformat:2 }}<span class="text-[10px] text-slate-400">/ha</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Proveedor, Prorrateo & Documento -->
+          {% if c.proveedor or c.es_prorrateado or c.prorrateo_realizado or c.documento_origen_tipo %}
+          <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400">
+            {% if c.proveedor %}
+              <span class="text-slate-600 font-medium">🏢 {{ c.proveedor.razon_social }}</span>
+            {% endif %}
+            {% if c.es_prorrateado %}
+              <span class="text-cyan-700 bg-cyan-50 px-1.5 py-0.2 rounded font-mono font-bold">Prorrateado por ha</span>
+            {% elif c.prorrateo_realizado %}
+              <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono font-bold">Distribuido a Cuadros</span>
+            {% endif %}
+            {% if c.documento_origen_tipo %}
+              {% if c.documento_origen_tipo == 'ParteDiario' and c.documento_origen_id %}
+              <a href="{% url 'parte_diario:partes_list' %}" class="text-[#3D4A2A] hover:underline font-bold" title="Ver en Parte Diario">
+                Parte #{{ c.documento_origen_id }}
+              </a>
+              {% else %}
+              <span class="font-mono">{{ c.documento_origen_tipo }}{% if c.documento_origen_id %} #{{ c.documento_origen_id }}{% endif %}</span>
+              {% endif %}
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Botones de Acción Móviles -->
+          <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+            <!-- Botón Editar -->
+            <button 
+              @click="
+                editCostoId = '{{ c.id }}';
+                editCostoDesc = '{{ c.descripcion|escapejs }}';
+                editCostoImporte = '{{ c.importe_ars }}';
+                editCostoCuentaId = '{{ c.cuenta_contable_id|default:'' }}';
+                editCostoCuadroId = '{{ c.cuadro_id|default:'general' }}';
+                editCostoProveedorId = '{{ c.proveedor_id|default:'' }}';
+                modalEditarCosto = true;
+              "
+              type="button" 
+              class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#3D4A2A] bg-[#EAEFE3] hover:bg-[#D5DFC9] rounded-lg transition-colors cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <span>Editar</span>
+            </button>
+
+            <!-- Botón Prorratear (si aplica) -->
+            {% if not c.cuadro and not c.prorrateo_realizado %}
+            <button 
+              @click="
+                prorrateoCostoId = '{{ c.id }}';
+                prorrateoDesc = '{{ c.descripcion|escapejs }}';
+                prorrateoImporte = '{{ c.importe_ars|floatformat:2 }}';
+                prorrateoFinca = '{{ c.finca.nombre|escapejs }}';
+                modalProrratear = true;
+              "
+              type="button" 
+              class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+              <span>Prorratear</span>
+            </button>
+            {% endif %}
+
+            <!-- Botón Eliminar -->
+            <form method="post" action="{% url 'costos:eliminar' c.id %}" class="inline" onsubmit="return confirm('¿Confirma que desea eliminar la imputación de costo #{{ c.id }}?');">
+              {% csrf_token %}
+              <button 
+                type="submit" 
+                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Eliminar</span>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <div class="py-10 px-4 text-center text-slate-400 text-xs">
+          No se encontraron registros de costos con los filtros seleccionados.
+        </div>
+        {% endfor %}
+
+        <!-- Mobile Total Summary Card -->
+        {% if costos %}
+        <div class="p-4 bg-slate-50 border-t-2 border-slate-200 flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-600 uppercase">Total Filtrado:</span>
+          <div class="text-right">
+            <div class="font-mono font-extrabold text-slate-900 text-sm">${{ total_costos_ars|floatformat:2 }}</div>
+            <div class="font-mono text-[10px] text-slate-500">USD ${{ total_costos_usd|floatformat:2 }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Vista Escritorio/Tablet: Tabla Completa (hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm min-w-[1000px]">
           <thead>
             <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
@@ -609,8 +783,8 @@
 
       <!-- Paginación -->
       {% if is_paginated %}
-      <div class="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
-        <div class="text-xs text-slate-500">
+      <div class="px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div class="text-xs text-slate-500 text-center sm:text-left">
           Mostrando página {{ page_obj.number }} de {{ paginator.num_pages }} ({{ total_registros }} registros en total)
         </div>
         <div class="flex items-center gap-1">
@@ -731,10 +905,68 @@
 
     <!-- Tabla Comparativa de Resumen de Cuadros -->
     <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50">
+      <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200/80 bg-slate-50/50">
         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tabla Comparativa de Benchmarking Agronómico</h3>
+        <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Comparativa de costos por superficie y kilo cosechado por cuadro.</p>
       </div>
-      <div class="overflow-x-auto">
+
+      <!-- Vista Móvil: Tarjetas de Benchmarking (block md:hidden) -->
+      <div class="block md:hidden divide-y divide-slate-100">
+        {% for cua in resumen_por_cuadro %}
+        <div class="p-3.5 sm:p-4 hover:bg-slate-50/70 transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-xs px-2 py-0.5 rounded-lg">
+                  {{ cua.cuadro.codigo }}
+                </span>
+                <span class="font-bold text-slate-900 text-xs">{{ cua.cuadro.nombre }}</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">
+                {{ cua.finca.nombre }} &bull; {{ cua.cuadro.get_variedad_olivo_display|default:cua.cuadro.nombre }}
+              </div>
+            </div>
+            <span class="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">
+              {{ cua.hectareas }} ha
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-100 text-xs">
+            <div class="bg-slate-50 p-2.5 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Costo / ha</span>
+              <span class="font-mono font-bold text-[#3D4A2A] text-sm tabular-nums mt-0.5 block">
+                ${{ cua.costo_por_ha|floatformat:2 }}
+              </span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Costo / kg</span>
+              {% if cua.costo_por_kg %}
+              <span class="font-mono font-bold text-amber-700 text-sm tabular-nums mt-0.5 block">
+                ${{ cua.costo_por_kg|floatformat:2 }}
+              </span>
+              {% else %}
+              <span class="text-[11px] font-medium text-slate-400 mt-0.5 block italic">Sin cosecha</span>
+              {% endif %}
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total ARS</span>
+              <span class="font-mono font-bold text-slate-900 text-xs tabular-nums mt-0.5 block">
+                ${{ cua.costo_total_ars|floatformat:2 }}
+              </span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kilos Cosechados</span>
+              <span class="font-mono font-semibold text-slate-700 text-xs tabular-nums mt-0.5 block">
+                {% if cua.kg_cosechados %}{{ cua.kg_cosechados|floatformat:0 }} kg{% else %}-{% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Vista Escritorio/Tablet: Tabla Completa (hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm min-w-[700px]">
           <thead>
             <tr class="border-b border-slate-200/80 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/70">
@@ -823,14 +1055,14 @@
   <!-- TAB 4: ARTICULACIÓN DINÁMICA CON EL PLAN DE CUENTAS (P&L CONCILIADO)   -->
   <!-- ===================================================================== -->
   <div x-show="activeTab === 'contabilidad'" class="space-y-6">
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-100">
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-100">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="font-mono font-bold text-xs bg-[#EAEFE3] text-[#3D4A2A] border border-[#D5DFC9] px-2.5 py-1 rounded-lg">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono font-bold text-[10px] sm:text-xs bg-[#EAEFE3] text-[#3D4A2A] border border-[#D5DFC9] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
               Rubro 4.2 (Egresos y Costos)
             </span>
-            <h3 class="text-base font-extrabold text-slate-900">Articulación con el Plan de Cuentas y Estado de Resultados</h3>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Articulación con Plan de Cuentas y P&amp;L</h3>
           </div>
           <p class="text-xs text-slate-500 mt-1 max-w-2xl">
             Conciliación en tiempo real entre las imputaciones de costos directos/indirectos y las líneas del Cuadro de Resultados
@@ -838,29 +1070,93 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2.5">
-          <form method="post" action="{% url 'costos:sincronizar_pl' %}">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <form method="post" action="{% url 'costos:sincronizar_pl' %}" class="flex-1 sm:flex-initial">
             {% csrf_token %}
             <button 
               type="submit" 
               onclick="return confirm('¿Desea sincronizar todos los costos reales con el Cuadro de Resultados activo?');"
-              class="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+              class="w-full inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3.5 py-2 sm:py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>Sincronizar con P&amp;L</span>
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Sincronizar P&amp;L</span>
             </button>
           </form>
 
           <a 
             href="{% url 'finanzas:plan_cuentas' %}" 
-            class="inline-flex items-center gap-2 bg-[#3D4A2A] text-white hover:bg-[#323d22] text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-colors self-start"
+            class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-[#3D4A2A] text-white hover:bg-[#323d22] text-xs font-bold px-3.5 py-2 sm:py-2.5 rounded-xl shadow-xs transition-colors"
           >
-            <span>Ir al Plan de Cuentas →</span>
+            <span>Plan Cuentas →</span>
           </a>
         </div>
       </div>
 
-      <div class="mt-6 overflow-x-auto">
+      <!-- Vista Móvil: Tarjetas de Cuentas Conciliadas (block md:hidden) -->
+      <div class="block md:hidden divide-y divide-slate-100 mt-4">
+        {% for it in articulacion_plan_cuentas %}
+        <div class="py-3.5 space-y-2">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="font-mono font-bold text-slate-800 text-xs bg-slate-100 px-1.5 py-0.5 rounded">{{ it.cuenta.codigo }}</span>
+              <h4 class="font-semibold text-slate-900 text-xs mt-1">{{ it.cuenta.nombre }}</h4>
+              <span class="text-[10px] text-slate-400">{{ it.seccion }}</span>
+            </div>
+            <div>
+              {% if it.esta_conciliado %}
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Conciliado</span>
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shrink-0" title="Diferencia: ${{ it.diferencia|floatformat:2 }}">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span>Desvío ${{ it.diferencia|floatformat:0 }}</span>
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl text-center text-xs">
+            <div>
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Costos</span>
+              <span class="font-mono font-bold text-[#3D4A2A] text-xs tabular-nums mt-0.5 block">${{ it.saldo_costos_ars|floatformat:0 }}</span>
+            </div>
+            <div>
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">P&amp;L Real</span>
+              <span class="font-mono font-bold text-slate-800 text-xs tabular-nums mt-0.5 block">${{ it.monto_pl_real|floatformat:0 }}</span>
+            </div>
+            <div>
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Presupuesto</span>
+              <span class="font-mono text-slate-500 text-xs tabular-nums mt-0.5 block">${{ it.monto_pl_presup|floatformat:0 }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-1 text-[11px]">
+            <a href="?cuenta_id={{ it.cuenta.id }}&tab=imputaciones" class="font-bold text-[#3D4A2A] bg-[#EAEFE3] hover:bg-[#D5DFC9] px-2.5 py-1 rounded-lg">
+              Ver Costos
+            </a>
+            <a href="{% url 'finanzas:plan_cuentas' %}" class="font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg">
+              Mayor →
+            </a>
+          </div>
+        </div>
+        {% empty %}
+        <div class="py-8 text-center text-slate-400 text-xs">
+          No se registran cuentas de costos en este período.
+        </div>
+        {% endfor %}
+
+        {% if articulacion_plan_cuentas %}
+        <div class="pt-3 border-t-2 border-slate-200 flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-700 uppercase">Total Control Costos:</span>
+          <span class="font-mono font-extrabold text-[#3D4A2A] text-sm">${{ total_costos_ars|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Vista Escritorio/Tablet: Tabla (hidden md:block) -->
+      <div class="hidden md:block mt-6 overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm min-w-[850px]">
           <thead>
             <tr class="border-b border-slate-200 text-[10px] font-semibold text-slate-400 uppercase tracking-widest bg-slate-50/50">
@@ -1046,22 +1342,72 @@
         </div>
         <div class="flex items-center gap-2">{% for campana in campanas_disponibles %}<span class="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ campana }}</span>{% endfor %}</div>
       </div>
-      <div class="relative" style="height:300px;"><canvas id="chartEvolucionRendimiento"></canvas></div>
+      <div class="relative h-60 sm:h-72 lg:h-80"><canvas id="chartEvolucionRendimiento"></canvas></div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
-      <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/50">
-        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tabla Analitica Detallada</h3>
-        <p class="text-xs text-slate-400 mt-0.5">Rendimiento, costos y margen estimado por cuadro y campana</p>
+      <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200/80 bg-slate-50/50">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Tabla Analítica Detallada</h3>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Rendimiento, costos y margen estimado por cuadro y campaña.</p>
       </div>
       {% for it in analitica_por_cuadro %}
       <div class="border-b border-slate-100 last:border-b-0">
-        <div class="px-6 py-3 bg-[#F5F7F2] flex items-center gap-3 flex-wrap">
-          <span class="font-mono font-black text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-sm px-2 py-0.5 rounded-lg">{{ it.cuadro.codigo }}</span>
-          <span class="font-bold text-slate-800 text-sm">{{ it.cuadro.nombre }}</span>
-          <span class="text-xs text-slate-500">{{ it.finca.nombre }} &bull; {{ it.variedad }} &bull; {{ it.hectareas }} ha</span>
+        <div class="px-4 py-3 sm:px-6 sm:py-3 bg-[#F5F7F2] flex items-center gap-2 sm:gap-3 flex-wrap">
+          <span class="font-mono font-black text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] text-xs sm:text-sm px-2 py-0.5 rounded-lg">{{ it.cuadro.codigo }}</span>
+          <span class="font-bold text-slate-800 text-xs sm:text-sm">{{ it.cuadro.nombre }}</span>
+          <span class="text-[11px] sm:text-xs text-slate-500">{{ it.finca.nombre }} &bull; {{ it.variedad }} &bull; {{ it.hectareas }} ha</span>
         </div>
-        <div class="overflow-x-auto">
+
+        <!-- Vista Móvil: Tarjetas de Campaña por Cuadro (block md:hidden) -->
+        <div class="block md:hidden divide-y divide-slate-100 p-3 space-y-2.5">
+          {% for c in it.campanas %}
+          <div class="pt-2.5 first:pt-0 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{{ c.campana }}</span>
+              <div class="flex items-center gap-2">
+                {% if c.variacion_rinde_pct is not None %}
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full {% if c.variacion_rinde_pct >= 0 %}text-[#3D4A2A] bg-[#EAEFE3]{% else %}text-rose-700 bg-rose-50{% endif %}">
+                  {% if c.variacion_rinde_pct >= 0 %}&#9650;{% else %}&#9660;{% endif %} {{ c.variacion_rinde_pct|floatformat:1 }}%
+                </span>
+                {% endif %}
+                <span class="font-mono font-black text-[#3D4A2A] text-xs">
+                  {% if c.rinde_kg_ha %}{{ c.rinde_kg_ha|floatformat:1 }} kg/ha{% else %}-{% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-white p-2 rounded-lg border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Costo / ha</span>
+                <span class="font-mono font-semibold text-slate-700 text-xs mt-0.5 block">
+                  {% if c.costo_ha %}${{ c.costo_ha|floatformat:2 }}{% else %}-{% endif %}
+                </span>
+              </div>
+              <div class="bg-white p-2 rounded-lg border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Costo / kg</span>
+                <span class="font-mono font-semibold text-slate-700 text-xs mt-0.5 block">
+                  {% if c.costo_kg %}${{ c.costo_kg|floatformat:2 }}{% else %}-{% endif %}
+                </span>
+              </div>
+              <div class="bg-white p-2 rounded-lg border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cosecha Total</span>
+                <span class="font-mono font-semibold text-slate-700 text-xs mt-0.5 block">
+                  {% if c.kg_cosechados %}{{ c.kg_cosechados|floatformat:0 }} kg{% else %}-{% endif %}
+                </span>
+              </div>
+              <div class="bg-white p-2 rounded-lg border border-slate-100">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Margen Est. / ha</span>
+                <span class="font-mono font-bold text-xs mt-0.5 block {% if c.margen_ha is not None and c.margen_ha >= 0 %}text-[#3D4A2A]{% elif c.margen_ha is not None %}text-rose-600{% else %}text-slate-400{% endif %}">
+                  {% if c.margen_ha is not None %}${{ c.margen_ha|floatformat:0 }}/ha{% else %}-{% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Vista Escritorio/Tablet: Tabla (hidden md:block) -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-xs min-w-[780px]">
             <thead>
               <tr class="border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/30">
