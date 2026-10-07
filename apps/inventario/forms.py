@@ -149,7 +149,6 @@ class GenerarOCSugeridaForm(BaseStyledForm):
         widget=forms.NumberInput(attrs={'step': '0.01'})
     )
 
-
 from .models import Herramienta, AsignacionHerramienta
 
 class HerramientaForm(forms.ModelForm):
@@ -168,3 +167,4 @@ class AsignacionHerramientaForm(forms.ModelForm):
             'fecha_devolucion_esperada': forms.DateInput(attrs={'type': 'date'}),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
         }
+

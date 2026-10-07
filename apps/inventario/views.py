@@ -733,13 +733,16 @@ class ExportarOrdenesExcelView(View):
         ]
         return export_to_excel(qs, columnas, "Registro de Órdenes de Compra", "ordenes_compra")
 
-# ------------------------------------------------------------------------------
+
+# ──────────────────────────────────────────────────────────────────────────────
 # DASHBOARD DE ACTIVOS: HERRAMIENTAS Y RODADOS
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 from .models import Herramienta, AsignacionHerramienta
+from .forms import HerramientaForm, AsignacionHerramientaForm
+from django.utils import timezone
 
 class StockHerramientasListView(ListView):
-    "\""Dashboard Integral de Stock y Pr�stamos de Herramientas."\""
+    """Dashboard Integral de Stock y Préstamos de Herramientas."""
     model = Herramienta
     template_name = 'inventario/herramientas_list.html'
     context_object_name = 'herramientas'
@@ -768,9 +771,8 @@ class StockHerramientasListView(ListView):
         ctx['estados'] = Herramienta.Estado.choices
         return ctx
 
-
 class StockRodadosListView(ListView):
-    "\""Dashboard Integral de Maquinarias y Rodados con Valorizaci�n."\""
+    """Dashboard Integral de Maquinarias y Rodados con Valorización."""
     model = Maquina
     template_name = 'inventario/rodados_list.html'
     context_object_name = 'maquinas'
@@ -798,10 +800,6 @@ class StockRodadosListView(ListView):
         ctx['filtro_tipo'] = self.request.GET.get('tipo', '')
         ctx['tipos'] = Maquina.TipoMaquina.choices
         return ctx
-
-
-from .forms import HerramientaForm, AsignacionHerramientaForm
-from django.utils import timezone
 
 class HerramientaCreateView(CreateView):
     model = Herramienta

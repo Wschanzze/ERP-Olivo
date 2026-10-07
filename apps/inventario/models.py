@@ -444,33 +444,34 @@ class ItemRecepcion(TimeStampedModel):
     def subtotal_real_ars(self):
         return round(self.cantidad_recibida * self.precio_unitario_real_ars, 2)
 
-# ------------------------------------------------------------------------------
-# M�DULO HERRAMIENTAS Y ACTIVOS MENORES
-# ------------------------------------------------------------------------------
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MÓDULO HERRAMIENTAS Y ACTIVOS MENORES
+# ──────────────────────────────────────────────────────────────────────────────
 
 class Herramienta(TimeStampedModel):
-    "\""Herramientas menores, equipos port�tiles y activos asignables."\""
+    """Herramientas menores, equipos portátiles y activos asignables."""
     class Estado(models.TextChoices):
-        DISPONIBLE = 'DISPONIBLE', _('Disponible en Pa�ol')
+        DISPONIBLE = 'DISPONIBLE', _('Disponible en Pañol')
         ASIGNADA = 'ASIGNADA', _('Asignada / En Uso')
-        MANTENIMIENTO = 'MANTENIMIENTO', _('En Reparaci�n / Mantenimiento')
+        MANTENIMIENTO = 'MANTENIMIENTO', _('En Reparación / Mantenimiento')
         PERDIDA = 'PERDIDA', _('Perdida / Robada')
         BAJA = 'BAJA', _('Dada de Baja por Rotura')
 
-    codigo = models.CharField(max_length=30, unique=True, verbose_name=_("C�digo Interno"))
-    nombre = models.CharField(max_length=150, verbose_name=_("Nombre / Descripci�n"))
+    codigo = models.CharField(max_length=30, unique=True, verbose_name=_("Código Interno"))
+    nombre = models.CharField(max_length=150, verbose_name=_("Nombre / Descripción"))
     marca = models.CharField(max_length=80, blank=True, verbose_name=_("Marca y Modelo"))
-    numero_serie = models.CharField(max_length=100, blank=True, verbose_name=_("N�mero de Serie"))
-    estado = models.CharField(max_length=30, choices=Estado.choices, default=Estado.DISPONIBLE, verbose_name=_("Estado F�sico"))
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name=_("Número de Serie"))
+    estado = models.CharField(max_length=30, choices=Estado.choices, default=Estado.DISPONIBLE, verbose_name=_("Estado Físico"))
     deposito_base = models.ForeignKey(
         Deposito, on_delete=models.PROTECT, related_name='herramientas_base', 
-        verbose_name=_("Pa�ol / Dep�sito Base")
+        verbose_name=_("Pañol / Depósito Base")
     )
     
-    # Valorizaci�n y compras
-    valor_adquisicion_ars = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name=_("Valor de Adquisici�n (ARS)"))
-    fecha_adquisicion = models.DateField(null=True, blank=True, verbose_name=_("Fecha de Adquisici�n"))
-    factura_referencia = models.CharField(max_length=100, blank=True, verbose_name=_("N� Factura / Remito"))
+    # Valorización y compras
+    valor_adquisicion_ars = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name=_("Valor de Adquisición (ARS)"))
+    fecha_adquisicion = models.DateField(null=True, blank=True, verbose_name=_("Fecha de Adquisición"))
+    factura_referencia = models.CharField(max_length=100, blank=True, verbose_name=_("N° Factura / Remito"))
 
     class Meta:
         verbose_name = _("Herramienta")
@@ -482,7 +483,7 @@ class Herramienta(TimeStampedModel):
 
 
 class AsignacionHerramienta(TimeStampedModel):
-    "\""Registro de Pr�stamo (Check-out) y Devoluci�n (Check-in) de herramientas."\""
+    """Registro de Préstamo (Check-out) y Devolución (Check-in) de herramientas."""
     class EstadoPrestamo(models.TextChoices):
         ACTIVO = 'ACTIVO', _('Activo (No Devuelto)')
         DEVUELTO = 'DEVUELTO', _('Devuelto')
@@ -491,12 +492,12 @@ class AsignacionHerramienta(TimeStampedModel):
     empleado = models.ForeignKey('personal.Empleado', on_delete=models.PROTECT, related_name='herramientas_prestadas', verbose_name=_("Empleado Asignado"))
     finca_destino = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Finca de Uso"))
     
-    fecha_prestamo = models.DateTimeField(verbose_name=_("Fecha y Hora de Pr�stamo"))
-    fecha_devolucion_esperada = models.DateField(null=True, blank=True, verbose_name=_("Devoluci�n Esperada"))
+    fecha_prestamo = models.DateTimeField(verbose_name=_("Fecha y Hora de Préstamo"))
+    fecha_devolucion_esperada = models.DateField(null=True, blank=True, verbose_name=_("Devolución Esperada"))
     
-    estado = models.CharField(max_length=20, choices=EstadoPrestamo.choices, default=EstadoPrestamo.ACTIVO, verbose_name=_("Estado del Pr�stamo"))
+    estado = models.CharField(max_length=20, choices=EstadoPrestamo.choices, default=EstadoPrestamo.ACTIVO, verbose_name=_("Estado del Préstamo"))
     
-    fecha_devolucion_real = models.DateTimeField(null=True, blank=True, verbose_name=_("Fecha Real de Devoluci�n"))
+    fecha_devolucion_real = models.DateTimeField(null=True, blank=True, verbose_name=_("Fecha Real de Devolución"))
     estado_entrega_final = models.CharField(
         max_length=50, blank=True, 
         verbose_name=_("Estado al devolver"),
@@ -506,7 +507,7 @@ class AsignacionHerramienta(TimeStampedModel):
     usuario_registro = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name=_("Registrado por"))
 
     class Meta:
-        verbose_name = _("Asignaci�n de Herramienta")
+        verbose_name = _("Asignación de Herramienta")
         verbose_name_plural = _("Asignaciones de Herramientas")
         ordering = ['-fecha_prestamo']
 
