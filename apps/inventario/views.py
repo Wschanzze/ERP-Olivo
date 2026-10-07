@@ -732,3 +732,116 @@ class ExportarOrdenesExcelView(View):
             ("Total Estimado (ARS)", "total_estimado_ars"),
         ]
         return export_to_excel(qs, columnas, "Registro de Ã“rdenes de Compra", "ordenes_compra")
+
+# ------------------------------------------------------------------------------
+# DASHBOARD DE ACTIVOS: HERRAMIENTAS Y RODADOS
+# ------------------------------------------------------------------------------
+from .models import Herramienta, AsignacionHerramienta
+
+class StockHerramientasListView(ListView):
+    "\""Dashboard Integral de Stock y Préstamos de Herramientas."\""
+    model = Herramienta
+    template_name = 'inventario/herramientas_list.html'
+    context_object_name = 'herramientas'
+    
+    def get_queryset(self):
+        qs = Herramienta.objects.select_related('deposito_base').order_by('nombre')
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(marca__icontains=q))
+        estado = self.request.GET.get('estado')
+        if estado:
+            qs = qs.filter(estado=estado)
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        herramientas = self.get_queryset()
+        
+        ctx['total_herramientas'] = herramientas.count()
+        ctx['total_asignadas'] = herramientas.filter(estado=Herramienta.Estado.ASIGNADA).count()
+        ctx['total_disponibles'] = herramientas.filter(estado=Herramienta.Estado.DISPONIBLE).count()
+        ctx['valorizacion_total'] = herramientas.aggregate(total=Sum('valor_adquisicion_ars'))['total'] or Decimal('0.00')
+        
+        ctx['filtro_q'] = self.request.GET.get('q', '')
+        ctx['filtro_estado'] = self.request.GET.get('estado', '')
+        ctx['estados'] = Herramienta.Estado.choices
+        return ctx
+
+
+class StockRodadosListView(ListView):
+    "\""Dashboard Integral de Maquinarias y Rodados con Valorización."\""
+    model = Maquina
+    template_name = 'inventario/rodados_list.html'
+    context_object_name = 'maquinas'
+    
+    def get_queryset(self):
+        qs = Maquina.objects.select_related('finca_asignada').order_by('tipo', 'nombre')
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(marca__icontains=q))
+        tipo = self.request.GET.get('tipo')
+        if tipo:
+            qs = qs.filter(tipo=tipo)
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        maquinas = self.get_queryset()
+        
+        ctx['total_rodados'] = maquinas.count()
+        ctx['total_operativos'] = maquinas.filter(estado=Maquina.EstadoMaquina.OPERATIVA).count()
+        ctx['total_mantenimiento'] = maquinas.filter(estado=Maquina.EstadoMaquina.EN_MANTENIMIENTO).count()
+        ctx['valorizacion_total'] = maquinas.aggregate(total=Sum('valor_adquisicion_ars'))['total'] or Decimal('0.00')
+        
+        ctx['filtro_q'] = self.request.GET.get('q', '')
+        ctx['filtro_tipo'] = self.request.GET.get('tipo', '')
+        ctx['tipos'] = Maquina.TipoMaquina.choices
+        return ctx
+
+
+from .forms import HerramientaForm, AsignacionHerramientaForm
+from django.utils import timezone
+
+class HerramientaCreateView(CreateView):
+    model = Herramienta
+    form_class = HerramientaForm
+    template_name = 'inventario/partials/herramienta_form_modal.html'
+    success_url = reverse_lazy('inventario:herramientas_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            messages.success(self.request, f"Herramienta '{self.object.nombre}' registrada correctamente.")
+            return render(self.request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Herramienta '{self.object.nombre}' registrada."
+            })
+        return response
+
+class AsignarHerramientaView(View):
+    def get(self, request, pk):
+        herramienta = get_object_or_404(Herramienta, pk=pk)
+        form = AsignacionHerramientaForm()
+        return render(request, 'inventario/partials/asignacion_modal.html', {'form': form, 'herramienta': herramienta})
+
+    def post(self, request, pk):
+        herramienta = get_object_or_404(Herramienta, pk=pk)
+        form = AsignacionHerramientaForm(request.POST)
+        if form.is_valid():
+            asignacion = form.save(commit=False)
+            asignacion.herramienta = herramienta
+            asignacion.usuario_registro = request.user if request.user.is_authenticated else None
+            asignacion.fecha_prestamo = timezone.now()
+            asignacion.save()
+            
+            # Cambiar estado de la herramienta
+            herramienta.estado = Herramienta.Estado.ASIGNADA
+            herramienta.save()
+            
+            messages.success(request, f"Herramienta asignada a {asignacion.empleado}.")
+            if request.headers.get('HX-Request'):
+                return render(request, 'inventario/partials/toast_refresh.html', {
+                    'mensaje': f"Herramienta asignada a {asignacion.empleado}."
+                })
+            return redirect('inventario:herramientas_list')
+        return render(request, 'inventario/partials/asignacion_modal.html', {'form': form, 'herramienta': herramienta})

@@ -11,8 +11,17 @@ urlpatterns = [
     path('ajustes/crear/', views.AjusteStockCreateView.as_view(), name='ajuste_create'),
     path('movimientos/', views.MovimientosStockListView.as_view(), name='movimientos_list'),
     path('movimientos/crear/', views.MovimientoStockCreateView.as_view(), name='movimiento_create'),
-    path('maquinas/', views.MaquinasListView.as_view(), name='maquinas_list'),
+    
+    # Nuevos dashboards integrales para activos
+    path('herramientas/', views.StockHerramientasListView.as_view(), name='herramientas_list'),
+    path('herramientas/crear/', views.HerramientaCreateView.as_view(), name='herramienta_create'),
+    path('herramientas/<int:pk>/asignar/', views.AsignarHerramientaView.as_view(), name='herramienta_asignar'),
+    
+    path('rodados/', views.StockRodadosListView.as_view(), name='rodados_list'),
+    # (Mantener URL vieja por compatibilidad si es necesario, o apuntarla al nuevo dashboard)
+    path('maquinas/', views.StockRodadosListView.as_view(), name='maquinas_list'),
     path('maquinas/crear/', views.MaquinaCreateView.as_view(), name='maquina_create'),
+    
     path('remitos/', views.RemitosListView.as_view(), name='remitos_list'),
     path('remitos/crear/', views.RemitoCreateView.as_view(), name='remito_create'),
     path('remitos/<int:pk>/', views.RemitoDetailView.as_view(), name='remito_detalle'),

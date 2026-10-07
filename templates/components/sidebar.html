@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!-- =========================================================================
      DOBLE SIDEBAR ENTERPRISE (OPCIÓN A)
      Columna 1: Rail Maestro Fijo (80px) con 5 Dominios Principales
@@ -499,6 +499,22 @@
             <span class="truncate flex-1">Stock de Insumos</span>
           </a>
 
+            <a
+              href="{% url 'inventario:herramientas_list' %}"
+              x-show="matchesSearch('Stock de Herramientas', 'herramientas panol prestamos')"
+              class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'herramientas' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            >
+              <span class="truncate flex-1">Stock de Herramientas</span>
+            </a>
+
+            <a
+              href="{% url 'inventario:rodados_list' %}"
+              x-show="matchesSearch('Parque de Rodados', 'maquinas rodados vehiculos mantenimiento')"
+              class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'rodados' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            >
+              <span class="truncate flex-1">Parque de Rodados</span>
+            </a>
+
           <a
             href="{% url 'inventario:remitos_list' %}"
             x-show="matchesSearch('Remitos & Firma Móvil', 'recepcion chofer camion traslado albaran despacho')"
@@ -794,6 +810,22 @@
           >
             <span>Stock de Insumos</span>
           </a>
+
+            <a
+              href="{% url 'inventario:herramientas_list' %}"
+              x-show="matchesSearch('Stock de Herramientas', 'herramientas panol prestamos')"
+              class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'herramientas' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            >
+              <span class="truncate flex-1">Stock de Herramientas</span>
+            </a>
+
+            <a
+              href="{% url 'inventario:rodados_list' %}"
+              x-show="matchesSearch('Parque de Rodados', 'maquinas rodados vehiculos mantenimiento')"
+              class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'rodados' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
+            >
+              <span class="truncate flex-1">Parque de Rodados</span>
+            </a>
           <a
             href="{% url 'inventario:remitos_list' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if 'remito' in request.path %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -1087,6 +1119,24 @@
           <span>Stock de Insumos</span>
           <span class="text-[10px] text-[#8FA872] font-mono">Almazara</span>
         </a>
+          <a 
+            href="{% url 'inventario:herramientas_list' %}" 
+            x-show="matchesSpotlight({title: 'Stock de Herramientas', module: 'Almazara', tags: 'herramientas panol prestamos activos'})"
+            @click="spotlightOpen = false; selectModule('almazara')"
+            class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <span>Stock de Herramientas</span>
+            <span class="text-[10px] text-[#8FA872] font-mono">Almazara</span>
+          </a>
+          <a 
+            href="{% url 'inventario:rodados_list' %}" 
+            x-show="matchesSpotlight({title: 'Parque de Rodados', module: 'Almazara', tags: 'maquinaria vehiculos tractores mantenimiento'})"
+            @click="spotlightOpen = false; selectModule('almazara')"
+            class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <span>Parque de Rodados</span>
+            <span class="text-[10px] text-[#8FA872] font-mono">Almazara</span>
+          </a>
         <a 
           href="{% url 'inventario:remitos_list' %}" 
           x-show="matchesSpotlight({title: 'Remitos & Firma Móvil Digital', module: 'Almazara', tags: 'recepcion chofer camion traslado albaran despacho'})"
@@ -1135,3 +1185,5 @@
   </div>
 
 </div>
+
+

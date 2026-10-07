@@ -212,6 +212,11 @@ class Maquina(TimeStampedModel):
     finca_asignada = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Finca Asignada"))
     estado = models.CharField(max_length=25, choices=EstadoMaquina.choices, default=EstadoMaquina.OPERATIVA, verbose_name=_("Estado"))
     fecha_ultimo_service = models.DateField(null=True, blank=True, verbose_name=_("Fecha Ãšltimo Mantenimiento"))
+    
+    # --- Datos de ValorizaciÃ³n y FacturaciÃ³n ---
+    valor_adquisicion_ars = models.DecimalField(max_digits=14, decimal_places=2, default=0.00, verbose_name=_("Valor de AdquisiciÃ³n (ARS)"))
+    fecha_adquisicion = models.DateField(null=True, blank=True, verbose_name=_("Fecha de AdquisiciÃ³n"))
+    factura_referencia = models.CharField(max_length=100, blank=True, verbose_name=_("NÂ° Factura / OC de Referencia"))
 
     class Meta:
         verbose_name = _("MÃ¡quina / VehÃ­culo")
@@ -438,3 +443,72 @@ class ItemRecepcion(TimeStampedModel):
     @property
     def subtotal_real_ars(self):
         return round(self.cantidad_recibida * self.precio_unitario_real_ars, 2)
+
+# ------------------------------------------------------------------------------
+# MÓDULO HERRAMIENTAS Y ACTIVOS MENORES
+# ------------------------------------------------------------------------------
+
+class Herramienta(TimeStampedModel):
+    "\""Herramientas menores, equipos portátiles y activos asignables."\""
+    class Estado(models.TextChoices):
+        DISPONIBLE = 'DISPONIBLE', _('Disponible en Pañol')
+        ASIGNADA = 'ASIGNADA', _('Asignada / En Uso')
+        MANTENIMIENTO = 'MANTENIMIENTO', _('En Reparación / Mantenimiento')
+        PERDIDA = 'PERDIDA', _('Perdida / Robada')
+        BAJA = 'BAJA', _('Dada de Baja por Rotura')
+
+    codigo = models.CharField(max_length=30, unique=True, verbose_name=_("Código Interno"))
+    nombre = models.CharField(max_length=150, verbose_name=_("Nombre / Descripción"))
+    marca = models.CharField(max_length=80, blank=True, verbose_name=_("Marca y Modelo"))
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name=_("Número de Serie"))
+    estado = models.CharField(max_length=30, choices=Estado.choices, default=Estado.DISPONIBLE, verbose_name=_("Estado Físico"))
+    deposito_base = models.ForeignKey(
+        Deposito, on_delete=models.PROTECT, related_name='herramientas_base', 
+        verbose_name=_("Pañol / Depósito Base")
+    )
+    
+    # Valorización y compras
+    valor_adquisicion_ars = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name=_("Valor de Adquisición (ARS)"))
+    fecha_adquisicion = models.DateField(null=True, blank=True, verbose_name=_("Fecha de Adquisición"))
+    factura_referencia = models.CharField(max_length=100, blank=True, verbose_name=_("N° Factura / Remito"))
+
+    class Meta:
+        verbose_name = _("Herramienta")
+        verbose_name_plural = _("Herramientas")
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"[{self.codigo}] {self.nombre} ({self.get_estado_display()})"
+
+
+class AsignacionHerramienta(TimeStampedModel):
+    "\""Registro de Préstamo (Check-out) y Devolución (Check-in) de herramientas."\""
+    class EstadoPrestamo(models.TextChoices):
+        ACTIVO = 'ACTIVO', _('Activo (No Devuelto)')
+        DEVUELTO = 'DEVUELTO', _('Devuelto')
+
+    herramienta = models.ForeignKey(Herramienta, on_delete=models.CASCADE, related_name='asignaciones', verbose_name=_("Herramienta"))
+    empleado = models.ForeignKey('personal.Empleado', on_delete=models.PROTECT, related_name='herramientas_prestadas', verbose_name=_("Empleado Asignado"))
+    finca_destino = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Finca de Uso"))
+    
+    fecha_prestamo = models.DateTimeField(verbose_name=_("Fecha y Hora de Préstamo"))
+    fecha_devolucion_esperada = models.DateField(null=True, blank=True, verbose_name=_("Devolución Esperada"))
+    
+    estado = models.CharField(max_length=20, choices=EstadoPrestamo.choices, default=EstadoPrestamo.ACTIVO, verbose_name=_("Estado del Préstamo"))
+    
+    fecha_devolucion_real = models.DateTimeField(null=True, blank=True, verbose_name=_("Fecha Real de Devolución"))
+    estado_entrega_final = models.CharField(
+        max_length=50, blank=True, 
+        verbose_name=_("Estado al devolver"),
+        help_text=_("Ej: Buen estado, Roto, Incompleto")
+    )
+    observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
+    usuario_registro = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name=_("Registrado por"))
+
+    class Meta:
+        verbose_name = _("Asignación de Herramienta")
+        verbose_name_plural = _("Asignaciones de Herramientas")
+        ordering = ['-fecha_prestamo']
+
+    def __str__(self):
+        return f"{self.herramienta.nombre} -> {self.empleado} ({self.get_estado_display()})"

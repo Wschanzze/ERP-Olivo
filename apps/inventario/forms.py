@@ -149,3 +149,22 @@ class GenerarOCSugeridaForm(BaseStyledForm):
         widget=forms.NumberInput(attrs={'step': '0.01'})
     )
 
+
+from .models import Herramienta, AsignacionHerramienta
+
+class HerramientaForm(forms.ModelForm):
+    class Meta:
+        model = Herramienta
+        fields = ['codigo', 'nombre', 'marca', 'numero_serie', 'deposito_base', 'valor_adquisicion_ars', 'fecha_adquisicion', 'factura_referencia']
+        widgets = {
+            'fecha_adquisicion': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class AsignacionHerramientaForm(forms.ModelForm):
+    class Meta:
+        model = AsignacionHerramienta
+        fields = ['empleado', 'finca_destino', 'fecha_devolucion_esperada', 'observaciones']
+        widgets = {
+            'fecha_devolucion_esperada': forms.DateInput(attrs={'type': 'date'}),
+            'observaciones': forms.Textarea(attrs={'rows': 3}),
+        }
