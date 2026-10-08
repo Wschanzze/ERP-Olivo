@@ -210,6 +210,7 @@ class Maquina(TimeStampedModel):
     ano_fabricacion = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Año de Fabricación"))
     horas_o_km_acumulados = models.DecimalField(max_digits=10, decimal_places=1, default=0.0, verbose_name=_("Horas / Km Acumulados"))
     finca_asignada = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Finca Asignada"))
+    cuadro_asignado = models.ForeignKey('campos.Cuadro', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Cuadro Asignado"))
     estado = models.CharField(max_length=25, choices=EstadoMaquina.choices, default=EstadoMaquina.OPERATIVA, verbose_name=_("Estado"))
     fecha_ultimo_service = models.DateField(null=True, blank=True, verbose_name=_("Fecha Último Mantenimiento"))
     
@@ -491,6 +492,7 @@ class AsignacionHerramienta(TimeStampedModel):
     herramienta = models.ForeignKey(Herramienta, on_delete=models.CASCADE, related_name='asignaciones', verbose_name=_("Herramienta"))
     empleado = models.ForeignKey('personal.Empleado', on_delete=models.PROTECT, related_name='herramientas_prestadas', verbose_name=_("Empleado Asignado"))
     finca_destino = models.ForeignKey(Finca, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Finca de Uso"))
+    cuadro_destino = models.ForeignKey('campos.Cuadro', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Cuadro de Uso"))
     
     fecha_prestamo = models.DateTimeField(verbose_name=_("Fecha y Hora de Préstamo"))
     fecha_devolucion_esperada = models.DateField(null=True, blank=True, verbose_name=_("Devolución Esperada"))

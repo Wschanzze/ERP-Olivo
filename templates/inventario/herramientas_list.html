@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Stock de Herramientas y Pañol | ERP Olivícola{% endblock %}
+{% block title %}Stock de Herramientas y PaÃ±ol | ERP OlivÃ­cola{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -10,15 +10,15 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Stock de Herramientas y Pañol</h1>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Stock de Herramientas y PaÃ±ol</h1>
         <span class="text-[11px] font-semibold text-[#3D4A2A] bg-[#EAEFE3] border border-[#D5DFC9] px-2.5 py-0.5 rounded-full">
           Activos Menores Asignables
         </span>
       </div>
-      <p class="text-sm text-slate-500 mt-1">Gestión integral, valorización patrimonial y asignaciones (préstamo/devolución) del pañol de herramientas.</p>
+      <p class="text-sm text-slate-500 mt-1">GestiÃ³n integral, valorizaciÃ³n patrimonial y asignaciones (prÃ©stamo/devoluciÃ³n) del paÃ±ol de herramientas.</p>
     </div>
 
-    <!-- Botones de Acción Operativa -->
+    <!-- Botones de AcciÃ³n Operativa -->
     <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
       <button 
         type="button"
@@ -37,7 +37,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Valorización Total (ARS)</p>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">ValorizaciÃ³n Total (ARS)</p>
         <p class="text-2xl font-black text-slate-900 mt-1">$ {{ valorizacion_total|floatformat:2 }}</p>
       </div>
       <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100/50">
@@ -50,14 +50,14 @@
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Herramientas</p>
         <p class="text-2xl font-black text-slate-900 mt-1">{{ total_herramientas }}</p>
       </div>
-      <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50">
-        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+      <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100/50">
+        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
       </div>
     </div>
     
     <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Disponibles (Pañol)</p>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Disponibles (PaÃ±ol)</p>
         <p class="text-2xl font-black text-slate-900 mt-1">{{ total_disponibles }}</p>
       </div>
       <div class="w-12 h-12 bg-[#EAEFE3] rounded-xl flex items-center justify-center border border-[#D5DFC9]">
@@ -84,7 +84,7 @@
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
-          <input type="text" name="q" value="{{ filtro_q }}" placeholder="Buscar herramienta por código, nombre o marca..." class="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A] transition-colors bg-slate-50 hover:bg-white">
+          <input type="text" name="q" value="{{ filtro_q }}" placeholder="Buscar herramienta por cÃ³digo, nombre o marca..." class="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A] transition-colors bg-slate-50 hover:bg-white">
         </div>
         
         <div class="w-full sm:w-48">
@@ -107,9 +107,9 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50/80 border-b border-slate-100">
-            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Código / Nombre</th>
+            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">CÃ³digo / Nombre</th>
             <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Marca & Serie</th>
-            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Valorización</th>
+            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">ValorizaciÃ³n</th>
             <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado Actual</th>
             <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Acciones</th>
           </tr>
@@ -127,7 +127,7 @@
                     {{ h.nombre }}
                   </div>
                   <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                    <span class="font-mono text-slate-400">{{ h.codigo }}</span> • {{ h.deposito_base.nombre }}
+                    <span class="font-mono text-slate-400">{{ h.codigo }}</span> â€¢ {{ h.deposito_base.nombre }}
                   </div>
                 </div>
               </div>
@@ -152,8 +152,8 @@
                   <span class="w-1 h-1 rounded-full bg-amber-500"></span>En Uso / Asignada
                 </span>
               {% elif h.estado == 'MANTENIMIENTO' %}
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
-                  <span class="w-1 h-1 rounded-full bg-blue-500"></span>Mantenimiento
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                  <span class="w-1 h-1 rounded-full bg-amber-500"></span>Mantenimiento
                 </span>
               {% else %}
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
@@ -162,21 +162,46 @@
               {% endif %}
             </td>
             <td class="px-5 py-3.5 align-middle text-right">
-              {% if h.estado == 'DISPONIBLE' %}
-              <button 
-                type="button"
-                hx-get="{% url 'inventario:herramienta_asignar' h.pk %}"
-                hx-target="#modal-body"
-                @click="modalOpen = true"
-                class="text-xs font-semibold text-[#3D4A2A] hover:bg-[#EAEFE3] px-3 py-1.5 rounded-lg border border-transparent hover:border-[#D5DFC9] transition-all cursor-pointer"
-              >
-                Asignar
-              </button>
-              {% else %}
-              <button class="text-xs font-semibold text-slate-400 px-3 py-1.5 rounded-lg border border-transparent cursor-not-allowed">
-                Devolver (Próximamente)
-              </button>
-              {% endif %}
+              <div class="flex items-center justify-end gap-2">
+                {% if h.estado == 'DISPONIBLE' %}
+                <button 
+                  type="button"
+                  hx-get="{% url 'inventario:herramienta_asignar' h.pk %}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="text-xs font-semibold text-[#3D4A2A] hover:bg-[#EAEFE3] px-3 py-1.5 rounded-lg border border-transparent hover:border-[#D5DFC9] transition-all cursor-pointer"
+                >
+                  Asignar
+                </button>
+                {% else %}
+                <button class="text-xs font-semibold text-slate-400 px-3 py-1.5 rounded-lg border border-transparent cursor-not-allowed">
+                  Devolver (Próximamente)
+                </button>
+                {% endif %}
+
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                  <button 
+                    type="button"
+                    hx-get="{% url 'inventario:herramienta_update' h.pk %}"
+                    hx-target="#modal-body"
+                    @click="modalOpen = true"
+                    class="text-[#3D4A2A] hover:bg-[#EAEFE3] p-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="Editar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  </button>
+                  <button 
+                    type="button"
+                    hx-get="{% url 'inventario:herramienta_delete' h.pk %}"
+                    hx-target="#modal-body"
+                    @click="modalOpen = true"
+                    class="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="Eliminar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
           {% empty %}
@@ -187,7 +212,7 @@
                   <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                 </div>
                 <h3 class="text-sm font-bold text-slate-700">No se encontraron herramientas</h3>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm">No hay activos menores que coincidan con los filtros o aún no se han cargado.</p>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">No hay activos menores que coincidan con los filtros o aÃºn no se han cargado.</p>
               </div>
             </td>
           </tr>
@@ -199,3 +224,5 @@
   </div>
 </div>
 {% endblock %}
+
+

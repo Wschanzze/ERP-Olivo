@@ -108,6 +108,35 @@ class InsumoCreateView(CreateView):
         messages.success(self.request, f"Insumo '{self.object.nombre}' creado exitosamente.")
         return response
 
+class InsumoUpdateView(UpdateView):
+    model = Insumo
+    form_class = InsumoForm
+    template_name = 'inventario/partials/insumo_form_modal.html'
+    success_url = reverse_lazy('inventario:insumos_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            messages.success(self.request, f"Insumo '{self.object.nombre}' actualizado.")
+            return render(self.request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Insumo '{self.object.nombre}' actualizado."
+            })
+        return response
+
+class InsumoDeleteView(DeleteView):
+    model = Insumo
+    template_name = 'inventario/partials/confirm_delete_modal.html'
+    success_url = reverse_lazy('inventario:insumos_list')
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.delete()
+        if request.headers.get('HX-Request'):
+            return render(request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Insumo eliminado."
+            })
+        return redirect(self.success_url)
+
 
 class InsumoKardexView(View):
     """
@@ -387,9 +416,76 @@ class MaquinasListView(ListView):
 
 class MaquinaCreateView(CreateView):
     model = Maquina
-    fields = ['codigo', 'nombre', 'tipo', 'marca', 'modelo', 'ano_fabricacion', 'finca_asignada', 'horas_o_km_acumulados', 'estado']
+    fields = ['codigo', 'nombre', 'tipo', 'marca', 'modelo', 'ano_fabricacion', 'finca_asignada', 'cuadro_asignado', 'valor_adquisicion_ars', 'fecha_adquisicion', 'factura_referencia', 'horas_o_km_acumulados', 'estado']
     template_name = 'inventario/partials/maquina_form_modal.html'
-    success_url = reverse_lazy('inventario:maquinas_list')
+    success_url = reverse_lazy('inventario:rodados_list')
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            messages.success(self.request, f"Rodado/Máquina '{self.object.nombre}' registrado correctamente.")
+            return render(self.request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Rodado '{self.object.nombre}' registrado."
+            })
+        return response
+
+class MaquinaUpdateView(UpdateView):
+    model = Maquina
+    fields = ['codigo', 'nombre', 'tipo', 'marca', 'modelo', 'ano_fabricacion', 'finca_asignada', 'cuadro_asignado', 'valor_adquisicion_ars', 'fecha_adquisicion', 'factura_referencia', 'horas_o_km_acumulados', 'estado']
+    template_name = 'inventario/partials/maquina_form_modal.html'
+    success_url = reverse_lazy('inventario:rodados_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            messages.success(self.request, f"Rodado/Máquina '{self.object.nombre}' actualizado.")
+            return render(self.request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Rodado '{self.object.nombre}' actualizado."
+            })
+        return response
+
+class MaquinaDeleteView(DeleteView):
+    model = Maquina
+    template_name = 'inventario/partials/confirm_delete_modal.html'
+    success_url = reverse_lazy('inventario:rodados_list')
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.delete()
+        if request.headers.get('HX-Request'):
+            return render(request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Rodado '{obj.nombre}' eliminado."
+            })
+        return redirect(self.success_url)
+
+class HerramientaUpdateView(UpdateView):
+    model = Herramienta
+    form_class = HerramientaForm
+    template_name = 'inventario/partials/herramienta_form_modal.html'
+    success_url = reverse_lazy('inventario:herramientas_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('HX-Request'):
+            messages.success(self.request, f"Herramienta '{self.object.nombre}' actualizada.")
+            return render(self.request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Herramienta '{self.object.nombre}' actualizada."
+            })
+        return response
+
+class HerramientaDeleteView(DeleteView):
+    model = Herramienta
+    template_name = 'inventario/partials/confirm_delete_modal.html'
+    success_url = reverse_lazy('inventario:herramientas_list')
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.delete()
+        if request.headers.get('HX-Request'):
+            return render(request, 'inventario/partials/toast_refresh.html', {
+                'mensaje': f"Herramienta '{obj.nombre}' eliminada."
+            })
+        return redirect(self.success_url)
 
 
 class RemitosListView(ListView):

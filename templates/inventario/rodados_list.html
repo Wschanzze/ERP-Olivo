@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Stock de Rodados y Maquinarias | ERP Olivícola{% endblock %}
+{% block title %}Stock de Rodados y Maquinarias | ERP OlivÃ­cola{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -15,14 +15,14 @@
           Activos Mayores
         </span>
       </div>
-      <p class="text-sm text-slate-500 mt-1">Control patrimonial, valorización contable (bienes de uso) y estado operativo del parque automotor.</p>
+      <p class="text-sm text-slate-500 mt-1">Control patrimonial, valorizaciÃ³n contable (bienes de uso) y estado operativo del parque automotor.</p>
     </div>
 
-    <!-- Botones de Acción Operativa -->
+    <!-- Botones de AcciÃ³n Operativa -->
     <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
       <button class="inline-flex items-center gap-1.5 bg-[#3D4A2A] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-[#2F3A1F] transition-colors shadow-sm cursor-not-allowed opacity-75">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        <span>Nuevo Vehículo (Próximamente)</span>
+        <span>Nuevo VehÃ­culo (PrÃ³ximamente)</span>
       </button>
     </div>
   </div>
@@ -31,7 +31,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Valorización Total (ARS)</p>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">ValorizaciÃ³n Total (ARS)</p>
         <p class="text-2xl font-black text-slate-900 mt-1">$ {{ valorizacion_total|floatformat:2 }}</p>
       </div>
       <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100/50">
@@ -41,11 +41,11 @@
     
     <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Parque Móvil</p>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Parque MÃ³vil</p>
         <p class="text-2xl font-black text-slate-900 mt-1">{{ total_rodados }}</p>
       </div>
-      <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100/50">
-        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <div class="w-12 h-12 bg-[#EAEFE3] rounded-xl flex items-center justify-center border border-[#D5DFC9]">
+        <svg class="w-6 h-6 text-[#3D4A2A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       </div>
     </div>
     
@@ -78,7 +78,7 @@
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
-          <input type="text" name="q" value="{{ filtro_q }}" placeholder="Buscar por código, patente, modelo o nombre..." class="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A] transition-colors bg-slate-50 hover:bg-white">
+          <input type="text" name="q" value="{{ filtro_q }}" placeholder="Buscar por cÃ³digo, patente, modelo o nombre..." class="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3D4A2A]/20 focus:border-[#3D4A2A] transition-colors bg-slate-50 hover:bg-white">
         </div>
         
         <div class="w-full sm:w-48">
@@ -101,9 +101,9 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-slate-50/80 border-b border-slate-100">
-            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Código / Unidad</th>
-            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Uso / Asignación</th>
-            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Adquisición / Factura</th>
+            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">CÃ³digo / Unidad</th>
+            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Uso / AsignaciÃ³n</th>
+            <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">AdquisiciÃ³n / Factura</th>
             <th class="px-5 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado Actual</th>
           </tr>
         </thead>
@@ -120,7 +120,7 @@
                     {{ m.nombre }}
                   </div>
                   <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                    <span class="font-mono text-slate-400">{{ m.codigo }}</span> • {{ m.marca }} {{ m.modelo }}
+                    <span class="font-mono text-slate-400">{{ m.codigo }}</span> â€¢ {{ m.marca }} {{ m.modelo }}
                   </div>
                 </div>
               </div>
@@ -164,6 +164,30 @@
                 </span>
               {% endif %}
             </td>
+            <td class="px-5 py-3.5 align-middle text-right">
+              <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  type="button"
+                  hx-get="{% url 'inventario:maquina_update' m.pk %}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="text-[#3D4A2A] hover:bg-[#EAEFE3] p-1.5 rounded-lg transition-colors cursor-pointer"
+                  title="Editar"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
+                <button 
+                  type="button"
+                  hx-get="{% url 'inventario:maquina_delete' m.pk %}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                  title="Eliminar"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </td>
           </tr>
           {% empty %}
           <tr>
@@ -173,7 +197,7 @@
                   <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                 </div>
                 <h3 class="text-sm font-bold text-slate-700">No se encontraron maquinarias/rodados</h3>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm">No hay rodados que coincidan con los filtros o aún no se han cargado.</p>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">No hay rodados que coincidan con los filtros o aÃºn no se han cargado.</p>
               </div>
             </td>
           </tr>
@@ -185,3 +209,4 @@
   </div>
 </div>
 {% endblock %}
+

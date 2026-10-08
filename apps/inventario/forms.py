@@ -162,7 +162,7 @@ class HerramientaForm(forms.ModelForm):
 class AsignacionHerramientaForm(forms.ModelForm):
     class Meta:
         model = AsignacionHerramienta
-        fields = ['empleado', 'finca_destino', 'fecha_devolucion_esperada', 'observaciones']
+        fields = ['empleado', 'finca_destino', 'cuadro_destino', 'fecha_devolucion_esperada', 'observaciones']
         widgets = {
             'fecha_devolucion_esperada': forms.DateInput(attrs={'type': 'date'}),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
