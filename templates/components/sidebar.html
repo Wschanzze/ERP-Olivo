@@ -768,6 +768,13 @@
           >
             <span>Tesorería &amp; Flujo</span>
           </a>
+            <a
+              href="{% url 'finanzas:proyeccion_pagos' %}"
+              class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.url_name == 'proyeccion_pagos' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
+            >
+              <svg class="w-4 h-4 mr-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              <span>Proyección de Pagos</span>
+            </a>
           <a
             href="{% url 'finanzas:plan_cuentas' %}"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.url_name == 'plan_cuentas' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
@@ -1057,6 +1064,20 @@
           <span>Tesorería &amp; Flujo</span>
           <span class="text-[10px] text-[#8FA872] font-mono">Finanzas</span>
         </a>
+          <a 
+            href="{% url 'finanzas:proyeccion_pagos' %}" 
+            x-show="matchesSpotlight({title: 'Proyección de Pagos', module: 'Finanzas', tags: 'pagos flujo caja estimacion'})"
+            @click="spotlightOpen = false; selectModule('finanzas')"
+            class="flex items-center p-2 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer"
+          >
+            <div class="w-8 h-8 rounded-lg bg-oliva-50 flex items-center justify-center mr-3 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4 text-oliva-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-800">Proyección de Pagos</h4>
+              <span class="text-[10px] text-[#8FA872] font-mono">Finanzas</span>
+            </div>
+          </a>
         <a 
           href="{% url 'finanzas:plan_cuentas' %}" 
           x-show="matchesSpotlight({title: 'Plan de Cuentas Contable', module: 'Finanzas', tags: 'arbol jerarquia rubros activos pasivos'})"
