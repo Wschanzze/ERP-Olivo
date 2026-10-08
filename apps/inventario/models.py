@@ -453,7 +453,7 @@ class ItemRecepcion(TimeStampedModel):
 class Herramienta(TimeStampedModel):
     """Herramientas menores, equipos portátiles y activos asignables."""
     class Estado(models.TextChoices):
-        DISPONIBLE = 'DISPONIBLE', _('Disponible en Pañol')
+        DISPONIBLE = 'DISPONIBLE', _('Disponible en Depósito')
         ASIGNADA = 'ASIGNADA', _('Asignada / En Uso')
         MANTENIMIENTO = 'MANTENIMIENTO', _('En Reparación / Mantenimiento')
         PERDIDA = 'PERDIDA', _('Perdida / Robada')
@@ -466,7 +466,7 @@ class Herramienta(TimeStampedModel):
     estado = models.CharField(max_length=30, choices=Estado.choices, default=Estado.DISPONIBLE, verbose_name=_("Estado Físico"))
     deposito_base = models.ForeignKey(
         Deposito, on_delete=models.PROTECT, related_name='herramientas_base', 
-        verbose_name=_("Pañol / Depósito Base")
+        verbose_name=_("Depósito Base")
     )
     
     # Valorización y compras

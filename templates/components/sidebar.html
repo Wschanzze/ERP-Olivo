@@ -501,7 +501,7 @@
 
             <a
               href="{% url 'inventario:herramientas_list' %}"
-              x-show="matchesSearch('Stock de Herramientas', 'herramientas panol prestamos')"
+              x-show="matchesSearch('Stock de Herramientas', 'herramientas deposito prestamos')"
               class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'herramientas' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
             >
               <span class="truncate flex-1">Stock de Herramientas</span>
@@ -813,7 +813,7 @@
 
             <a
               href="{% url 'inventario:herramientas_list' %}"
-              x-show="matchesSearch('Stock de Herramientas', 'herramientas panol prestamos')"
+              x-show="matchesSearch('Stock de Herramientas', 'herramientas deposito prestamos')"
               class="flex items-center px-2.5 py-2 text-xs rounded-xl transition-all duration-150 group cursor-pointer {% if 'herramientas' in request.path %}bg-[#3D4A2A] text-white font-bold shadow-xs border border-[#5A6E3F]{% else %}text-[#C8D6BC] hover:bg-white/10 hover:text-white border border-transparent{% endif %}"
             >
               <span class="truncate flex-1">Stock de Herramientas</span>
@@ -1121,7 +1121,7 @@
         </a>
           <a 
             href="{% url 'inventario:herramientas_list' %}" 
-            x-show="matchesSpotlight({title: 'Stock de Herramientas', module: 'Almazara', tags: 'herramientas panol prestamos activos'})"
+            x-show="matchesSpotlight({title: 'Stock de Herramientas', module: 'Almazara', tags: 'herramientas deposito prestamos activos'})"
             @click="spotlightOpen = false; selectModule('almazara')"
             class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#C8D6BC] hover:bg-white/10 hover:text-white transition-colors"
           >

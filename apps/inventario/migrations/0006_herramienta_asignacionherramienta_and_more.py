@@ -40,11 +40,11 @@ class Migration(migrations.Migration):
                 ('nombre', models.CharField(max_length=150, verbose_name='Nombre / Descripción')),
                 ('marca', models.CharField(blank=True, max_length=80, verbose_name='Marca y Modelo')),
                 ('numero_serie', models.CharField(blank=True, max_length=100, verbose_name='Número de Serie')),
-                ('estado', models.CharField(choices=[('DISPONIBLE', 'Disponible en Pañol'), ('ASIGNADA', 'Asignada / En Uso'), ('MANTENIMIENTO', 'En Reparación / Mantenimiento'), ('PERDIDA', 'Perdida / Robada'), ('BAJA', 'Dada de Baja por Rotura')], default='DISPONIBLE', max_length=30, verbose_name='Estado Físico')),
+                ('estado', models.CharField(choices=[('DISPONIBLE', 'Disponible en Depósito'), ('ASIGNADA', 'Asignada / En Uso'), ('MANTENIMIENTO', 'En Reparación / Mantenimiento'), ('PERDIDA', 'Perdida / Robada'), ('BAJA', 'Dada de Baja por Rotura')], default='DISPONIBLE', max_length=30, verbose_name='Estado Físico')),
                 ('valor_adquisicion_ars', models.DecimalField(decimal_places=2, default=0.0, max_digits=12, verbose_name='Valor de Adquisición (ARS)')),
                 ('fecha_adquisicion', models.DateField(blank=True, null=True, verbose_name='Fecha de Adquisición')),
                 ('factura_referencia', models.CharField(blank=True, max_length=100, verbose_name='N° Factura / Remito')),
-                ('deposito_base', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='herramientas_base', to='inventario.deposito', verbose_name='Pañol / Depósito Base')),
+                ('deposito_base', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='herramientas_base', to='inventario.deposito', verbose_name='Depósito Base')),
             ],
             options={
                 'verbose_name': 'Herramienta',
