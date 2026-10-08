@@ -12,9 +12,10 @@ from django.http import HttpResponse
 
 from .models import (
     Insumo, CategoriaInsumo, Deposito, StockPorDeposito, MovimientoStock,
-    Maquina, Remito, ItemRemito, OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion
+    Maquina, Remito, ItemRemito, OrdenDeCompra, ItemOrdenDeCompra, RecepcionMercaderia, ItemRecepcion,
+    Herramienta, AsignacionHerramienta
 )
-from .forms import TransferenciaStockForm, AjusteStockForm, InsumoForm, GenerarOCSugeridaForm
+from .forms import TransferenciaStockForm, AjusteStockForm, InsumoForm, GenerarOCSugeridaForm, HerramientaForm, AsignacionHerramientaForm
 from .services import (
     confirmar_recepcion, realizar_transferencia_stock, realizar_ajuste_stock, obtener_kardex_insumo,
     calcular_clasificacion_abc_inventario, calcular_matriz_cobertura_y_reorden,
@@ -833,8 +834,6 @@ class ExportarOrdenesExcelView(View):
 # ──────────────────────────────────────────────────────────────────────────────
 # DASHBOARD DE ACTIVOS: HERRAMIENTAS Y RODADOS
 # ──────────────────────────────────────────────────────────────────────────────
-from .models import Herramienta, AsignacionHerramienta
-from .forms import HerramientaForm, AsignacionHerramientaForm
 from django.utils import timezone
 
 class StockHerramientasListView(ListView):
@@ -939,3 +938,4 @@ class AsignarHerramientaView(View):
                 })
             return redirect('inventario:herramientas_list')
         return render(request, 'inventario/partials/asignacion_modal.html', {'form': form, 'herramienta': herramienta})
+
