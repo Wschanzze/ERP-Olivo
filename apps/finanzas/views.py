@@ -1481,6 +1481,8 @@ class PoblarDatosDemoView(View):
         from apps.core.services_demo import poblar_datos_demo_q1_2026
         try:
             poblar_datos_demo_q1_2026()
+            from apps.finanzas.services_proyeccion_demo import poblar_datos_dinamicos_proyeccion
+            poblar_datos_dinamicos_proyeccion()
             messages.success(request, "Datos de prueba del 1° Trimestre 2026 (Ene-Mar) generados con éxito.")
         except Exception as e:
             messages.error(request, f"Error al poblar datos de prueba: {str(e)}")
