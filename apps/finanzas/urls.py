@@ -1,10 +1,12 @@
 from django.urls import path
 from . import views
+from .views_proyeccion import ProyeccionPagosView
 
 app_name = 'finanzas'
 
 urlpatterns = [
     path('', views.FinanzasDashboardView.as_view(), name='dashboard'),
+    path('proyeccion/', ProyeccionPagosView.as_view(), name='proyeccion_pagos'),
     path('caja/', views.CuentasListValoresView.as_view(), name='cuentas_list'),
     path('caja/arqueo/', views.ArqueoCajaView.as_view(), name='caja_arqueo'),
     path('cuentas/crear/', views.CuentaCreateView.as_view(), name='cuenta_create'),

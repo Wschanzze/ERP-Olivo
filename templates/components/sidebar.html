@@ -710,6 +710,13 @@
 
       <!-- Vistas Finanzas -->
       <div x-show="activeModule === 'finanzas'" x-cloak class="space-y-1.5">
+          <a 
+            href="{% url 'finanzas:proyeccion_pagos' %}"
+            class="flex items-center px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.url_name == 'proyeccion_pagos' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-[#C8D6BC] bg-white/5 hover:bg-white/10{% endif %}"
+          >
+            <svg class="w-4 h-4 mr-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Proyección de Pagos
+          </a>
           <a
             href="{% url 'finanzas:dashboard' %}?tab=resultados"
             class="flex items-center justify-between px-3.5 py-2.5 text-xs rounded-xl font-medium {% if request.resolver_match.app_name == 'finanzas' and request.GET.tab == 'resultados' %}bg-[#3D4A2A] text-white font-bold border border-[#5A6E3F]{% else %}text-emerald-300 bg-white/5 hover:bg-white/10{% endif %}"

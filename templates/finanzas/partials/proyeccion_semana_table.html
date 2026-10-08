@@ -1,0 +1,121 @@
+{% load humanize %}
+<div x-show="openWeek === '{{ scope }}'" {% if scope != 'actual' %}x-cloak{% endif %} class="divide-y divide-slate-100">
+
+  {% if not block_data.facturas and not block_data.cheques and not block_data.ocs %}
+  <div class="p-10 text-center text-slate-500">
+    <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    <p class="font-medium text-slate-600">No hay pagos proyectados para este período.</p>
+  </div>
+  {% else %}
+
+  <!-- 1. Facturas Registradas -->
+  {% if block_data.facturas %}
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Facturas Registradas (Libro IVA)
+      </h4>
+      <span class="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">$ {{ block_data.total_facturas|floatformat:2|intcomma }}</span>
+    </div>
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+          <tr>
+            <th class="px-4 py-3">Vencimiento</th>
+            <th class="px-4 py-3">Proveedor</th>
+            <th class="px-4 py-3">Comprobante</th>
+            <th class="px-4 py-3 text-right">Saldo Pendiente</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for f in block_data.facturas %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 font-medium {% if f.fecha_vencimiento < today %}text-rose-600{% endif %}">
+              {{ f.fecha_vencimiento|date:"d/m/Y" }}
+            </td>
+            <td class="px-4 py-3">{{ f.razon_social|default:f.cuenta_corriente.razon_social }}</td>
+            <td class="px-4 py-3">{{ f.get_tipo_comprobante_display }} {{ f.numero_comprobante }}</td>
+            <td class="px-4 py-3 text-right font-bold text-slate-800">$ {{ f.saldo_pendiente|default:f.total|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 2. Cheques Diferidos Emitidos -->
+  {% if block_data.cheques %}
+  <div class="p-6 bg-slate-50/30">
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Cheques a Cubrir (Emitidos)
+      </h4>
+      <span class="text-sm font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">$ {{ block_data.total_cheques|floatformat:2|intcomma }}</span>
+    </div>
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+          <tr>
+            <th class="px-4 py-3">Fecha Cobro</th>
+            <th class="px-4 py-3">Banco / Nro</th>
+            <th class="px-4 py-3">Entregado A</th>
+            <th class="px-4 py-3 text-right">Importe</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for c in block_data.cheques %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 font-medium {% if c.fecha_cobro < today %}text-rose-600{% endif %}">
+              {{ c.fecha_cobro|date:"d/m/Y" }}
+            </td>
+            <td class="px-4 py-3">{{ c.banco_emisor }} #{{ c.numero }}</td>
+            <td class="px-4 py-3">{{ c.cuenta_corriente.razon_social|default:"Proveedor/Tercero" }}</td>
+            <td class="px-4 py-3 text-right font-bold text-slate-800">$ {{ c.importe|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 3. Órdenes de Compra (Comprometido No Facturado) -->
+  {% if block_data.ocs %}
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Gastos Comprometidos (O.C. / Remitos)
+      </h4>
+      <span class="text-sm font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full">$ {{ block_data.total_ocs|floatformat:2|intcomma }}</span>
+    </div>
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+          <tr>
+            <th class="px-4 py-3">Entrega Estimada</th>
+            <th class="px-4 py-3">Proveedor</th>
+            <th class="px-4 py-3">Nro O.C.</th>
+            <th class="px-4 py-3 text-right">Total Estimado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for oc in block_data.ocs %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 font-medium">{{ oc.fecha_entrega_estimada|date:"d/m/Y" }}</td>
+            <td class="px-4 py-3">{{ oc.proveedor.razon_social }}</td>
+            <td class="px-4 py-3">{{ oc.numero }}</td>
+            <td class="px-4 py-3 text-right font-bold text-slate-800">$ {{ oc.total_estimado_ars|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+</div>

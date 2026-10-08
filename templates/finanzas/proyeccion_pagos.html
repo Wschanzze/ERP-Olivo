@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Proyección de Pagos | Finanzas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Proyección de Pagos Semanales</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Control de salidas de dinero proyectadas (Cheques, Facturas y O.C. pendientes).</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'finanzas:dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Volver a Finanzas
+      </a>
+    </div>
+  </div>
+
+  <!-- Tarjetas de Resumen General -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Vencidas -->
+    <div class="bg-white border border-rose-200 rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-rose-800">Atrasados / Vencidos</h3>
+        <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
+          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-rose-600">$ {{ semana_vencida.total_semana|floatformat:2|intcomma }}</p>
+      <p class="text-xs text-rose-500 font-medium mt-1">Antes de esta semana</p>
+    </div>
+
+    <!-- Semana Actual -->
+    <div class="bg-oliva-700 rounded-2xl p-5 shadow-md relative overflow-hidden">
+      <!-- Decoracin -->
+      <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-oliva-50">Semana Actual</h3>
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+        </div>
+        <p class="text-2xl font-black text-white">$ {{ semana_actual.total_semana|floatformat:2|intcomma }}</p>
+        <p class="text-xs text-oliva-200 font-medium mt-1">
+          {{ semana_actual.start_date|date:"d M" }} al {{ semana_actual.end_date|date:"d M" }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Prxima Semana -->
+    <div class="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-amber-800">Próxima Semana</h3>
+        <div class="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-amber-600">$ {{ semana_proxima.total_semana|floatformat:2|intcomma }}</p>
+      <p class="text-xs text-amber-600 font-medium mt-1">
+        {{ semana_proxima.start_date|date:"d M" }} al {{ semana_proxima.end_date|date:"d M" }}
+      </p>
+    </div>
+
+    <!-- Futuros -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-slate-800">Semanas Posteriores</h3>
+        <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <p class="text-2xl font-black text-slate-700">$ {{ semanas_futuras.total_semana|floatformat:2|intcomma }}</p>
+      <p class="text-xs text-slate-500 font-medium mt-1">Semanas a futuro</p>
+    </div>
+  </div>
+
+  <!-- Detalles por Semana (Pestaas o Secciones) -->
+  <div x-data="{ openWeek: 'actual' }" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <!-- Tabs Nav -->
+    <div class="flex border-b border-slate-200 bg-slate-50/50 p-2 gap-2 overflow-x-auto">
+      <button @click="openWeek = 'atrasado'" :class="openWeek === 'atrasado' ? 'bg-white shadow-sm border-rose-200 text-rose-700 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
+        Atrasados ($ {{ semana_vencida.total_semana|floatformat:0|intcomma }})
+      </button>
+      <button @click="openWeek = 'actual'" :class="openWeek === 'actual' ? 'bg-white shadow-sm border-oliva-200 text-oliva-700 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
+        Semana Actual ($ {{ semana_actual.total_semana|floatformat:0|intcomma }})
+      </button>
+      <button @click="openWeek = 'proxima'" :class="openWeek === 'proxima' ? 'bg-white shadow-sm border-amber-200 text-amber-700 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
+        Próxima Semana ($ {{ semana_proxima.total_semana|floatformat:0|intcomma }})
+      </button>
+      <button @click="openWeek = 'futuro'" :class="openWeek === 'futuro' ? 'bg-white shadow-sm border-slate-300 text-slate-800 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
+        Posteriores ($ {{ semanas_futuras.total_semana|floatformat:0|intcomma }})
+      </button>
+    </div>
+
+    <!-- Contenido de las Tabs (Macro template para evitar repeticin) -->
+    <div class="p-0">
+      {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='atrasado' block_data=semana_vencida %}
+      {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='actual' block_data=semana_actual %}
+      {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='proxima' block_data=semana_proxima %}
+      {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='futuro' block_data=semanas_futuras %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
