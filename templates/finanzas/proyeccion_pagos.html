@@ -21,18 +21,8 @@
   </div>
 
   <!-- Tarjetas de Resumen General -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <!-- Vencidas -->
-    <div class="bg-white border border-rose-200 rounded-2xl p-5 shadow-sm">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-bold text-rose-800">Atrasados / Vencidos</h3>
-        <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center">
-          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-      </div>
-      <p class="text-2xl font-black text-rose-600">$ {{ semana_vencida.total_semana|floatformat:2|intcomma }}</p>
-      <p class="text-xs text-rose-500 font-medium mt-1">Antes de esta semana</p>
-    </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    
 
     <!-- Semana Actual -->
     <div class="bg-oliva-700 rounded-2xl p-5 shadow-md relative overflow-hidden">
@@ -83,9 +73,7 @@
   <div x-data="{ openWeek: 'actual' }" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
     <!-- Tabs Nav -->
     <div class="flex border-b border-slate-200 bg-slate-50/50 p-2 gap-2 overflow-x-auto">
-      <button @click="openWeek = 'atrasado'" :class="openWeek === 'atrasado' ? 'bg-white shadow-sm border-rose-200 text-rose-700 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
-        Atrasados ($ {{ semana_vencida.total_semana|floatformat:0|intcomma }})
-      </button>
+      
       <button @click="openWeek = 'actual'" :class="openWeek === 'actual' ? 'bg-white shadow-sm border-oliva-200 text-oliva-700 font-bold' : 'text-slate-600 hover:bg-slate-100 border-transparent'" class="px-4 py-2 text-sm rounded-xl border transition-all whitespace-nowrap">
         Semana Actual ($ {{ semana_actual.total_semana|floatformat:0|intcomma }})
       </button>
@@ -99,7 +87,7 @@
 
     <!-- Contenido de las Tabs (Macro template para evitar repeticin) -->
     <div class="p-0">
-      {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='atrasado' block_data=semana_vencida %}
+      
       {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='actual' block_data=semana_actual %}
       {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='proxima' block_data=semana_proxima %}
       {% include 'finanzas/partials/proyeccion_semana_table.html' with scope='futuro' block_data=semanas_futuras %}

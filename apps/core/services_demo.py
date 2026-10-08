@@ -2389,6 +2389,14 @@ def limpiar_datos_demo_q1_2026():
     desde_dt = timezone.make_aware(datetime.datetime(2026, 1, 1, 0, 0, 0))
     hasta_dt = timezone.make_aware(datetime.datetime(2026, 3, 31, 23, 59, 59))
 
+        # --- LIMPIEZA FORZADA DE REGISTROS CON NUMERACIONES CONOCIDAS ---
+    # Esto previene errores de "Unique Constraint" si el usuario modificó las fechas de los datos demo
+    # y quedaron fuera del rango Q1 2026.
+    OrdenDeCompra.objects.filter(numero__in=['OC-2026-001', 'OC-2026-002', 'OC-2026-003', 'OC-2026-004', 'OC-2026-005', 'OC-2026-006', 'OC-PROX-01']).delete()
+    Cheque.objects.filter(numero__in=['33445566', '44556677', '88341201', '88341202', '77124098', 'CHK-ACTUAL-01', 'CHK-FUTURO-01']).delete()
+    ComprobanteFiscal.objects.filter(numero_comprobante__in=['A-0001-00000127', 'A-0001-00000128', 'C-0002-00000055', 'A-0001-00000088', 'B-0001-00000090', 'C-0001-00000200', 'A-0001-0001', 'A-0001-0002']).delete()
+    OrdenPagoRecibo.objects.filter(numero__in=['OP-2026-0001', 'OP-2026-0002', 'RC-2026-0001']).delete()
+
     reporte = {}
 
     # 1. Cuadros de Resultados Q1 y Tipos de Cambio
@@ -2418,6 +2426,7 @@ def limpiar_datos_demo_q1_2026():
 
     # 3.1 Comprobantes Fiscales (Libro de IVA Compras y Ventas)
     q_facturas = ComprobanteFiscal.objects.filter(
+        models.Q(numero__in=['OP-2026-0001', 'OP-2026-0002', 'RC-2026-0001']) |
         models.Q(concepto__startswith='[DEMO]') |
         models.Q(fecha_emision__gte=desde, fecha_emision__lte=hasta)
     )
@@ -2426,6 +2435,7 @@ def limpiar_datos_demo_q1_2026():
 
     # 3.2 Órdenes de Pago y Recibos
     q_ops = OrdenPagoRecibo.objects.filter(
+        models.Q(numero__in=['OP-2026-0001', 'OP-2026-0002', 'RC-2026-0001']) |
         models.Q(concepto__startswith='[DEMO]') |
         models.Q(fecha__gte=desde, fecha__lte=hasta)
     )
@@ -2442,6 +2452,7 @@ def limpiar_datos_demo_q1_2026():
 
     # 4. Movimientos Financieros
     q_movs = MovimientoFinanciero.objects.filter(
+        models.Q(numero__in=['OP-2026-0001', 'OP-2026-0002', 'RC-2026-0001']) |
         models.Q(concepto__startswith='[DEMO]') |
         models.Q(fecha__gte=desde, fecha__lte=hasta)
     )

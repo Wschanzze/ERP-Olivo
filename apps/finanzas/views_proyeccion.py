@@ -79,8 +79,8 @@ class ProyeccionPagosView(TemplateView):
                 'total_semana': total_facturas + total_cheques + total_ocs
             }
 
-        context['semana_vencida'] = get_semana_data(None, start_current_week, is_past=True)
-        context['semana_actual'] = get_semana_data(start_current_week, end_current_week)
+        
+        context['semana_actual'] = get_semana_data(None, end_current_week, is_past=True)
         context['semana_proxima'] = get_semana_data(start_next_week, end_next_week)
         context['semanas_futuras'] = get_semana_data(end_next_week, None, is_future=True)
 
