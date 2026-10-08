@@ -1,7 +1,7 @@
 from apps.core.excel_export import export_to_excel
 from decimal import Decimal
 from datetime import datetime
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
