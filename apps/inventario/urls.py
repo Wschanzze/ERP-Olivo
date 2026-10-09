@@ -12,6 +12,7 @@ urlpatterns = [
     path('transferencias/crear/', views.TransferenciaStockCreateView.as_view(), name='transferencia_create'),
     path('ajustes/crear/', views.AjusteStockCreateView.as_view(), name='ajuste_create'),
     path('consumos/crear/', views.ConsumoStockCreateView.as_view(), name='consumo_create'),
+    path('ingreso-compra/crear/', views.IngresoCompraCreateView.as_view(), name='ingreso_compra_create'),
     path('movimientos/', views.MovimientosStockListView.as_view(), name='movimientos_list'),
     path('movimientos/crear/', views.MovimientoStockCreateView.as_view(), name='movimiento_create'),
     path('maquinas/', views.MaquinasListView.as_view(), name='maquinas_list'),
@@ -49,4 +50,5 @@ urlpatterns = [
     path('remitos/exportar/', views.ExportarRemitosExcelView.as_view(), name='exportar_remitos'),
     path('ordenes-compra/exportar/', views.ExportarOrdenesExcelView.as_view(), name='exportar_ordenes_compra'),
 ]
+
 

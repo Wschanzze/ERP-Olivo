@@ -55,6 +55,17 @@
 
       <button 
         type="button"
+        hx-get="{% url 'inventario:ingreso_compra_create' %}"
+        hx-target="#modal-body"
+        @click="modalOpen = true"
+        class="inline-flex items-center gap-1.5 bg-white border border-slate-200/80 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs cursor-pointer"
+      >
+        <span class="text-emerald-700">⮜</span>
+        <span>Ingresar Compra</span>
+      </button>
+
+      <button 
+        type="button"
         hx-get="{% url 'inventario:consumo_create' %}"
         hx-target="#modal-body"
         @click="modalOpen = true"
@@ -351,6 +362,17 @@
                   <span class="text-xs font-bold">⇄</span>
                 </button>
 
+                <!-- Ingreso rápido -->
+                <button
+                  type="button"
+                  hx-get="{% url 'inventario:ingreso_compra_create' %}?insumo={{ ins.pk }}"
+                  hx-target="#modal-body"
+                  @click="modalOpen = true"
+                  class="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-emerald-700 transition-colors"
+                  title="Ingresar Compra de Insumo"
+                >
+                  <span class="text-xs font-bold text-emerald-700">⮜</span>
+                </button>
                 <!-- Consumo rápido -->
                 <button
                   type="button"
@@ -427,6 +449,7 @@
 
 </div>
 {% endblock %}
+
 
 
 

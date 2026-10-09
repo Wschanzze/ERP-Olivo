@@ -986,3 +986,42 @@ class ConsumoStockCreateView(View):
 
 
 
+
+from apps.inventario.forms import IngresoCompraForm
+
+class IngresoCompraCreateView(View):
+    """
+    Formulario modal HTMX para registrar ingresos rápidos por compra directa de insumos.
+    """
+    def get(self, request):
+        insumo_id = request.GET.get('insumo')
+        initial = {}
+        if insumo_id and insumo_id.isdigit():
+            initial['insumo'] = insumo_id
+        form = IngresoCompraForm(initial=initial)
+        return render(request, 'inventario/partials/ingreso_compra_modal.html', {'form': form})
+
+    def post(self, request):
+        form = IngresoCompraForm(request.POST)
+        if form.is_valid():
+            try:
+                motivo = "Compra Rápida: " + form.cleaned_data['motivo']
+                from apps.inventario.services import realizar_ajuste_stock
+                from apps.inventario.models import MovimientoStock
+                
+                resultado = realizar_ajuste_stock(
+                    insumo_id=form.cleaned_data['insumo'].id,
+                    deposito_id=form.cleaned_data['deposito'].id,
+                    tipo_ajuste=MovimientoStock.TipoMovimiento.ENTRADA_COMPRA,
+                    cantidad=form.cleaned_data['cantidad'],
+                    costo_unitario=form.cleaned_data['costo_unitario'],
+                    motivo=motivo,
+                    usuario=request.user if request.user.is_authenticated else None
+                )
+                if resultado['ok']:
+                    messages.success(request, resultado['mensaje'])
+                    return render(request, 'inventario/partials/toast_refresh.html', {'mensaje': resultado['mensaje']})
+            except Exception as e:
+                form.add_error(None, str(e))
+        return render(request, 'inventario/partials/ingreso_compra_modal.html', {'form': form})
+

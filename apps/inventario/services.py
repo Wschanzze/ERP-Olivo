@@ -235,7 +235,8 @@ def realizar_ajuste_stock(
         MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO,
         MovimientoStock.TipoMovimiento.AJUSTE_NEGATIVO,
         MovimientoStock.TipoMovimiento.SALIDA_MERMA,
-        MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO
+        MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
+        MovimientoStock.TipoMovimiento.ENTRADA_COMPRA
     ]
     if tipo_ajuste not in tipos_validos:
         raise ValidationError(f"Tipo de ajuste '{tipo_ajuste}' no es válido.")
@@ -264,7 +265,7 @@ def realizar_ajuste_stock(
         prefix = "MER" if tipo_ajuste == MovimientoStock.TipoMovimiento.SALIDA_MERMA else "AJU"
         ref_codigo = f"{prefix}-{now.strftime('%y%m%d%H%M')}"
 
-        if tipo_ajuste == MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO:
+        if tipo_ajuste in [MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO, MovimientoStock.TipoMovimiento.ENTRADA_COMPRA]:
             # Incrementar depósito
             stock_dep.cantidad += cantidad
             stock_dep.save(update_fields=['cantidad', 'updated_at'])
@@ -764,6 +765,7 @@ def crear_orden_compra_sugerida(
         'mensaje': f"Orden de Compra {oc.numero} creada exitosamente con {items_creados} ítem(s).",
         'orden': oc,
     }
+
 
 
 

@@ -214,3 +214,37 @@ class ConsumoStockForm(BaseStyledForm):
     )
 
 
+
+class IngresoCompraForm(BaseStyledForm):
+    insumo = forms.ModelChoiceField(
+        queryset=Insumo.objects.filter(activo=True).order_by('nombre'),
+        label="Insumo Adquirido",
+        empty_label="Seleccione un insumo..."
+    )
+    deposito = forms.ModelChoiceField(
+        queryset=Deposito.objects.filter(activo=True).order_by('finca__nombre', 'nombre'),
+        label="Depósito de Ingreso",
+        empty_label="Seleccione depósito..."
+    )
+    cantidad = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        label="Cantidad Comprada",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'placeholder': '0.00'})
+    )
+    costo_unitario = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.00'),
+        required=True,
+        label="Costo Unitario (ARS)",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'placeholder': 'Precio por unidad'})
+    )
+    motivo = forms.CharField(
+        max_length=200,
+        required=True,
+        label="Referencia (Remito / Factura / Proveedor)",
+        widget=forms.TextInput(attrs={'placeholder': 'Ej. Factura A-0001-12345678 Agroquímica'})
+    )
+
