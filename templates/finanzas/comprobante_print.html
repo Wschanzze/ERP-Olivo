@@ -210,19 +210,31 @@
 
     <!-- Summary and Totals Box -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mb-6">
       <!-- Left side: Exchange rate notes and remarks -->
       <div class="border border-slate-200 rounded-xl p-3.5 text-[11px] text-slate-600 space-y-1.5 bg-slate-50/50">
         <p class="font-bold text-slate-800">Observaciones y Régimen Cambiario:</p>
-        <p>• Operación imputada a {{ mov.cuenta.nombre }} en moneda oficial {{ mov.moneda }}.</p>
-        {% if importe_usd and mov.moneda == 'ARS' %}
-          <p class="text-emerald-800 font-semibold">
-            • Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Equivalente: <span class="font-black">u$s {{ importe_usd|floatformat:2 }} USD</span>.
-          </p>
-        {% elif importe_ars and mov.moneda == 'USD' %}
-          <p class="text-emerald-800 font-semibold">
-            • Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Contravalor: <span class="font-black">${{ importe_ars|floatformat:2 }} ARS</span>.
-          </p>
+        
+        {% if es_comprobante_fiscal %}
+          <p>Operación en moneda declarada {{ comp.moneda }}.</p>
+          {% if comp.moneda != 'ARS' and tc %}
+            <p class="text-emerald-800 font-semibold">
+                Coeficiente TC declarado: $1 {{ comp.moneda }} = ${{ tc|floatformat:2 }} ARS. Equivalente: <span class="font-black">$ {{ importe_ars|floatformat:2 }} ARS</span>.
+            </p>
+          {% endif %}
+        {% else %}
+          <p>Operación imputada a {{ mov.cuenta.nombre }} en moneda oficial {{ mov.moneda }}.</p>
+          {% if importe_usd and mov.moneda == 'ARS' %}
+            <p class="text-emerald-800 font-semibold">
+                Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Equivalente: <span class="font-black">u$s {{ importe_usd|floatformat:2 }} USD</span>.
+            </p>
+          {% elif importe_ars and mov.moneda == 'USD' %}
+            <p class="text-emerald-800 font-semibold">
+                Coeficiente TC oficial: $1 USD = ${{ tc|floatformat:2 }} ARS. Contravalor: <span class="font-black">${{ importe_ars|floatformat:2 }} ARS</span>.
+            </p>
+          {% endif %}
         {% endif %}
+
         <p class="text-[10px] text-slate-400 mt-2">
           Documento emitido conforme a las resoluciones generales vigentes de facturación agroindustrial y comercial.
         </p>
@@ -230,21 +242,68 @@
 
       <!-- Right side: Financial Totals -->
       <div class="border border-slate-300 rounded-xl overflow-hidden text-xs">
-        <div class="flex justify-between py-2 px-4 border-b border-slate-200">
-          <span class="font-medium text-slate-600">Subtotal Neto Gravado:</span>
-          <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ neto_gravado|floatformat:2 }}</span>
-        </div>
-        <div class="flex justify-between py-2 px-4 border-b border-slate-200">
-          <span class="font-medium text-slate-600">IVA Liquidado ({% if aplica_iva %}21%{% else %}0%{% endif %}):</span>
-          <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ iva_liquidado|floatformat:2 }}</span>
-        </div>
-        <div class="flex justify-between items-center py-3 px-4 bg-slate-900 text-white">
-          <span class="font-extrabold uppercase tracking-wide text-xs">Total Comprobante:</span>
-          <span class="font-mono font-black text-base tabular-nums">{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}</span>
-        </div>
+        {% if es_comprobante_fiscal %}
+          
+          {% if comp.neto_gravado_total > 0 %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">Subtotal Neto Gravado:</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ comp.moneda }} ${{ comp.neto_gravado_total|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          {% for iva in comp.desglose_iva %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">IVA Liquidado ({{ iva.alicuota|floatformat:1 }}%):</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ comp.moneda }} ${{ iva.importe|floatformat:2 }}</span>
+          </div>
+          {% endfor %}
+
+          {% if comp.exento > 0 %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">Importes Exentos:</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ comp.moneda }} ${{ comp.exento|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          {% if comp.no_gravado > 0 %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">Conceptos No Gravados:</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ comp.moneda }} ${{ comp.no_gravado|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          {% if comp.total_tributos > 0 %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">Otros Tributos y Percepc.:</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ comp.moneda }} ${{ comp.total_tributos|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+
+          <div class="flex justify-between items-center py-3 px-4 bg-slate-900 text-white">
+            <span class="font-extrabold uppercase tracking-wide text-xs">Total Comprobante:</span>
+            <span class="font-mono font-black text-base tabular-nums">{{ comp.moneda }} ${{ comp.total|floatformat:2 }}</span>
+          </div>
+
+        {% else %}
+          
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">Subtotal Neto Gravado:</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ neto_gravado|floatformat:2 }}</span>
+          </div>
+          {% if aplica_iva %}
+          <div class="flex justify-between py-2 px-4 border-b border-slate-200">
+            <span class="font-medium text-slate-600">IVA Liquidado (21%):</span>
+            <span class="font-mono font-bold text-slate-800 tabular-nums">{{ mov.moneda }} ${{ iva_liquidado|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+          <div class="flex justify-between items-center py-3 px-4 bg-slate-900 text-white">
+            <span class="font-extrabold uppercase tracking-wide text-xs">Total Comprobante:</span>
+            <span class="font-mono font-black text-base tabular-nums">{{ mov.moneda }} ${{ mov.importe|floatformat:2 }}</span>
+          </div>
+
+        {% endif %}
       </div>
     </div>
-
     <!-- AFIP / ARCA CAE, QR Oficial and Authorized Signature Bar -->
     <div class="border-t-2 border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-6">
       
@@ -293,5 +352,6 @@
 
 </body>
 </html>
+
 
 
