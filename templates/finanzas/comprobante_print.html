@@ -167,7 +167,7 @@
                 ${{ item.precio_unitario|floatformat:2 }}
               </td>
               <td class="py-3 px-3 text-right font-mono text-slate-600 text-[11px]">
-                {% if aplica_iva %}{{ item.alicuota_iva }}%{% else %}0,00%{% endif %}
+                {% if comp and not comp.es_oficial %}-{% elif aplica_iva %}{{ item.alicuota_iva }}%{% else %}0,00%{% endif %}
               </td>
               <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
                 ${{ item.subtotal_neto|floatformat:2 }}
@@ -209,7 +209,6 @@
     </div>
 
     <!-- Summary and Totals Box -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mb-6">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start mb-6">
       <!-- Left side: Exchange rate notes and remarks -->
       <div class="border border-slate-200 rounded-xl p-3.5 text-[11px] text-slate-600 space-y-1.5 bg-slate-50/50">
@@ -352,6 +351,8 @@
 
 </body>
 </html>
+
+
 
 
 
