@@ -2484,7 +2484,7 @@ class ComprobanteFiscalPrintView(DetailView):
             ctx['letra'] = 'X'
             ctx['cod_afip'] = '99'
             ctx['nombre_doc'] = comp.get_tipo_comprobante_display()
-            ctx['aplica_iva'] = True
+            ctx['aplica_iva'] = False
 
         ctx['pto_vta'] = comp.punto_de_venta.zfill(4)
         ctx['nro_formateado'] = comp.numero_comprobante.zfill(8)
@@ -2577,6 +2577,8 @@ class ExportarOrdenesPagoExcelView(View):
             ("Concepto", "concepto"),
         ]
         return export_to_excel(qs, columnas, "Órdenes de Pago y Recibos", "ordenes_pago_recibos")
+
+
 
 
 

@@ -188,10 +188,10 @@
             </td>
             <td class="py-3 px-3 text-right font-mono">1.00</td>
             <td class="py-3 px-3 text-right font-mono font-medium text-slate-700 tabular-nums">
-              ${{ neto_gravado|floatformat:2 }}
+              ${{ mov.importe|floatformat:2 }}
             </td>
             <td class="py-3 px-3 text-right font-mono text-slate-600 text-[11px]">
-              {% if aplica_iva %}21,00%{% else %}0,00%{% endif %}
+              {% if aplica_iva %}21,00%{% else %}-{% endif %}
             </td>
             <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
               ${{ mov.importe|floatformat:2 }}
@@ -351,6 +351,8 @@
 
 </body>
 </html>
+
+
 
 
 
