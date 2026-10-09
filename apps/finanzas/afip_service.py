@@ -268,40 +268,23 @@ def autorizar_comprobante_arca(comprobante) -> Dict[str, Any]:
 
     # Alícuotas de IVA
     iva_list = []
-    if comprobante.neto_gravado_21 and comprobante.neto_gravado_21 > 0:
+    for desglose in comprobante.desglose_iva():
         iva_list.append({
-            'Id': 5, # 21%
-            'BaseImp': float(comprobante.neto_gravado_21),
-            'Importe': float(comprobante.iva_21 or Decimal('0.00'))
-        })
-    if comprobante.neto_gravado_10_5 and comprobante.neto_gravado_10_5 > 0:
-        iva_list.append({
-            'Id': 4, # 10.5%
-            'BaseImp': float(comprobante.neto_gravado_10_5),
-            'Importe': float(comprobante.iva_10_5 or Decimal('0.00'))
-        })
-    if comprobante.neto_gravado_27 and comprobante.neto_gravado_27 > 0:
-        iva_list.append({
-            'Id': 6, # 27%
-            'BaseImp': float(comprobante.neto_gravado_27),
-            'Importe': float(comprobante.iva_27 or Decimal('0.00'))
+            'Id': desglose['id_arca'],
+            'BaseImp': float(desglose['base_imponible']),
+            'Importe': float(desglose['importe'])
         })
 
-    neto_total = (comprobante.neto_gravado_21 or Decimal('0')) + \
-                 (comprobante.neto_gravado_10_5 or Decimal('0')) + \
-                 (comprobante.neto_gravado_27 or Decimal('0'))
-
-    total_iva = (comprobante.iva_21 or Decimal('0')) + \
-                (comprobante.iva_10_5 or Decimal('0')) + \
-                (comprobante.iva_27 or Decimal('0'))
-
+    neto_total = comprobante.neto_gravado_total
+    total_iva = comprobante.total_iva
     no_gravado = comprobante.no_gravado or Decimal('0')
     exento = comprobante.exento or Decimal('0')
-    percepciones = (comprobante.percepcion_iva or Decimal('0')) + \
-                   (comprobante.percepcion_iibb or Decimal('0')) + \
-                   (comprobante.impuestos_internos or Decimal('0'))
-
+    percepciones = comprobante.total_tributos
     total = comprobante.total or (neto_total + total_iva + no_gravado + exento + percepciones)
+    
+    # Moneda (ARCA: PES, DOL, etc)
+    moneda_arca = 'DOL' if comprobante.moneda == 'USD' else 'PES'
+    cotizacion = float(comprobante.tipo_cambio) if moneda_arca != 'PES' else 1.0
 
     # Armado del payload para ARCA WSFE
     voucher_data = {
@@ -319,24 +302,29 @@ def autorizar_comprobante_arca(comprobante) -> Dict[str, Any]:
         'ImpOpEx': float(exento),
         'ImpIVA': float(total_iva),
         'ImpTrib': float(percepciones),
-        'MonId': 'PES',
-        'MonCotiz': 1.0,
+        'MonId': moneda_arca,
+        'MonCotiz': cotizacion,
     }
 
     if iva_list:
         voucher_data['Iva'] = iva_list
 
-    # Percepciones provinciales / municipales si aplican
+    # Percepciones y otros tributos si aplican
     if percepciones > 0:
-        voucher_data['Tributos'] = [
-            {
-                'Id': 2, # Percepción Ingresos Brutos
-                'Desc': 'Percepción IIBB Catamarca',
-                'BaseImp': float(neto_total),
-                'Alic': 3.0,
-                'Importe': float(percepciones)
-            }
-        ]
+        tributos = []
+        if (comprobante.percepcion_iibb or 0) > 0:
+            tributos.append({'Id': 2, 'Desc': 'Percepción IIBB', 'BaseImp': float(neto_total), 'Alic': 0, 'Importe': float(comprobante.percepcion_iibb)})
+        if (comprobante.percepcion_ganancias or 0) > 0:
+            tributos.append({'Id': 1, 'Desc': 'Percepción Ganancias', 'BaseImp': float(neto_total), 'Alic': 0, 'Importe': float(comprobante.percepcion_ganancias)})
+        if (comprobante.impuestos_municipales or 0) > 0:
+            tributos.append({'Id': 3, 'Desc': 'Impuestos Municipales', 'BaseImp': float(neto_total), 'Alic': 0, 'Importe': float(comprobante.impuestos_municipales)})
+        if (comprobante.impuestos_internos or 0) > 0:
+            tributos.append({'Id': 4, 'Desc': 'Impuestos Internos', 'BaseImp': float(neto_total), 'Alic': 0, 'Importe': float(comprobante.impuestos_internos)})
+        if (comprobante.percepcion_iva or 0) > 0:
+            tributos.append({'Id': 1, 'Desc': 'Percepción IVA', 'BaseImp': float(neto_total), 'Alic': 0, 'Importe': float(comprobante.percepcion_iva)})
+        
+        if tributos:
+            voucher_data['Tributos'] = tributos
 
     # Emisión con correlativo automático en ARCA
     res = afip.ElectronicBilling.createNextVoucher(voucher_data)
@@ -400,8 +388,8 @@ def generar_qr_arca_url(comprobante) -> str:
         "tipoCmp": cbte_tipo,
         "nroCmp": nro_cbte,
         "importe": float(comprobante.total or 0.0),
-        "moneda": "PES",
-        "ctz": 1.0,
+        "moneda": "DOL" if comprobante.moneda == "USD" else "PES",
+        "ctz": float(comprobante.tipo_cambio) if comprobante.moneda == "USD" else 1.0,
         "tipoDocRec": doc_tipo_rec,
         "nroDocRec": doc_nro_rec,
         "tipoCodAut": "E", # CAE
@@ -460,31 +448,45 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
     empresa = Empresa.objects.first()
 
     vat_breakdown = []
-    if comprobante.neto_gravado_21 and comprobante.iva_21:
+    for desglose in comprobante.desglose_iva():
         vat_breakdown.append({
-            "vat_rate": 21.0,
-            "taxable_base": float(comprobante.neto_gravado_21),
-            "vat_amount": float(comprobante.iva_21)
+            "vat_rate": float(desglose['alicuota']),
+            "taxable_base": float(desglose['base_imponible']),
+            "vat_amount": float(desglose['importe'])
         })
-    if comprobante.neto_gravado_10_5 and comprobante.iva_10_5:
-        vat_breakdown.append({
-            "vat_rate": 10.5,
-            "taxable_base": float(comprobante.neto_gravado_10_5),
-            "vat_amount": float(comprobante.iva_10_5)
-        })
-    if comprobante.neto_gravado_27 and comprobante.iva_27:
-        vat_breakdown.append({
-            "vat_rate": 27.0,
-            "taxable_base": float(comprobante.neto_gravado_27),
-            "vat_amount": float(comprobante.iva_27)
-        })
+
     # Fallback si no hay desgloses pero es Factura A (evitar arreglo vacío que AfipSDK rechazaría)
     if not vat_breakdown and template_name == 'invoice-a':
         vat_breakdown.append({
             "vat_rate": 21.0,
-            "taxable_base": float(comprobante.neto_gravado_21 or comprobante.total or 0),
-            "vat_amount": float(comprobante.iva_21 or 0)
+            "taxable_base": float(comprobante.neto_gravado_total or comprobante.total or 0),
+            "vat_amount": float(comprobante.total_iva or 0)
         })
+        
+    # Construir líneas del comprobante (ítems)
+    pdf_items = []
+    detalles = comprobante.detalles.all()
+    if detalles.exists():
+        for det in detalles:
+            pdf_items.append({
+                "description": det.descripcion,
+                "quantity": float(det.cantidad),
+                "unit_price": float(det.precio_unitario),
+                "subtotal": float(det.subtotal_neto),
+                "vat_rate": float(det.porcentaje_iva)
+            })
+    else:
+        # Fallback de compatibilidad
+        pdf_items.append({
+            "description": comprobante.concepto or "Productos Olivícolas",
+            "quantity": 1,
+            "unit_price": float(comprobante.neto_gravado_total or comprobante.total),
+            "subtotal": float(comprobante.neto_gravado_total or comprobante.total),
+            "vat_rate": 21.0
+        })
+
+    moneda_arca = 'DOL' if comprobante.moneda == 'USD' else 'PES'
+    cotizacion = float(comprobante.tipo_cambio) if moneda_arca != 'PES' else 1.0
 
     pdf_payload = {
         "file_name": f"{comprobante.get_tipo_comprobante_display()}_{comprobante.numero_completo}.pdf",
@@ -504,28 +506,20 @@ def generar_pdf_oficial_afipsdk(comprobante) -> Dict[str, Any]:
                 "cae_due_date": comprobante.vto_cae.strftime("%d/%m/%Y") if comprobante.vto_cae else "",
                 "concept": 1,
                 "sale_condition": "Contado",
-                "currency_id": "PES",
-                "currency_rate": 1.0,
+                "currency_id": moneda_arca,
+                "currency_rate": cotizacion,
                 "receiver_name": comprobante.razon_social,
                 "receiver_document_type": doc_tipo_num,
                 "receiver_document_number": cuit_clean or "0",
                 "receiver_address": comprobante.cuenta_corriente.direccion if comprobante.cuenta_corriente else "-",
                 "receiver_iva_condition": comprobante.get_condicion_iva_display(),
-                "items": [
-                    {
-                        "description": comprobante.concepto or "Productos Olivícolas",
-                        "quantity": 1,
-                        "unit_price": float(comprobante.neto_gravado_21 or comprobante.total),
-                        "subtotal": float(comprobante.neto_gravado_21 or comprobante.total),
-                        "vat_rate": 21.0
-                    }
-                ],
+                "items": pdf_items,
                 "vat_breakdown": vat_breakdown,
-                "net_amount_taxed": float(comprobante.neto_gravado_21 or comprobante.total),
+                "net_amount_taxed": float(comprobante.neto_gravado_total),
                 "net_amount_untaxed": float(comprobante.no_gravado or 0),
                 "exempt_amount": float(comprobante.exento or 0),
-                "tributes_amount": float((comprobante.percepcion_iva or 0) + (comprobante.percepcion_iibb or 0) + (comprobante.impuestos_internos or 0)),
-                "vat_amount": float((comprobante.iva_21 or 0) + (comprobante.iva_10_5 or 0) + (comprobante.iva_27 or 0)),
+                "tributes_amount": float(comprobante.total_tributos),
+                "vat_amount": float(comprobante.total_iva),
                 "total_amount": float(comprobante.total)
             }
         }

@@ -1,4 +1,4 @@
-from django.views.generic import TemplateView, ListView, CreateView, DetailView, UpdateView
+﻿from django.views.generic import TemplateView, ListView, CreateView, DetailView, UpdateView
 from django.urls import reverse_lazy, reverse
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -33,7 +33,7 @@ from .afip_service import (
 
 
 def get_plan_cuentas_payload():
-    """Genera datos serializados y estadísticas para el visor reactivo del Plan de Cuentas, con caché en memoria."""
+    """Genera datos serializados y estadÃ­sticas para el visor reactivo del Plan de Cuentas, con cachÃ© en memoria."""
     cached_payload = cache.get('plan_cuentas_payload')
     if cached_payload is not None:
         return cached_payload
@@ -113,8 +113,8 @@ def get_plan_cuentas_payload():
             total_egresos += 1
 
         text_search = f"{c.nombre} {c.nota}".lower()
-        es_bio = any(w in text_search for w in ['biológ', 'biolog', 'olivar', 'aceituna', 'fruto', 'pie'])
-        es_ind = any(w in text_search for w in ['aceite', 'molienda', 'almazara', 'fraccionado', 'extracción', 'extraccion', 'conserva', 'orujo', 'hueso'])
+        es_bio = any(w in text_search for w in ['biolÃ³g', 'biolog', 'olivar', 'aceituna', 'fruto', 'pie'])
+        es_ind = any(w in text_search for w in ['aceite', 'molienda', 'almazara', 'fraccionado', 'extracciÃ³n', 'extraccion', 'conserva', 'orujo', 'hueso'])
         es_exp = any(w in text_search for w in ['export', 'usd', 'exterior'])
 
         if es_bio:
@@ -166,8 +166,8 @@ def get_plan_cuentas_payload():
 def build_cuadro_simplificado(cuadro_activo, tc):
     """
     Construye la estructura gerencial de manejo interno del Cuadro de Resultados (P&L),
-    agrupando los 56 códigos contables en bloques operativos comprensibles para la gerencia,
-    con presentación simultánea en Pesos Argentinos (ARS) y Dólares (USD) con su coeficiente.
+    agrupando los 56 cÃ³digos contables en bloques operativos comprensibles para la gerencia,
+    con presentaciÃ³n simultÃ¡nea en Pesos Argentinos (ARS) y DÃ³lares (USD) con su coeficiente.
     """
     if not cuadro_activo:
         return None
@@ -194,79 +194,79 @@ def build_cuadro_simplificado(cuadro_activo, tc):
             'titulo': '1. INGRESOS OPERATIVOS / VENTAS NETAS',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('aceite_granel', {'label': 'Venta Aceite Virgen Extra a Granel (Exportación)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('aceite_granel', {'label': 'Venta Aceite Virgen Extra a Granel (ExportaciÃ³n)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('aceite_fraccionado', {'label': 'Venta Aceite Fraccionado y Gourmet (Mercado Interno)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('aceituna_mesa', {'label': 'Venta Aceituna de Mesa (Conserva en Fresco)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('subproductos', {'label': 'Venta Subproductos (Orujo y Hueso para Biomasa)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('otros_ingresos', {'label': 'Otros Ingresos Operativos Agronómicos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('otros_ingresos', {'label': 'Otros Ingresos Operativos AgronÃ³micos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'costos_agro': {
-            'titulo': '2. COSTOS DIRECTOS DE PRODUCCIÓN AGRÍCOLA (CAMPO)',
+            'titulo': '2. COSTOS DIRECTOS DE PRODUCCIÃ“N AGRÃCOLA (CAMPO)',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('mano_obra_campo', {'label': 'Mano de Obra Agrícola y Jornales de Cosecha UATRE', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('riego_energia', {'label': 'Riego por Goteo y Energía Eléctrica de Pozos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('fertilizantes', {'label': 'Fertilizantes, Enmiendas y Nutrición Foliar', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('fitosanitarios', {'label': 'Fitosanitarios, Curación Cúprica y Sanidad', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('mano_obra_campo', {'label': 'Mano de Obra AgrÃ­cola y Jornales de Cosecha UATRE', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('riego_energia', {'label': 'Riego por Goteo y EnergÃ­a ElÃ©ctrica de Pozos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('fertilizantes', {'label': 'Fertilizantes, Enmiendas y NutriciÃ³n Foliar', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('fitosanitarios', {'label': 'Fitosanitarios, CuraciÃ³n CÃºprica y Sanidad', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('maquinaria_combustibles', {'label': 'Combustibles, Tractores y Labores Mecanizadas', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('otros_agro', {'label': 'Otros Insumos y Servicios Agrícolas Directos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('otros_agro', {'label': 'Otros Insumos y Servicios AgrÃ­colas Directos', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'costos_ind': {
             'titulo': '3. COSTOS INDUSTRIALES DE ALMAZARA & ENVASADO',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('molienda_extraccion', {'label': 'Molienda y Operación de Almazara (Línea Continua)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('molienda_extraccion', {'label': 'Molienda y OperaciÃ³n de Almazara (LÃ­nea Continua)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('envases_insumos', {'label': 'Botellas de Vidrio Dorica, Tapas, Etiquetas y Cajas', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('fletes_cosecha', {'label': 'Fletes de Cosecha y Logística de Tolva', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('mantenimiento_calidad', {'label': 'Mantenimiento de Planta y Análisis Panel Test', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('fletes_cosecha', {'label': 'Fletes de Cosecha y LogÃ­stica de Tolva', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('mantenimiento_calidad', {'label': 'Mantenimiento de Planta y AnÃ¡lisis Panel Test', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'gastos_admin': {
-            'titulo': '4. GASTOS DE ADMINISTRACIÓN Y ESTRUCTURA',
+            'titulo': '4. GASTOS DE ADMINISTRACIÃ“N Y ESTRUCTURA',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('sueldos_admin', {'label': 'Sueldos Administración, Dirección y Cargas Sociales', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('honorarios_profesionales', {'label': 'Honorarios Contables, Legales y Asesoría Agronómica', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('sueldos_admin', {'label': 'Sueldos AdministraciÃ³n, DirecciÃ³n y Cargas Sociales', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('honorarios_profesionales', {'label': 'Honorarios Contables, Legales y AsesorÃ­a AgronÃ³mica', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('servicios_generales', {'label': 'Comunicaciones, Sistemas, Seguros y Servicios', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'gastos_com': {
-            'titulo': '5. GASTOS COMERCIALES, DISTRIBUCIÓN & EXPORTACIÓN',
+            'titulo': '5. GASTOS COMERCIALES, DISTRIBUCIÃ“N & EXPORTACIÃ“N',
             'tipo': 'seccion',
             'items': OrderedDict([
                 ('fletes_puerto', {'label': 'Fletes Terrestres a Puerto y Despachos Aduana', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
                 ('comisiones_broker', {'label': 'Comisiones de Venta y Brokers Internacionales', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('certificaciones_mkt', {'label': 'Certificaciones de Calidad (Kosher/Orgánico) y Ferias', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('certificaciones_mkt', {'label': 'Certificaciones de Calidad (Kosher/OrgÃ¡nico) y Ferias', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'amortizaciones': {
             'titulo': '6. AMORTIZACIONES Y DEPRECIACIONES',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('depreciaciones', {'label': 'Depreciación Plantaciones, Pozos de Riego y Maquinaria', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('depreciaciones', {'label': 'DepreciaciÃ³n Plantaciones, Pozos de Riego y Maquinaria', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'financieros': {
             'titulo': '7. RESULTADOS FINANCIEROS Y DIFERENCIAS DE CAMBIO',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('intereses_gastos', {'label': 'Intereses Prefinanciación BICE y Gastos Bancarios', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('dif_cambio', {'label': 'Diferencia de Cambio Neta (Liquidación Divisas / Proveedores)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('intereses_gastos', {'label': 'Intereses PrefinanciaciÃ³n BICE y Gastos Bancarios', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('dif_cambio', {'label': 'Diferencia de Cambio Neta (LiquidaciÃ³n Divisas / Proveedores)', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         },
         'impuestos': {
             'titulo': '8. IMPUESTO A LAS GANANCIAS Y TASAS',
             'tipo': 'seccion',
             'items': OrderedDict([
-                ('ganancias', {'label': 'Provisión Impuesto a las Ganancias Ejercicio', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
-                ('tasas_ing_brutos', {'label': 'Ingresos Brutos, Canon Hídrico y Tasas Municipales', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('ganancias', {'label': 'ProvisiÃ³n Impuesto a las Ganancias Ejercicio', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
+                ('tasas_ing_brutos', {'label': 'Ingresos Brutos, Canon HÃ­drico y Tasas Municipales', 'ars': Decimal('0'), 'presup_ars': Decimal('0'), 'obs': ''}),
             ])
         }
     }
 
-    # Asignar cada línea al grupo e ítem correspondiente
+    # Asignar cada lÃ­nea al grupo e Ã­tem correspondiente
     for l in cuadro_activo.lineas.select_related('cuenta_contable').all():
         n = (l.cuenta_contable.nombre or '').lower()
         sec = l.seccion
@@ -402,7 +402,7 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-oliva-900',
     })
 
-    # 2. Costos Agrícolas
+    # 2. Costos AgrÃ­colas
     items_agro = [format_item(d) for d in grupos['costos_agro']['items'].values() if d['ars'] > 0 or d['presup_ars'] > 0]
     total_agro_ars = sum((it['monto_ars'] for it in items_agro), Decimal('0'))
     total_agro_usd = round(total_agro_ars / tc, 2)
@@ -411,7 +411,7 @@ def build_cuadro_simplificado(cuadro_activo, tc):
     resultado_bloques.append({
         'tipo': 'seccion',
         'key': 'costos_agro',
-        'titulo': '2. COSTOS DIRECTOS DE PRODUCCIÓN AGRÍCOLA (CAMPO)',
+        'titulo': '2. COSTOS DIRECTOS DE PRODUCCIÃ“N AGRÃCOLA (CAMPO)',
         'items': items_agro,
         'subtotal_ars': total_agro_ars,
         'subtotal_usd': total_agro_usd,
@@ -421,14 +421,14 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-amber-900',
     })
 
-    # 👉 MARGEN AGRÍCOLA
+    # ðŸ‘‰ MARGEN AGRÃCOLA
     margen_agro_ars = total_ventas_ars - total_agro_ars
     margen_agro_usd = round(margen_agro_ars / tc, 2)
     pct_margen_agro = round((margen_agro_ars / total_ventas_ars) * 100, 1) if total_ventas_ars > 0 else 0.0
     resultado_bloques.append({
         'tipo': 'indicador_clave',
-        'titulo': '(=) MARGEN DE CONTRIBUCIÓN AGRÍCOLA (CAMPO)',
-        'descripcion': 'Facturación neta menos costos directos de mano de obra, fertirriego, químicos y laboreo.',
+        'titulo': '(=) MARGEN DE CONTRIBUCIÃ“N AGRÃCOLA (CAMPO)',
+        'descripcion': 'FacturaciÃ³n neta menos costos directos de mano de obra, fertirriego, quÃ­micos y laboreo.',
         'monto_ars': margen_agro_ars,
         'monto_usd': margen_agro_usd,
         'pct_ventas': pct_margen_agro,
@@ -454,21 +454,21 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-amber-900',
     })
 
-    # 👉 MARGEN BRUTO OPERATIVO
+    # ðŸ‘‰ MARGEN BRUTO OPERATIVO
     margen_bruto_ars = margen_agro_ars - total_ind_ars
     margen_bruto_usd = round(margen_bruto_ars / tc, 2)
     pct_margen_bruto = round((margen_bruto_ars / total_ventas_ars) * 100, 1) if total_ventas_ars > 0 else 0.0
     resultado_bloques.append({
         'tipo': 'indicador_clave',
         'titulo': '(=) MARGEN BRUTO OPERATIVO (UTILIDAD BRUTA AGROINDUSTRIAL)',
-        'descripcion': 'Margen después de absorber todos los costos directos de campo, molienda y envasado.',
+        'descripcion': 'Margen despuÃ©s de absorber todos los costos directos de campo, molienda y envasado.',
         'monto_ars': margen_bruto_ars,
         'monto_usd': margen_bruto_usd,
         'pct_ventas': pct_margen_bruto,
         'badge_bg': 'bg-emerald-100 text-emerald-950 font-bold border border-emerald-300',
     })
 
-    # 4. Gastos de Administración
+    # 4. Gastos de AdministraciÃ³n
     items_admin = [format_item(d) for d in grupos['gastos_admin']['items'].values() if d['ars'] > 0 or d['presup_ars'] > 0]
     total_admin_ars = sum((it['monto_ars'] for it in items_admin), Decimal('0'))
     total_admin_usd = round(total_admin_ars / tc, 2)
@@ -477,7 +477,7 @@ def build_cuadro_simplificado(cuadro_activo, tc):
     resultado_bloques.append({
         'tipo': 'seccion',
         'key': 'gastos_admin',
-        'titulo': '4. GASTOS DE ADMINISTRACIÓN Y ESTRUCTURA',
+        'titulo': '4. GASTOS DE ADMINISTRACIÃ“N Y ESTRUCTURA',
         'items': items_admin,
         'subtotal_ars': total_admin_ars,
         'subtotal_usd': total_admin_usd,
@@ -496,7 +496,7 @@ def build_cuadro_simplificado(cuadro_activo, tc):
     resultado_bloques.append({
         'tipo': 'seccion',
         'key': 'gastos_com',
-        'titulo': '5. GASTOS COMERCIALES, LOGÍSTICA & EXPORTACIÓN',
+        'titulo': '5. GASTOS COMERCIALES, LOGÃSTICA & EXPORTACIÃ“N',
         'items': items_com,
         'subtotal_ars': total_com_ars,
         'subtotal_usd': total_com_usd,
@@ -506,14 +506,14 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-slate-800',
     })
 
-    # 👉 EBITDA
+    # ðŸ‘‰ EBITDA
     ebitda_ars = margen_bruto_ars - (total_admin_ars + total_com_ars)
     ebitda_usd = round(ebitda_ars / tc, 2)
     pct_ebitda = round((ebitda_ars / total_ventas_ars) * 100, 1) if total_ventas_ars > 0 else 0.0
     resultado_bloques.append({
         'tipo': 'indicador_clave',
         'titulo': '(=) EBITDA OPERATIVO (RESULTADO ANTES DE AMORTIZACIONES E IMPUESTOS)',
-        'descripcion': 'Capacidad pura de generación operativa de fondos de la empresa olivícola.',
+        'descripcion': 'Capacidad pura de generaciÃ³n operativa de fondos de la empresa olivÃ­cola.',
         'monto_ars': ebitda_ars,
         'monto_usd': ebitda_usd,
         'pct_ventas': pct_ebitda,
@@ -539,14 +539,14 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-slate-800',
     })
 
-    # 👉 EBIT
+    # ðŸ‘‰ EBIT
     ebit_ars = ebitda_ars - total_amort_ars
     ebit_usd = round(ebit_ars / tc, 2)
     pct_ebit = round((ebit_ars / total_ventas_ars) * 100, 1) if total_ventas_ars > 0 else 0.0
     resultado_bloques.append({
         'tipo': 'indicador_clave',
         'titulo': '(=) EBIT OPERATIVO (RESULTADO OPERATIVO NETO)',
-        'descripcion': 'Resultado operativo descontando el desgaste del capital invertido en plantación y maquinarias.',
+        'descripcion': 'Resultado operativo descontando el desgaste del capital invertido en plantaciÃ³n y maquinarias.',
         'monto_ars': ebit_ars,
         'monto_usd': ebit_usd,
         'pct_ventas': pct_ebit,
@@ -591,14 +591,14 @@ def build_cuadro_simplificado(cuadro_activo, tc):
         'text_header': 'text-slate-800',
     })
 
-    # 🏆 RESULTADO NETO FINAL
+    # ðŸ† RESULTADO NETO FINAL
     resultado_neto_ars = ebit_ars + total_fin_ars - total_imp_ars
     resultado_neto_usd = round(resultado_neto_ars / tc, 2)
     pct_resultado_neto = round((resultado_neto_ars / total_ventas_ars) * 100, 1) if total_ventas_ars > 0 else 0.0
     resultado_bloques.append({
         'tipo': 'indicador_final',
         'titulo': '(=) RESULTADO NETO DEL EJERCICIO',
-        'descripcion': 'Utilidad neta final distribuible de la campaña olivícola tras impuestos y financiamiento.',
+        'descripcion': 'Utilidad neta final distribuible de la campaÃ±a olivÃ­cola tras impuestos y financiamiento.',
         'monto_ars': resultado_neto_ars,
         'monto_usd': resultado_neto_usd,
         'pct_ventas': pct_resultado_neto,
@@ -675,7 +675,7 @@ class FinanzasDashboardView(TemplateView):
         ctx['total_consolidado_ars'] = total_consolidado_ars
         ctx['total_consolidado_usd'] = total_consolidado_usd
 
-        # Datos para Módulo de Libro de IVA & Facturación (1 consulta unificada)
+        # Datos para MÃ³dulo de Libro de IVA & FacturaciÃ³n (1 consulta unificada)
         periodo_mes = self.request.GET.get('periodo_mes')
         periodo_ano = self.request.GET.get('periodo_ano')
 
@@ -696,11 +696,11 @@ class FinanzasDashboardView(TemplateView):
         ctx['facturas_compras'] = facturas_compras
         ctx['facturas_ventas'] = facturas_ventas
 
-        tot_credito = sum((f.total_iva for f in facturas_compras), Decimal('0.00'))
-        tot_debito = sum((f.total_iva for f in facturas_ventas), Decimal('0.00'))
-        tot_neto_compras = sum((f.neto_gravado_21 + f.neto_gravado_10_5 for f in facturas_compras), Decimal('0.00'))
-        tot_neto_ventas = sum((f.neto_gravado_21 + f.neto_gravado_10_5 for f in facturas_ventas), Decimal('0.00'))
-        tot_percep = sum((f.percepcion_iibb + f.percepcion_iva for f in facturas_compras), Decimal('0.00'))
+        tot_credito = sum((f.total_iva * f.tipo_cambio for f in facturas_compras), Decimal('0.00'))
+        tot_debito = sum((f.total_iva * f.tipo_cambio for f in facturas_ventas), Decimal('0.00'))
+        tot_neto_compras = sum((f.neto_gravado_total * f.tipo_cambio for f in facturas_compras), Decimal('0.00'))
+        tot_neto_ventas = sum((f.neto_gravado_total * f.tipo_cambio for f in facturas_ventas), Decimal('0.00'))
+        tot_percep = sum((f.total_tributos * f.tipo_cambio for f in facturas_compras), Decimal('0.00'))
 
         ctx['total_credito_fiscal'] = tot_credito
         ctx['total_debito_fiscal'] = tot_debito
@@ -713,7 +713,7 @@ class FinanzasDashboardView(TemplateView):
         tcs_empresa = list(TipoCambioMensual.objects.filter(empresa=empresa)) if empresa else []
         tc_dict = {(tc.ano, tc.mes): tc.tc for tc in tcs_empresa}
 
-        # Selector de Período para Flujo de Caja
+        # Selector de PerÃ­odo para Flujo de Caja
         periodo_flujo = self.request.GET.get('periodo_flujo')
         if not periodo_flujo:
             if MovimientoFinanciero.objects.filter(fecha__year=2026).exists():
@@ -725,7 +725,7 @@ class FinanzasDashboardView(TemplateView):
         if periodo_flujo == 'q1_2026':
             f_desde = datetime.date(2026, 1, 1)
             f_hasta = datetime.date(2026, 3, 31)
-            ctx['periodo_flujo_label'] = "1° Trimestre 2026 (Ene - Mar)"
+            ctx['periodo_flujo_label'] = "1Â° Trimestre 2026 (Ene - Mar)"
             meses_list = [
                 ('Ene 26', datetime.date(2026, 1, 1), datetime.date(2026, 2, 1)),
                 ('Feb 26', datetime.date(2026, 2, 1), datetime.date(2026, 3, 1)),
@@ -734,7 +734,7 @@ class FinanzasDashboardView(TemplateView):
         elif periodo_flujo == 'ano_2026':
             f_desde = datetime.date(2026, 1, 1)
             f_hasta = datetime.date(2026, 12, 31)
-            ctx['periodo_flujo_label'] = "Año 2026 Completo"
+            ctx['periodo_flujo_label'] = "AÃ±o 2026 Completo"
             meses_list = []
             nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
             for m in range(1, 13):
@@ -745,14 +745,14 @@ class FinanzasDashboardView(TemplateView):
             hoy = timezone.now().date()
             f_hasta = hoy
             f_desde = (hoy.replace(day=1) - datetime.timedelta(days=5 * 28)).replace(day=1)
-            ctx['periodo_flujo_label'] = "Últimos 6 Meses"
+            ctx['periodo_flujo_label'] = "Ãšltimos 6 Meses"
             meses_list = []
             for i in range(5, -1, -1):
                 mes_ref = (hoy.replace(day=1) - datetime.timedelta(days=i * 28)).replace(day=1)
                 siguiente = (mes_ref.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
                 meses_list.append((mes_ref.strftime('%b %y'), mes_ref, siguiente))
 
-        # Movimientos del período analizado (1 consulta precargada en memoria)
+        # Movimientos del perÃ­odo analizado (1 consulta precargada en memoria)
         movs_periodo = list(
             MovimientoFinanciero.objects.filter(
                 fecha__gte=f_desde, fecha__lte=f_hasta
@@ -791,7 +791,7 @@ class FinanzasDashboardView(TemplateView):
         ctx['ingresos_mes'] = ingresos_ars
         ctx['egresos_mes'] = egresos_ars
 
-        # Gráfico dinámico por mes (Calculado 100% en memoria sobre movs_periodo, 0 queries extra)
+        # GrÃ¡fico dinÃ¡mico por mes (Calculado 100% en memoria sobre movs_periodo, 0 queries extra)
         grafico_data = []
         for nombre_mes, d_ini, d_fin in meses_list:
             tc_mes = tc_dict.get((d_ini.year, d_ini.month), tc_vigente)
@@ -849,7 +849,7 @@ class FinanzasDashboardView(TemplateView):
         if cuadro_id and str(cuadro_id).isdigit():
             cuadro_activo = cuadros.filter(id=int(cuadro_id)).first()
         if not cuadro_activo:
-            cuadro_q1_demo = cuadros.filter(titulo__icontains="1° Trimestre 2026").first()
+            cuadro_q1_demo = cuadros.filter(titulo__icontains="1Â° Trimestre 2026").first()
             if cuadro_q1_demo:
                 cuadro_activo = cuadro_q1_demo
             elif cuadros.exists():
@@ -898,7 +898,7 @@ class FinanzasDashboardView(TemplateView):
 
             ctx['secciones_resultado'] = [s for s in secciones.values() if s['lineas']]
 
-        # Detección de datos de prueba (Q1 2026)
+        # DetecciÃ³n de datos de prueba (Q1 2026)
         ctx['hay_datos_demo'] = CuadroResultado.objects.filter(
             fecha_inicio__gte=datetime.date(2026, 1, 1), 
             fecha_fin__lte=datetime.date(2026, 3, 31)
@@ -978,7 +978,7 @@ class MovimientoCreateView(CreateView):
 
 
 class TransferenciaCreateView(CreateView):
-    """Vista específica para registrar transferencias entre cuentas propias."""
+    """Vista especÃ­fica para registrar transferencias entre cuentas propias."""
     model = MovimientoFinanciero
     fields = ['cuenta', 'cuenta_destino', 'fecha', 'importe', 'moneda', 'concepto']
     template_name = 'finanzas/partials/transferencia_form_modal.html'
@@ -1104,7 +1104,7 @@ class ConciliacionDetailView(DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         c = self.get_object()
-        # Movimientos del período de la cuenta
+        # Movimientos del perÃ­odo de la cuenta
         ctx['movimientos'] = MovimientoFinanciero.objects.filter(
             cuenta=c.cuenta,
             fecha__lte=c.fecha_extracto
@@ -1148,7 +1148,7 @@ class PlanCuentasView(TemplateView):
 
 
 class CuentaContableDetailModalView(DetailView):
-    """Modal HTMX / parcial con el detalle agronómico y las relaciones de una cuenta contable."""
+    """Modal HTMX / parcial con el detalle agronÃ³mico y las relaciones de una cuenta contable."""
     model = CuentaContable
     template_name = 'finanzas/partials/cuenta_contable_detail_modal.html'
     context_object_name = 'cuenta'
@@ -1165,19 +1165,19 @@ class CuentaContableDetailModalView(DetailView):
 
 
 class CuentaContableUpdateView(UpdateView):
-    """Permite actualizar la nota técnica o estado de una cuenta contable."""
+    """Permite actualizar la nota tÃ©cnica o estado de una cuenta contable."""
     model = CuentaContable
     fields = ['nombre', 'saldo_habitual', 'clase', 'es_imputable', 'nota', 'activa']
     template_name = 'finanzas/partials/cuenta_contable_edit_modal.html'
     success_url = reverse_lazy('finanzas:plan_cuentas')
 
     def form_valid(self, form):
-        messages.success(self.request, f"Cuenta {form.instance.codigo} actualizada con éxito.")
+        messages.success(self.request, f"Cuenta {form.instance.codigo} actualizada con Ã©xito.")
         return super().form_valid(form)
 
 
 class VincularEntidadRapidaView(View):
-    """Enlace rápido desde la interfaz entre entidades operativas y cuentas del Plan de Cuentas."""
+    """Enlace rÃ¡pido desde la interfaz entre entidades operativas y cuentas del Plan de Cuentas."""
 
     def post(self, request, *args, **kwargs):
         entidad_tipo = request.POST.get('entidad_tipo')
@@ -1198,11 +1198,11 @@ class VincularEntidadRapidaView(View):
             if campo == 'activo':
                 cat.cuenta_contable_activo = cuenta_contable
                 cat.save(update_fields=['cuenta_contable_activo'])
-                messages.success(request, f"Cuenta de activo de categoría '{cat.nombre}' actualizada.")
+                messages.success(request, f"Cuenta de activo de categorÃ­a '{cat.nombre}' actualizada.")
             else:
                 cat.cuenta_contable_gasto = cuenta_contable
                 cat.save(update_fields=['cuenta_contable_gasto'])
-                messages.success(request, f"Cuenta de consumo de categoría '{cat.nombre}' actualizada.")
+                messages.success(request, f"Cuenta de consumo de categorÃ­a '{cat.nombre}' actualizada.")
 
         elif entidad_tipo == 'centro_costo':
             cc = get_object_or_404(CentroDeCosto, id=entidad_id)
@@ -1215,7 +1215,7 @@ class VincularEntidadRapidaView(View):
 
 
 class SincronizarPlanCuentasView(View):
-    """Ejecuta la sincronización / reimportación desde el archivo Excel del servidor."""
+    """Ejecuta la sincronizaciÃ³n / reimportaciÃ³n desde el archivo Excel del servidor."""
 
     def post(self, request, *args, **kwargs):
         try:
@@ -1229,14 +1229,14 @@ class SincronizarPlanCuentasView(View):
 
 
 class TipoCambioGuardarView(View):
-    """Guarda o actualiza el coeficiente oficial de tipo de cambio para un año y mes."""
+    """Guarda o actualiza el coeficiente oficial de tipo de cambio para un aÃ±o y mes."""
 
     def post(self, request, *args, **kwargs):
         empresa = Empresa.objects.first()
         ano = request.POST.get('ano')
         mes = request.POST.get('mes')
         tc_str = request.POST.get('tc', '').strip().replace(',', '.')
-        fuente = request.POST.get('fuente', '').strip() or 'Banco Nación (BNA) / Oficial'
+        fuente = request.POST.get('fuente', '').strip() or 'Banco NaciÃ³n (BNA) / Oficial'
 
         try:
             ano_val = int(ano)
@@ -1275,7 +1275,7 @@ class TipoCambioGuardarView(View):
 
 
 class CuadroResultadoCreateView(View):
-    """Crea un nuevo período para el Estado de Resultados."""
+    """Crea un nuevo perÃ­odo para el Estado de Resultados."""
 
     def post(self, request, *args, **kwargs):
         empresa = Empresa.objects.first()
@@ -1329,7 +1329,7 @@ class CuadroResultadoCreateView(View):
 
 
 class LineaCuadroResultadoUpdateView(View):
-    """Actualiza una línea individual del cuadro (monto real, presupuesto u observaciones). Soporta AJAX."""
+    """Actualiza una lÃ­nea individual del cuadro (monto real, presupuesto u observaciones). Soporta AJAX."""
 
     def post(self, request, pk, *args, **kwargs):
         linea = get_object_or_404(LineaCuadroResultado, pk=pk)
@@ -1379,12 +1379,12 @@ class LineaCuadroResultadoUpdateView(View):
                 }
             })
 
-        messages.success(request, f"Línea '{linea.cuenta_contable.nombre}' actualizada.")
+        messages.success(request, f"LÃ­nea '{linea.cuenta_contable.nombre}' actualizada.")
         return redirect(f"/finanzas/?tab=resultados&cuadro_id={cuadro.id}")
 
 
 class CuadroResultadoNotasUpdateView(View):
-    """Actualiza notas ejecutivas, estado y parámetros del período para el Directorio."""
+    """Actualiza notas ejecutivas, estado y parÃ¡metros del perÃ­odo para el Directorio."""
 
     def post(self, request, pk, *args, **kwargs):
         cuadro = get_object_or_404(CuadroResultado, pk=pk)
@@ -1409,12 +1409,12 @@ class CuadroResultadoNotasUpdateView(View):
                 pass
 
         cuadro.save()
-        messages.success(request, "Notas gerenciales y parámetros del período actualizados con éxito.")
+        messages.success(request, "Notas gerenciales y parÃ¡metros del perÃ­odo actualizados con Ã©xito.")
         return redirect(f"/finanzas/?tab=resultados&cuadro_id={cuadro.id}")
 
 
 class CuadroResultadoPrintView(DetailView):
-    """Vista ejecutiva de presentación imprimible para Gerencia General y Directorio."""
+    """Vista ejecutiva de presentaciÃ³n imprimible para Gerencia General y Directorio."""
     model = CuadroResultado
     template_name = 'finanzas/cuadro_resultado_print.html'
     context_object_name = 'cuadro'
@@ -1464,7 +1464,7 @@ class LimpiarDatosDemoView(View):
             total_eliminados = sum(v for k, v in reporte.items() if isinstance(v, int))
             messages.success(
                 request,
-                f"Datos de prueba Q1 2026 eliminados con éxito ({total_eliminados} registros purgados). El sistema quedó listo para operar con datos 100% reales."
+                f"Datos de prueba Q1 2026 eliminados con Ã©xito ({total_eliminados} registros purgados). El sistema quedÃ³ listo para operar con datos 100% reales."
             )
         except Exception as e:
             messages.error(request, f"Error al limpiar datos de prueba: {str(e)}")
@@ -1483,7 +1483,7 @@ class PoblarDatosDemoView(View):
             poblar_datos_demo_q1_2026()
             from apps.finanzas.services_proyeccion_demo import poblar_datos_dinamicos_proyeccion
             poblar_datos_dinamicos_proyeccion()
-            messages.success(request, "Datos de prueba del 1° Trimestre 2026 (Ene-Mar) generados con éxito.")
+            messages.success(request, "Datos de prueba del 1Â° Trimestre 2026 (Ene-Mar) generados con Ã©xito.")
         except Exception as e:
             messages.error(request, f"Error al poblar datos de prueba: {str(e)}")
         
@@ -1507,7 +1507,7 @@ class ComprobantePrintView(DetailView):
 
         tipo_upper = (mov.comprobante_tipo or '').strip().upper()
 
-        # Clasificación fiscal AFIP del comprobante
+        # ClasificaciÃ³n fiscal AFIP del comprobante
         if 'FACTURA A' in tipo_upper or 'FACTURA-A' in tipo_upper or tipo_upper == 'A':
             letra = 'A'
             cod_afip = '01'
@@ -1521,7 +1521,7 @@ class ComprobantePrintView(DetailView):
         elif 'FACTURA E' in tipo_upper or 'FACTURA-E' in tipo_upper or tipo_upper == 'E':
             letra = 'E'
             cod_afip = '19'
-            nombre_doc = 'FACTURA "E" DE EXPORTACIÓN'
+            nombre_doc = 'FACTURA "E" DE EXPORTACIÃ“N'
             aplica_iva = False
         elif 'RECIBO' in tipo_upper:
             letra = 'R'
@@ -1545,7 +1545,7 @@ class ComprobantePrintView(DetailView):
                 nombre_doc = 'ORDEN DE PAGO / COMPROBANTE DE EGRESO'
                 aplica_iva = False
 
-        # Desglose de importes e IVA (21% estándar)
+        # Desglose de importes e IVA (21% estÃ¡ndar)
         if aplica_iva:
             tasa_iva = Decimal('21.00')
             neto_gravado = (mov.importe / Decimal('1.21')).quantize(Decimal('0.01'))
@@ -1555,7 +1555,7 @@ class ComprobantePrintView(DetailView):
             neto_gravado = mov.importe
             iva_liquidado = Decimal('0.00')
 
-        # Formato de punto de venta y número
+        # Formato de punto de venta y nÃºmero
         comp_nro = mov.comprobante_nro or f"{mov.pk:08d}"
         if '-' in comp_nro:
             partes = comp_nro.split('-', 1)
@@ -1565,7 +1565,7 @@ class ComprobantePrintView(DetailView):
             pto_vta = '0001'
             nro_formateado = comp_nro.zfill(8)
 
-        # Conversión cambiaria
+        # ConversiÃ³n cambiaria
         tc = mov.tipo_cambio if (mov.tipo_cambio and mov.tipo_cambio > 1) else TipoCambioMensual.get_tc(empresa, mov.fecha.year, mov.fecha.month)
         if mov.moneda == 'ARS':
             importe_usd = (mov.importe / tc).quantize(Decimal('0.01')) if tc else None
@@ -1578,7 +1578,7 @@ class ComprobantePrintView(DetailView):
         cae_num = f"74{mov.fecha.strftime('%y%m')}{mov.pk:08d}"[:14]
         vto_cae = mov.fecha + timedelta(days=10)
 
-        # Generar QR para comprobante de tesorería
+        # Generar QR para comprobante de tesorerÃ­a
         try:
             import qrcode, io, base64
             qr = qrcode.QRCode(version=1, box_size=4, border=1)
@@ -1627,11 +1627,11 @@ class PagoProveedorView(View):
         proveedor = get_object_or_404(CuentaCorriente, id=proveedor_id, tipo_entidad=CuentaCorriente.TipoEntidad.PROVEEDOR)
         fecha = datetime.date.fromisoformat(fecha_str) if fecha_str else timezone.now().date()
 
-        # ─── Pago con cheques de cartera ──────────────────────────────────
+        # â”€â”€â”€ Pago con cheques de cartera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if medio_pago == 'CHEQUE_TERCERO':
             cheques_ids = request.POST.getlist('cheques_ids')
             if not cheques_ids:
-                messages.error(request, "Debés seleccionar al menos un cheque de cartera.")
+                messages.error(request, "DebÃ©s seleccionar al menos un cheque de cartera.")
                 return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
 
             cheques_obj = list(Cheque.objects.filter(
@@ -1640,7 +1640,7 @@ class PagoProveedorView(View):
                 tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
             ))
             if not cheques_obj:
-                messages.error(request, "Los cheques seleccionados no están disponibles en cartera.")
+                messages.error(request, "Los cheques seleccionados no estÃ¡n disponibles en cartera.")
                 return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
 
             importe = sum(ch.importe for ch in cheques_obj)
@@ -1672,12 +1672,12 @@ class PagoProveedorView(View):
 
             messages.success(
                 request,
-                f"✅ Pago de ${importe:,.2f} registrado a {proveedor.razon_social} "
+                f"âœ… Pago de ${importe:,.2f} registrado a {proveedor.razon_social} "
                 f"mediante {len(cheques_obj)} cheque(s) endosado(s)."
             )
             return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
 
-        # ─── Pago convencional (transferencia, efectivo, etc.) ────────────
+        # â”€â”€â”€ Pago convencional (transferencia, efectivo, etc.) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         cuenta_id = request.POST.get('cuenta_id')
         importe = Decimal(request.POST.get('importe', '0'))
         cuenta = get_object_or_404(Cuenta, id=cuenta_id)
@@ -1744,21 +1744,21 @@ class ComprobanteCuentaCorrienteView(View):
         
         entidad = get_object_or_404(CuentaCorriente, id=entidad_id)
         if entidad.tipo_entidad == CuentaCorriente.TipoEntidad.PROVEEDOR:
-            # Factura de compra: aumenta nuestra deuda (saldo más negativo)
+            # Factura de compra: aumenta nuestra deuda (saldo mÃ¡s negativo)
             entidad.saldo_actual -= importe
             entidad.save(update_fields=['saldo_actual', 'updated_at'])
-            messages.success(request, f"Comprobante {tipo_comprobante} N° {comprobante_nro} registrado por ${importe:,.2f} a {entidad.razon_social}.")
+            messages.success(request, f"Comprobante {tipo_comprobante} NÂ° {comprobante_nro} registrado por ${importe:,.2f} a {entidad.razon_social}.")
             return redirect(reverse_lazy('finanzas:dashboard') + '?tab=proveedores')
         else:
-            # Factura de venta: aumenta saldo a cobrar (más positivo)
+            # Factura de venta: aumenta saldo a cobrar (mÃ¡s positivo)
             entidad.saldo_actual += importe
             entidad.save(update_fields=['saldo_actual', 'updated_at'])
-            messages.success(request, f"Factura de Venta N° {comprobante_nro} registrada por ${importe:,.2f} a {entidad.razon_social}.")
+            messages.success(request, f"Factura de Venta NÂ° {comprobante_nro} registrada por ${importe:,.2f} a {entidad.razon_social}.")
             return redirect(reverse_lazy('finanzas:dashboard') + '?tab=clientes')
 
 
 class CuentaCorrienteDetalleModalView(View):
-    """Devuelve el extracto / movimientos de una cuenta corriente específica para modal HTMX."""
+    """Devuelve el extracto / movimientos de una cuenta corriente especÃ­fica para modal HTMX."""
     def get(self, request, pk):
         entidad = get_object_or_404(CuentaCorriente, pk=pk)
         movimientos = MovimientoFinanciero.objects.filter(cuenta_corriente=entidad).select_related('cuenta').order_by('-fecha', '-created_at')[:50]
@@ -1773,7 +1773,7 @@ class CuentaCorrienteDetalleModalView(View):
 
 
 class ArqueoCajaView(View):
-    """Procesa el arqueo de caja físico y genera ajuste automático si se solicita."""
+    """Procesa el arqueo de caja fÃ­sico y genera ajuste automÃ¡tico si se solicita."""
     def post(self, request):
         cuenta_id = request.POST.get('cuenta_id')
         monto_fisico = Decimal(request.POST.get('monto_fisico', '0'))
@@ -1805,7 +1805,7 @@ class ArqueoCajaView(View):
             )
             messages.success(request, f"Arqueo realizado en {cuenta.nombre}. Saldo ajustado a ${monto_fisico:,.2f} con registro de diferencia.")
         else:
-            messages.info(request, f"Arqueo registrado en {cuenta.nombre}. Conteo físico: ${monto_fisico:,.2f} | Sistema: ${cuenta.saldo_actual:,.2f} | Diferencia: ${diferencia:,.2f}.")
+            messages.info(request, f"Arqueo registrado en {cuenta.nombre}. Conteo fÃ­sico: ${monto_fisico:,.2f} | Sistema: ${cuenta.saldo_actual:,.2f} | Diferencia: ${diferencia:,.2f}.")
             
         return redirect(reverse_lazy('finanzas:dashboard') + '?tab=caja')
 
@@ -1839,7 +1839,7 @@ class ChequeCambiarEstadoView(View):
                 fecha=timezone.now().date(),
                 importe=cheque.importe,
                 moneda=cuenta.moneda,
-                concepto=f"Acreditación Cheque {cheque.banco_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
+                concepto=f"AcreditaciÃ³n Cheque {cheque.banco_emisor} #{cheque.numero} ({cheque.emisor_firmante})",
 
                 comprobante_tipo="CHEQUE_COBRADO",
                 comprobante_nro=cheque.numero,
@@ -1875,14 +1875,14 @@ class CuentaCorrienteCreateView(CreateView):
     
     def form_valid(self, form):
         entidad = form.save()
-        messages.success(self.request, f"{entidad.get_tipo_entidad_display()} '{entidad.razon_social}' creado con éxito.")
+        messages.success(self.request, f"{entidad.get_tipo_entidad_display()} '{entidad.razon_social}' creado con Ã©xito.")
         tab = 'proveedores' if entidad.tipo_entidad == CuentaCorriente.TipoEntidad.PROVEEDOR else 'clientes'
         return redirect(reverse_lazy('finanzas:dashboard') + f'?tab={tab}')
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# VISTAS DE FACTURACIÓN, PAGOS/COBROS, LIBRO DE IVA Y ARQUEO DE CAJA
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# VISTAS DE FACTURACIÃ“N, PAGOS/COBROS, LIBRO DE IVA Y ARQUEO DE CAJA
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class ComprobanteFiscalCreateView(View):
     """Alta de Comprobante Fiscal (Factura A, B, C) con impacto en cta cte y Libro de IVA."""
@@ -1933,21 +1933,16 @@ class ComprobanteFiscalCreateView(View):
             concepto = request.POST.get('concepto', '').strip()
 
             condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
+            moneda = request.POST.get('moneda', 'ARS')
+            tipo_cambio = Decimal(request.POST.get('tipo_cambio') or '1.0')
 
-            if es_oficial:
-                neto_21 = Decimal(request.POST.get('neto_gravado_21') or '0.00')
-                neto_105 = Decimal(request.POST.get('neto_gravado_10_5') or '0.00')
-                exento = Decimal(request.POST.get('exento') or '0.00')
-                percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
-            else:
-                neto_21 = Decimal('0.00')
-                neto_105 = Decimal('0.00')
-                exento = Decimal(request.POST.get('exento_interno') or '0.00')
-                percep_iibb = Decimal('0.00')
-
-            iva_21 = round(neto_21 * Decimal('0.21'), 2)
-            iva_105 = round(neto_105 * Decimal('0.105'), 2)
-            total = neto_21 + neto_105 + iva_21 + iva_105 + exento + percep_iibb
+            exento = Decimal(request.POST.get('exento') or '0.00')
+            no_gravado = Decimal(request.POST.get('no_gravado') or '0.00')
+            percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
+            percep_iva = Decimal(request.POST.get('percepcion_iva') or '0.00')
+            percep_gan = Decimal(request.POST.get('percepcion_ganancias') or '0.00')
+            imp_muni = Decimal(request.POST.get('impuestos_municipales') or '0.00')
+            imp_int = Decimal(request.POST.get('impuestos_internos') or '0.00')
 
             cuenta_corriente = get_object_or_404(CuentaCorriente, pk=cuenta_corriente_id)
             cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
@@ -1964,33 +1959,61 @@ class ComprobanteFiscalCreateView(View):
                 cuit=cuenta_corriente.cuit,
                 condicion_iva=condicion_iva,
                 concepto=concepto,
-                neto_gravado_21=neto_21,
-                neto_gravado_10_5=neto_105,
-                iva_21=iva_21,
-                iva_10_5=iva_105,
+                moneda=moneda,
+                tipo_cambio=tipo_cambio,
                 exento=exento,
+                no_gravado=no_gravado,
                 percepcion_iibb=percep_iibb,
-                total=total,
-                saldo_pendiente=total,
+                percepcion_iva=percep_iva,
+                percepcion_ganancias=percep_gan,
+                impuestos_municipales=imp_muni,
+                impuestos_internos=imp_int,
                 cuenta_contable_id=cuenta_contable_id,
                 es_oficial=es_oficial
             )
 
-            # Impacto en la cuenta corriente
-            if tipo_operacion == 'COMPRA':
-                cuenta_corriente.saldo_actual -= total  # Aumenta deuda con proveedor
+            # Carga de Detalle si es oficial y tiene Ã­tems
+            if es_oficial:
+                descripciones = request.POST.getlist('item_desc[]')
+                cantidades = request.POST.getlist('item_cant[]')
+                unidades = request.POST.getlist('item_unidad[]')
+                precios = request.POST.getlist('item_precio[]')
+                ivas = request.POST.getlist('item_iva[]')
+
+                if descripciones:
+                    for i in range(len(descripciones)):
+                        if descripciones[i].strip():
+                            DetalleComprobanteFiscal.objects.create(
+                                comprobante=comprobante,
+                                orden=i,
+                                descripcion=descripciones[i].strip(),
+                                cantidad=Decimal(cantidades[i] or '1.00'),
+                                unidad_medida=unidades[i] if (i < len(unidades) and unidades[i]) else 'unidades',
+                                precio_unitario=Decimal(precios[i] or '0.00'),
+                                alicuota_iva=ivas[i] if (i < len(ivas) and ivas[i]) else '21'
+                            )
+                comprobante.recalcular_desde_detalles()
             else:
-                cuenta_corriente.saldo_actual += total  # Aumenta crédito por cobrar a cliente
+                comprobante.exento = Decimal(request.POST.get('exento_interno') or '0.00')
+                comprobante.total = comprobante.exento
+                comprobante.saldo_pendiente = comprobante.total
+                comprobante.save(update_fields=['exento', 'total', 'saldo_pendiente'])
+
+            # Reflejo del saldo
+            if tipo_operacion == 'COMPRA':
+                cuenta_corriente.saldo_actual -= comprobante.total_en_pesos
+            else:
+                cuenta_corriente.saldo_actual += comprobante.total_en_pesos
             cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
 
-            # Autorización inmediata en ARCA si fue solicitada para una Venta Oficial
+            # AutorizaciÃ³n inmediata en ARCA si fue solicitada para una Venta Oficial
             autorizar_arca = request.POST.get('autorizar_arca') in ('1', 'true', 'on')
             if autorizar_arca and tipo_operacion == 'VENTA' and es_oficial:
                 try:
                     res_arca = autorizar_comprobante_arca(comprobante)
                     messages.success(
                         request,
-                        f"¡Factura {comprobante.numero_completo} emitida y autorizada en ARCA! CAE: {res_arca['cae']} (Vto: {res_arca['vto_cae'].strftime('%d/%m/%Y')})."
+                        f"Factura {comprobante.numero_completo} emitida y autorizada en ARCA! CAE: {res_arca['cae']} (Vto: {res_arca['vto_cae'].strftime('%d/%m/%Y')})."
                     )
                 except Exception as e_arca:
                     messages.warning(
@@ -1998,7 +2021,7 @@ class ComprobanteFiscalCreateView(View):
                         f"Comprobante {comprobante.numero_completo} registrado en el ERP, pero no se pudo autorizar en ARCA: {str(e_arca)}. Puede autorizarlo desde el Libro de IVA."
                     )
             else:
-                messages.success(request, f"Comprobante {comprobante.numero_completo} ({cuenta_corriente.razon_social}) registrado en Libro de IVA por ${total:,.2f}.")
+                messages.success(request, f"Comprobante {comprobante.numero_completo} ({cuenta_corriente.razon_social}) registrado en Libro de IVA por {comprobante.moneda} ${comprobante.total:,.2f}.")
         except Exception as e:
             messages.error(request, f"Error al registrar comprobante fiscal: {str(e)}")
 
@@ -2018,11 +2041,11 @@ class ComprobantePagoCobroView(View):
             comprobante = get_object_or_404(ComprobanteFiscal, pk=comprobante_id)
             cuenta_corriente = comprobante.cuenta_corriente
 
-            # ─── Modo cheque de tercero: múltiple selección ───────────────
+            # â”€â”€â”€ Modo cheque de tercero: mÃºltiple selecciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if medio_pago == 'CHEQUE_TERCERO' and not es_cobro:
                 cheques_ids = request.POST.getlist('cheques_ids')
                 if not cheques_ids:
-                    messages.error(request, "Debés seleccionar al menos un cheque de cartera.")
+                    messages.error(request, "DebÃ©s seleccionar al menos un cheque de cartera.")
                     return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
 
                 cheques_obj = list(Cheque.objects.filter(
@@ -2031,7 +2054,7 @@ class ComprobantePagoCobroView(View):
                     tipo=Cheque.TipoCheque.RECIBIDO_TERCERO
                 ))
                 if not cheques_obj:
-                    messages.error(request, "Los cheques seleccionados no están disponibles en cartera.")
+                    messages.error(request, "Los cheques seleccionados no estÃ¡n disponibles en cartera.")
                     return redirect(reverse_lazy('finanzas:dashboard') + '?tab=libro_iva')
 
                 importe = sum(ch.importe for ch in cheques_obj)
@@ -2045,7 +2068,7 @@ class ComprobantePagoCobroView(View):
                 cheque_principal = cheques_obj[0]
                 cuenta_financiera = cheque_principal.cuenta_bancaria_origen or Cuenta.objects.filter(activa=True).first()
 
-                # Movimiento financiero (egreso simbólico por cheques)
+                # Movimiento financiero (egreso simbÃ³lico por cheques)
                 mov_fin = MovimientoFinanciero.objects.create(
                     cuenta=cuenta_financiera,
                     tipo=MovimientoFinanciero.TipoMovimiento.EGRESO,
@@ -2064,7 +2087,8 @@ class ComprobantePagoCobroView(View):
                 cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
 
                 # Actualizar comprobante fiscal
-                comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe)
+                importe_en_moneda_original = (importe / comprobante.tipo_cambio) if (comprobante.moneda != 'ARS' and comprobante.tipo_cambio) else importe
+                comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe_en_moneda_original)
                 if comprobante.saldo_pendiente == 0:
                     comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGADA
                 else:
@@ -2097,12 +2121,12 @@ class ComprobantePagoCobroView(View):
 
                 messages.success(
                     request,
-                    f"✅ Orden de Pago {orden.numero} por ${importe:,.2f} registrada. "
+                    f"âœ… Orden de Pago {orden.numero} por ${importe:,.2f} registrada. "
                     f"{len(cheques_obj)} cheque(s) endosado(s) a {cuenta_corriente.razon_social}."
                 )
                 return redirect('finanzas:orden_pago_print', pk=orden.id)
 
-            # ─── Modo normal: transferencia, efectivo, cheque propio ──────
+            # â”€â”€â”€ Modo normal: transferencia, efectivo, cheque propio â”€â”€â”€â”€â”€â”€
             importe = Decimal(request.POST.get('importe') or '0.00')
             cuenta_financiera_id = request.POST.get('cuenta_financiera_id')
             cuenta_financiera = get_object_or_404(Cuenta, pk=cuenta_financiera_id)
@@ -2139,7 +2163,8 @@ class ComprobantePagoCobroView(View):
             cuenta_corriente.save(update_fields=['saldo_actual', 'updated_at'])
 
             # Actualizar comprobante fiscal
-            comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe)
+            importe_en_moneda_original = (importe / comprobante.tipo_cambio) if (comprobante.moneda != 'ARS' and comprobante.tipo_cambio) else importe
+            comprobante.saldo_pendiente = max(Decimal('0.00'), comprobante.saldo_pendiente - importe_en_moneda_original)
             if comprobante.saldo_pendiente == 0:
                 comprobante.estado_pago = ComprobanteFiscal.EstadoPago.PAGADA
             else:
@@ -2172,7 +2197,7 @@ class ComprobantePagoCobroView(View):
 
 
 class ArqueoCajaCreateView(View):
-    """Cierre y arqueo físico de caja chica diaria."""
+    """Cierre y arqueo fÃ­sico de caja chica diaria."""
     def post(self, request):
         try:
             cuenta_id = request.POST.get('cuenta_id')
@@ -2215,7 +2240,7 @@ class ArqueoCajaCreateView(View):
                 cuenta.save(update_fields=['saldo_actual', 'updated_at'])
 
             dif_txt = f"+${diferencia:,.2f} (sobrante)" if diferencia > 0 else (f"-${abs(diferencia):,.2f} (faltante)" if diferencia < 0 else "cuadrada exacta")
-            messages.success(request, f"Arqueo de {cuenta.nombre} cerrado con éxito al {fecha}. Diferencia: {dif_txt}.")
+            messages.success(request, f"Arqueo de {cuenta.nombre} cerrado con Ã©xito al {fecha}. Diferencia: {dif_txt}.")
         except Exception as e:
             messages.error(request, f"Error al procesar el arqueo: {str(e)}")
 
@@ -2229,7 +2254,7 @@ class OrdenPagoReciboPrintView(DetailView):
 
 
 class ExportarLibroIVAView(View):
-    """Exporta el Libro de IVA en formato Excel (.xlsx) con diseño corporativo."""
+    """Exporta el Libro de IVA en formato Excel (.xlsx) con diseÃ±o corporativo."""
     def get(self, request):
         import openpyxl
         from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -2268,15 +2293,13 @@ class ExportarLibroIVAView(View):
         ws['A1'].alignment = Alignment(horizontal='center')
         
         ws.merge_cells('A2:O2')
-        ws['A2'] = f"LIBRO DE IVA {tipo.upper()}S - PERÍODO {mes:02d}/{ano}"
+        ws['A2'] = f"LIBRO DE IVA {tipo.upper()}S - PERÃODO {mes:02d}/{ano}"
         ws['A2'].font = Font(name='Arial', size=12, bold=True)
         ws['A2'].alignment = Alignment(horizontal='center')
 
-        headers = ['Fecha', 'Tipo Comprobante', 'Pto. Venta', 'Número', 'CUIT', 'Razón Social', 'Cond. IVA', 
-                   'Neto Grav 21%', 'IVA 21%', 'Neto Grav 10.5%', 'IVA 10.5%', 'Exento/No Gravado', 
-                   'Perc. IIBB', 'Total Facturado', 'Estado AFIP']
+        headers = ['Fecha', 'Tipo Comprobante', 'Pto. Venta', 'Número', 'CUIT', 'Razón Social', 'Cond. IVA', 'Moneda', 'T.C.', 'Neto 21%', 'IVA 21%', 'Neto 10.5%', 'IVA 10.5%', 'Neto 5%', 'IVA 5%', 'Neto 2.5%', 'IVA 2.5%', 'Exento', 'No Gravado', 'Perc. Gan.', 'Perc. IVA', 'Perc. IIBB', 'Imp. Mun.', 'Imp. Int.', 'Total (Moneda Orig)', 'Total (ARS)', 'Estado AFIP']
         
-        ws.append([]) # Fila 3 vacía
+        ws.append([]) # Fila 3 vacia
         ws.append(headers) # Fila 4
         
         for col_num, header in enumerate(headers, 1):
@@ -2295,18 +2318,29 @@ class ExportarLibroIVAView(View):
                 c.cuenta_corriente.cuit if c.cuenta_corriente else 'Consumidor Final',
                 c.cuenta_corriente.razon_social if c.cuenta_corriente else 'Varios',
                 c.cuenta_corriente.get_tipo_entidad_display() if c.cuenta_corriente else '-',
+                c.moneda,
+                float(c.tipo_cambio or 1.0),
                 float(c.neto_gravado_21 or 0),
                 float(c.iva_21 or 0),
                 float(c.neto_gravado_10_5 or 0),
                 float(c.iva_10_5 or 0),
+                float(c.neto_gravado_5 or 0),
+                float(c.iva_5 or 0),
+                float(c.neto_gravado_2_5 or 0),
+                float(c.iva_2_5 or 0),
                 float(c.exento or 0),
+                float(c.no_gravado or 0),
+                float(c.percepcion_ganancias or 0),
+                float(c.percepcion_iva or 0),
                 float(c.percepcion_iibb or 0),
+                float(c.impuestos_municipales or 0),
+                float(c.impuestos_internos or 0),
                 float(c.total or 0),
+                float(c.total_en_pesos or 0),
                 'Autorizado (CAE)' if c.cae else 'Sin CAE'
-            ]
             ws.append(row_data)
 
-        # Anchos de columna dinámicos seguros con celdas combinadas
+        # Anchos de columna dinÃ¡micos seguros con celdas combinadas
         for col_idx, col in enumerate(ws.columns, 1):
             max_length = 0
             column = openpyxl.utils.get_column_letter(col_idx)
@@ -2322,9 +2356,9 @@ class ExportarLibroIVAView(View):
         return response
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# INTEGRACIÓN ARCA (EX AFIP) - AFIPSDK
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# INTEGRACIÃ“N ARCA (EX AFIP) - AFIPSDK
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class AfipPadronLookupView(View):
     """Endpoint AJAX /finanzas/api/afip/padron/<cuit>/ para consultar datos fiscales en ARCA."""
@@ -2337,7 +2371,7 @@ class AfipPadronLookupView(View):
 
 
 class ComprobanteAutorizarArcaView(View):
-    """Acción para autorizar un ComprobanteFiscal de VENTA ante ARCA (WSFE) y obtener CAE."""
+    """AcciÃ³n para autorizar un ComprobanteFiscal de VENTA ante ARCA (WSFE) y obtener CAE."""
     def post(self, request, pk):
         comprobante = get_object_or_404(ComprobanteFiscal, pk=pk)
         
@@ -2349,7 +2383,7 @@ class ComprobanteAutorizarArcaView(View):
             res = autorizar_comprobante_arca(comprobante)
             messages.success(
                 request,
-                f"¡Factura autorizada exitosamente en ARCA! CAE: {res['cae']} (Vto: {res['vto_cae'].strftime('%d/%m/%Y')}). N° {res['numero_completo']}."
+                f"Â¡Factura autorizada exitosamente en ARCA! CAE: {res['cae']} (Vto: {res['vto_cae'].strftime('%d/%m/%Y')}). NÂ° {res['numero_completo']}."
             )
         except Exception as e:
             messages.error(request, f"Error al autorizar en ARCA: {str(e)}")
@@ -2380,7 +2414,7 @@ class ComprobantePdfOficialView(View):
 
 
 class ComprobanteFiscalPrintView(DetailView):
-    """Vista de impresión formal homologada para ComprobanteFiscal con QR oficial de ARCA."""
+    """Vista de impresiÃ³n formal homologada para ComprobanteFiscal con QR oficial de ARCA."""
     model = ComprobanteFiscal
     template_name = 'finanzas/comprobante_print.html'
     context_object_name = 'comp'
@@ -2397,11 +2431,11 @@ class ComprobanteFiscalPrintView(DetailView):
         class ProxyFinca:
             nombre = "General"
         class ProxyCentroCosto:
-            nombre = "Administración"
+            nombre = "AdministraciÃ³n"
         class ProxyCuenta:
             nombre = "Libro de IVA"
             def get_tipo_display(self):
-                return "Registro de Facturación"
+                return "Registro de FacturaciÃ³n"
         
         class ProxyMov:
             pk = comp.pk
@@ -2438,12 +2472,12 @@ class ComprobanteFiscalPrintView(DetailView):
         elif 'NC_A' in tipo:
             ctx['letra'] = 'A'
             ctx['cod_afip'] = '03'
-            ctx['nombre_doc'] = 'NOTA DE CRÉDITO "A"'
+            ctx['nombre_doc'] = 'NOTA DE CRÃ‰DITO "A"'
             ctx['aplica_iva'] = True
         elif 'NC_B' in tipo:
             ctx['letra'] = 'B'
             ctx['cod_afip'] = '08'
-            ctx['nombre_doc'] = 'NOTA DE CRÉDITO "B"'
+            ctx['nombre_doc'] = 'NOTA DE CRÃ‰DITO "B"'
             ctx['aplica_iva'] = True
         else:
             ctx['letra'] = 'X'
@@ -2453,23 +2487,28 @@ class ComprobanteFiscalPrintView(DetailView):
 
         ctx['pto_vta'] = comp.punto_de_venta.zfill(4)
         ctx['nro_formateado'] = comp.numero_comprobante.zfill(8)
-        ctx['neto_gravado'] = (comp.neto_gravado_21 or Decimal('0')) + (comp.neto_gravado_10_5 or Decimal('0'))
+        ctx['neto_gravado'] = comp.neto_gravado_total
         ctx['iva_liquidado'] = comp.total_iva
         ctx['cae_num'] = comp.cae or 'PENDIENTE'
         ctx['vto_cae'] = comp.vto_cae
+        
         ctx['mov'] = {
             'fecha': comp.fecha_emision,
             'concepto': comp.concepto,
             'comprobante_tipo': comp.get_tipo_comprobante_display(),
             'comprobante_nro': comp.numero_completo,
             'importe': comp.total,
-            'moneda': 'ARS',
+            'moneda': comp.moneda,
             'cuenta_corriente': comp.cuenta_corriente,
             'tipo': 'INGRESO' if comp.tipo_operacion == 'VENTA' else 'EGRESO',
             'pk': comp.pk
         }
+        
+        if comp.moneda != 'ARS':
+            ctx['tc'] = comp.tipo_cambio
+            ctx['importe_ars'] = comp.total_en_pesos
 
-        # Generación de QR oficial de ARCA
+        # GeneraciÃ³n de QR oficial de ARCA
         ctx['qr_arca_url'] = generar_qr_arca_url(comp)
         ctx['qr_arca_base64'] = generar_qr_arca_base64(comp)
 
@@ -2490,7 +2529,7 @@ class ExportarCajaExcelView(View):
             ("Entidad", lambda m: m.cuenta_corriente.razon_social if m.cuenta_corriente else "Varios"),
             ("Moneda", "moneda"),
             ("Importe", "importe"),
-            ("Conciliado", lambda m: "Sí" if m.conciliado else "No"),
+            ("Conciliado", lambda m: "SÃ­" if m.conciliado else "No"),
             ("Comprobante Nro", "comprobante_nro"),
         ]
         return export_to_excel(qs, columnas, "Registro de Caja y Movimientos Financieros", "caja_movimientos")
@@ -2499,9 +2538,9 @@ class ExportarChequesExcelView(View):
     def get(self, request, *args, **kwargs):
         qs = Cheque.objects.select_related('cuenta_corriente', 'cuenta_bancaria_origen').all().order_by('-fecha_cobro')
         columnas = [
-            ("Fecha Emisión", lambda c: c.fecha_emision.strftime("%d/%m/%Y")),
+            ("Fecha EmisiÃ³n", lambda c: c.fecha_emision.strftime("%d/%m/%Y")),
             ("Vencimiento", lambda c: c.fecha_cobro.strftime("%d/%m/%Y")),
-            ("Número", "numero"),
+            ("NÃºmero", "numero"),
             ("Banco", "banco_emisor"),
             ("Tipo", "tipo"),
             ("Estado", "estado"),
@@ -2514,15 +2553,15 @@ class ExportarCuentasCorrientesExcelView(View):
     def get(self, request, *args, **kwargs):
         qs = CuentaCorriente.objects.all().order_by('razon_social')
         columnas = [
-            ("Razón Social", "razon_social"),
+            ("RazÃ³n Social", "razon_social"),
             ("CUIT", "cuit"),
             ("Tipo Entidad", "tipo_entidad"),
-            ("Teléfono", "telefono"),
+            ("TelÃ©fono", "telefono"),
             ("Email", "email"),
             ("Saldo Inicial ARS", "saldo_inicial_ars"),
             ("Saldo Inicial USD", "saldo_inicial_usd"),
         ]
-        return export_to_excel(qs, columnas, "Padrón de Clientes y Proveedores (CC)", "cuentas_corrientes")
+        return export_to_excel(qs, columnas, "PadrÃ³n de Clientes y Proveedores (CC)", "cuentas_corrientes")
 
 class ExportarOrdenesPagoExcelView(View):
     def get(self, request, *args, **kwargs):
@@ -2530,10 +2569,14 @@ class ExportarOrdenesPagoExcelView(View):
         columnas = [
             ("Fecha", lambda o: o.fecha.strftime("%d/%m/%Y")),
             ("Tipo", "tipo"),
-            ("Número", "numero"),
+            ("NÃºmero", "numero"),
             ("Entidad", lambda o: o.cuenta_corriente.razon_social if o.cuenta_corriente else "-"),
             ("Cuenta", lambda o: o.cuenta_financiera.nombre if o.cuenta_financiera else "-"),
             ("Importe Total", "importe_total"),
             ("Concepto", "concepto"),
         ]
-        return export_to_excel(qs, columnas, "Órdenes de Pago y Recibos", "ordenes_pago_recibos")
+        return export_to_excel(qs, columnas, "Ã“rdenes de Pago y Recibos", "ordenes_pago_recibos")
+
+
+
+

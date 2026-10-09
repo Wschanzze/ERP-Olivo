@@ -8,24 +8,40 @@
   aria-modal="true"
   x-data="{
     esOficial: true,
-    neto21: 0,
-    neto105: 0,
+    moneda: 'ARS',
+    tipo_cambio: 1.0,
+    items: [{desc: '', cant: 1, un: 'unidades', precio: 0, iva: '21'}],
     exento: 0,
+    noGravado: 0,
     percepIIBB: 0,
+    percepIVA: 0,
+    percepGanancias: 0,
+    impMunicipales: 0,
+    impInternos: 0,
     totalInterno: 0,
-    iva21() { return Math.round((parseFloat(this.neto21) || 0) * 0.21 * 100) / 100; },
-    iva105() { return Math.round((parseFloat(this.neto105) || 0) * 0.105 * 100) / 100; },
+    get netos() {
+       let res = {'21': 0, '10.5': 0, '27': 0, '5': 0, '2.5': 0, '0': 0};
+       this.items.forEach(i => {
+           let n = (parseFloat(i.cant) || 0) * (parseFloat(i.precio) || 0);
+           if (res[i.iva] !== undefined) res[i.iva] += n;
+       });
+       return res;
+    },
+    get ivas() {
+       let res = {'21': 0, '10.5': 0, '27': 0, '5': 0, '2.5': 0, '0': 0};
+       for(let k in res) { res[k] = this.netos[k] * (parseFloat(k) / 100); }
+       return res;
+    },
+    get subtotalNeto() { return Object.values(this.netos).reduce((a,b)=>a+b, 0); },
+    get totalIva() { return Object.values(this.ivas).reduce((a,b)=>a+b, 0); },
     total() {
-      if (!this.esOficial) {
-        return (parseFloat(this.totalInterno) || 0).toFixed(2);
-      }
+      if (!this.esOficial) return (parseFloat(this.totalInterno) || 0).toFixed(2);
       return (
-        (parseFloat(this.neto21) || 0) +
-        (parseFloat(this.neto105) || 0) +
-        this.iva21() +
-        this.iva105() +
-        (parseFloat(this.exento) || 0) +
-        (parseFloat(this.percepIIBB) || 0)
+        this.subtotalNeto + this.totalIva +
+        (parseFloat(this.exento) || 0) + (parseFloat(this.noGravado) || 0) +
+        (parseFloat(this.percepIIBB) || 0) + (parseFloat(this.percepIVA) || 0) +
+        (parseFloat(this.percepGanancias) || 0) + (parseFloat(this.impMunicipales) || 0) +
+        (parseFloat(this.impInternos) || 0)
       ).toFixed(2);
     }
   }"
@@ -261,86 +277,124 @@
             </select>
           </div>
 
-          <!-- Concepto -->
-          <div>
-            <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Concepto / Detalle *</label>
-            <input 
-              type="text" 
-              name="concepto" 
-              required 
-              placeholder="Ej. Fertilizantes solubles para fertirriego / Envases botellas 500ml"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
-            />
+          <!-- Concepto y Moneda -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-1">
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Moneda *</label>
+              <select 
+                name="moneda" 
+                x-model="moneda"
+                class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              >
+                <option value="ARS">Pesos (ARS)</option>
+                <option value="USD">Dólares (USD)</option>
+              </select>
+            </div>
+            <div class="sm:col-span-1">
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1" :class="moneda === 'ARS' ? 'opacity-50' : ''">Tipo de Cambio</label>
+              <input 
+                type="number" 
+                name="tipo_cambio" 
+                step="0.000001" 
+                x-model="tipo_cambio"
+                :disabled="moneda === 'ARS'"
+                class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800 disabled:bg-slate-100"
+              />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Concepto / Referencia *</label>
+              <input 
+                type="text" 
+                name="concepto" 
+                required 
+                placeholder="Ej. Factura Exportación / Fertilizantes..."
+                class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-oliva-500/20 focus:border-oliva-600 transition-all"
+              />
+            </div>
           </div>
 
-          <!-- Desglose Impositivo con Cálculo en Tiempo Real -->
+          <!-- Detalle de Ítems (Sólo Oficial) -->
+          <div x-show="esOficial" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                Detalle de Productos / Servicios
+              </h4>
+              <button type="button" @click="items.push({desc: '', cant: 1, un: 'unidades', precio: 0, iva: '21'})" class="px-3 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100">
+                + Agregar Ítem
+              </button>
+            </div>
+            
+            <div class="space-y-2">
+              <template x-for="(item, index) in items" :key="index">
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 items-start bg-white p-2 rounded-xl border border-slate-200">
+                  <div class="w-full sm:w-1/3">
+                    <input type="text" name="item_desc[]" x-model="item.desc" placeholder="Descripción..." required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+                  </div>
+                  <div class="w-1/3 sm:w-20">
+                    <input type="number" step="0.01" name="item_cant[]" x-model="item.cant" placeholder="Cant" required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
+                  </div>
+                  <div class="w-1/3 sm:w-20">
+                    <input type="text" name="item_unidad[]" x-model="item.un" placeholder="U.M." class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+                  </div>
+                  <div class="w-1/3 sm:w-24">
+                    <input type="number" step="0.0001" name="item_precio[]" x-model="item.precio" placeholder="Precio U." required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
+                  </div>
+                  <div class="w-1/2 sm:w-24">
+                    <select name="item_iva[]" x-model="item.iva" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-semibold">
+                      <option value="21">IVA 21%</option>
+                      <option value="10.5">IVA 10.5%</option>
+                      <option value="27">IVA 27%</option>
+                      <option value="5">IVA 5%</option>
+                      <option value="2.5">IVA 2.5%</option>
+                      <option value="0">IVA 0%</option>
+                    </select>
+                  </div>
+                  <div class="w-1/2 sm:w-24 pt-1 text-right font-mono text-xs font-bold text-slate-700">
+                    $<span x-text="((parseFloat(item.cant)||0)*(parseFloat(item.precio)||0)).toFixed(2)"></span>
+                  </div>
+                  <button type="button" @click="items.splice(index, 1)" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" x-show="items.length > 1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Otros Tributos y Totales (Sólo Oficial) -->
           <div x-show="esOficial" class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
             <h4 class="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-              Desglose Impositivo (Alícuotas AFIP)
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Tributos Adicionales
             </h4>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Neto Gravado 21%</label>
-                <input 
-                  type="number" 
-                  name="neto_gravado_21" 
-                  step="0.01" 
-                  x-model="neto21"
-                  :disabled="!esOficial"
-                  placeholder="0.00"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
-                />
-                <span class="text-[10px] text-oliva-700 font-bold block mt-0.5">IVA 21%: $<span x-text="iva21().toFixed(2)"></span></span>
+                <label class="block text-[10px] font-semibold text-slate-600 mb-1">Percep. Ganancias</label>
+                <input type="number" step="0.01" name="percepcion_ganancias" x-model="percepGanancias" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
-
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Neto Gravado 10.5% (Agro/Bienes)</label>
-                <input 
-                  type="number" 
-                  name="neto_gravado_10_5" 
-                  step="0.01" 
-                  x-model="neto105"
-                  :disabled="!esOficial"
-                  placeholder="0.00"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
-                />
-                <span class="text-[10px] text-oliva-700 font-bold block mt-0.5">IVA 10.5%: $<span x-text="iva105().toFixed(2)"></span></span>
+                <label class="block text-[10px] font-semibold text-slate-600 mb-1">Percep. IIBB</label>
+                <input type="number" step="0.01" name="percepcion_iibb" x-model="percepIIBB" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-600 mb-1">Imp. Municipales</label>
+                <input type="number" step="0.01" name="impuestos_municipales" x-model="impMunicipales" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-600 mb-1">Conceptos Exentos</label>
+                <input type="number" step="0.01" name="exento" x-model="exento" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">No Gravado / Exento</label>
-                <input 
-                  type="number" 
-                  name="exento" 
-                  step="0.01" 
-                  x-model="exento"
-                  :disabled="!esOficial"
-                  placeholder="0.00"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
-                />
+            <!-- Resumen Totales -->
+            <div class="mt-4 p-3 bg-white rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex gap-4 text-xs font-semibold text-slate-600">
+                <div>Subtotal: $<span x-text="subtotalNeto.toFixed(2)"></span></div>
+                <div>Total IVA: $<span x-text="totalIva.toFixed(2)"></span></div>
               </div>
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Percepciones IIBB (Catamarca / CM)</label>
-                <input 
-                  type="number" 
-                  name="percepcion_iibb" 
-                  step="0.01" 
-                  x-model="percepIIBB"
-                  :disabled="!esOficial"
-                  placeholder="0.00"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-slate-800"
-                />
+              <div class="font-bold text-slate-700 uppercase flex items-center gap-2">
+                TOTAL: <span class="font-mono font-black text-lg text-slate-900">$<span x-text="total()"></span></span>
               </div>
-            </div>
-
-            <!-- Total Calculado -->
-            <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-              <span class="font-bold text-slate-700 uppercase">Total Factura:</span>
-              <span class="font-mono font-black text-base text-slate-900">$<span x-text="total()"></span></span>
             </div>
           </div>
 

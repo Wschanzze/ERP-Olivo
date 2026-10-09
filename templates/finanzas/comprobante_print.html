@@ -146,12 +146,35 @@
             <th class="py-2.5 px-3">Descripción / Concepto</th>
             <th class="py-2.5 px-3">Imputación (Finca / C. Costo)</th>
             <th class="py-2.5 px-3 text-right">Cant.</th>
-            <th class="py-2.5 px-3 text-right">Subtotal Neto</th>
+            <th class="py-2.5 px-3 text-right">Precio U.</th>
             <th class="py-2.5 px-3 text-right">Alícuota IVA</th>
-            <th class="py-2.5 px-3 text-right">Total ({{ mov.moneda }})</th>
+            <th class="py-2.5 px-3 text-right">Subtotal Neto</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
+          {% if es_comprobante_fiscal and comp.detalles.all %}
+            {% for item in comp.detalles.all %}
+            <tr>
+              <td class="py-3 px-3 font-mono font-bold text-slate-500 text-[11px]">ITM-{{ forloop.counter|stringformat:"02d" }}</td>
+              <td class="py-3 px-3">
+                <span class="font-bold text-slate-900 block text-xs">{{ item.descripcion }}</span>
+              </td>
+              <td class="py-3 px-3 text-slate-600 text-[11px]">
+                {{ comp.cuenta_corriente.razon_social|default:"General" }}
+              </td>
+              <td class="py-3 px-3 text-right font-mono">{{ item.cantidad|floatformat:2 }} {{ item.unidad_medida }}</td>
+              <td class="py-3 px-3 text-right font-mono font-medium text-slate-700 tabular-nums">
+                ${{ item.precio_unitario|floatformat:2 }}
+              </td>
+              <td class="py-3 px-3 text-right font-mono text-slate-600 text-[11px]">
+                {% if aplica_iva %}{{ item.alicuota_iva }}%{% else %}0,00%{% endif %}
+              </td>
+              <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                ${{ item.subtotal_neto|floatformat:2 }}
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
           <tr>
             <td class="py-3 px-3 font-mono font-bold text-slate-500 text-[11px]">OP-{{ mov.pk|stringformat:"05d" }}</td>
             <td class="py-3 px-3">
@@ -174,6 +197,7 @@
               ${{ mov.importe|floatformat:2 }}
             </td>
           </tr>
+          {% endif %}
           <!-- Spacer empty rows for formal invoice feel -->
           <tr class="h-10 text-slate-300">
             <td colspan="7" class="py-1 px-3 italic text-[10px] text-slate-400">
