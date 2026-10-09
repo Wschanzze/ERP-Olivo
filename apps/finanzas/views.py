@@ -2338,6 +2338,7 @@ class ExportarLibroIVAView(View):
                 float(c.total or 0),
                 float(c.total_en_pesos or 0),
                 'Autorizado (CAE)' if c.cae else 'Sin CAE'
+            ]
             ws.append(row_data)
 
         # Anchos de columna dinÃ¡micos seguros con celdas combinadas
@@ -2576,6 +2577,7 @@ class ExportarOrdenesPagoExcelView(View):
             ("Concepto", "concepto"),
         ]
         return export_to_excel(qs, columnas, "Ã“rdenes de Pago y Recibos", "ordenes_pago_recibos")
+
 
 
 
