@@ -943,9 +943,9 @@ class AsignarHerramientaView(View):
 from apps.inventario.forms import ConsumoStockForm
 
 class ConsumoStockCreateView(View):
-    "\"\"
+    """
     Formulario modal HTMX para registrar consumo de insumos (combustible, agroquímicos) asignados a Fincas.
-    \"\""
+    """
     def get(self, request):
         insumo_id = request.GET.get('insumo')
         initial = {}
@@ -981,5 +981,8 @@ class ConsumoStockCreateView(View):
             except Exception as e:
                 form.add_error(None, str(e))
         return render(request, 'inventario/partials/consumo_modal.html', {'form': form})
+
+
+
 
 
