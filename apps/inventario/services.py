@@ -1,4 +1,4 @@
-"""
+﻿"""
 Capa de servicios transaccionales para el módulo Inventario.
 Confirma recepciones de mercadería de forma atómica:
 - Genera MovimientoStock por cada ítem recibido
@@ -234,7 +234,8 @@ def realizar_ajuste_stock(
     tipos_validos = [
         MovimientoStock.TipoMovimiento.AJUSTE_POSITIVO,
         MovimientoStock.TipoMovimiento.AJUSTE_NEGATIVO,
-        MovimientoStock.TipoMovimiento.SALIDA_MERMA
+        MovimientoStock.TipoMovimiento.SALIDA_MERMA,
+        MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO
     ]
     if tipo_ajuste not in tipos_validos:
         raise ValidationError(f"Tipo de ajuste '{tipo_ajuste}' no es válido.")
@@ -763,5 +764,6 @@ def crear_orden_compra_sugerida(
         'mensaje': f"Orden de Compra {oc.numero} creada exitosamente con {items_creados} ítem(s).",
         'orden': oc,
     }
+
 
 

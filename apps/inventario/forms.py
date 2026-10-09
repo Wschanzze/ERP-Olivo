@@ -1,4 +1,4 @@
-from django import forms
+﻿from django import forms
 from decimal import Decimal
 from .models import Insumo, Deposito, MovimientoStock, CategoriaInsumo
 
@@ -104,6 +104,18 @@ class AjusteStockForm(BaseStyledForm):
 
 
 class InsumoForm(forms.ModelForm):
+    stock_inicial = forms.DecimalField(
+        max_digits=12, decimal_places=2, required=False, label="Stock Físico Inicial",
+        help_text="Usá este campo solo al crear el producto para cargar su existencia inicial.",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'placeholder': '0.00'})
+    )
+    deposito_inicial = forms.ModelChoiceField(
+        queryset=Deposito.objects.filter(activo=True).order_by('finca__nombre', 'nombre'),
+        required=False, label="Depósito Base",
+        empty_label="Seleccione un depósito...",
+        help_text="Requerido si ingresás un stock inicial."
+    )
+
     class Meta:
         model = Insumo
         fields = [
@@ -167,4 +179,38 @@ class AsignacionHerramientaForm(forms.ModelForm):
             'fecha_devolucion_esperada': forms.DateInput(attrs={'type': 'date'}),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+from apps.core.models import Finca
+
+class ConsumoStockForm(BaseStyledForm):
+    insumo = forms.ModelChoiceField(
+        queryset=Insumo.objects.filter(activo=True).order_by('nombre'),
+        label="Insumo Consumido",
+        empty_label="Seleccione un insumo..."
+    )
+    deposito = forms.ModelChoiceField(
+        queryset=Deposito.objects.filter(activo=True).order_by('finca__nombre', 'nombre'),
+        label="Depósito (Sale)",
+        empty_label="Seleccione depósito..."
+    )
+    finca_destino = forms.ModelChoiceField(
+        queryset=Finca.objects.filter(activa=True).order_by('nombre'),
+        label="Finca / Centro de Costo de Destino",
+        empty_label="Seleccione destino (quién consume)..."
+    )
+    cantidad = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        label="Cantidad Consumida",
+        widget=forms.NumberInput(attrs={'step': '0.01', 'placeholder': '0.00'})
+    )
+    motivo = forms.CharField(
+        max_length=200,
+        required=True,
+        label="Motivo / Trabajo",
+        widget=forms.TextInput(attrs={'placeholder': 'Ej. Carga de combustible tractor, curación cuadro X'})
+    )
+
 

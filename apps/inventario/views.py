@@ -1,4 +1,4 @@
-from apps.core.excel_export import export_to_excel
+﻿from apps.core.excel_export import export_to_excel
 from decimal import Decimal
 from datetime import datetime
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
@@ -938,4 +938,48 @@ class AsignarHerramientaView(View):
                 })
             return redirect('inventario:herramientas_list')
         return render(request, 'inventario/partials/asignacion_modal.html', {'form': form, 'herramienta': herramienta})
+
+
+from apps.inventario.forms import ConsumoStockForm
+
+class ConsumoStockCreateView(View):
+    "\"\"
+    Formulario modal HTMX para registrar consumo de insumos (combustible, agroquímicos) asignados a Fincas.
+    \"\""
+    def get(self, request):
+        insumo_id = request.GET.get('insumo')
+        initial = {}
+        if insumo_id and insumo_id.isdigit():
+            initial['insumo'] = insumo_id
+        form = ConsumoStockForm(initial=initial)
+        return render(request, 'inventario/partials/consumo_modal.html', {'form': form})
+
+    def post(self, request):
+        form = ConsumoStockForm(request.POST)
+        if form.is_valid():
+            try:
+                # Armar el motivo completo
+                finca = form.cleaned_data['finca_destino']
+                motivo_original = form.cleaned_data['motivo']
+                motivo_completo = f"Consumo en {finca.nombre}: {motivo_original}"
+                
+                from apps.inventario.services import realizar_ajuste_stock
+                from apps.inventario.models import MovimientoStock
+                
+                resultado = realizar_ajuste_stock(
+                    insumo_id=form.cleaned_data['insumo'].id,
+                    deposito_id=form.cleaned_data['deposito'].id,
+                    tipo_ajuste=MovimientoStock.TipoMovimiento.SALIDA_PARTE_DIARIO,
+                    cantidad=form.cleaned_data['cantidad'],
+                    costo_unitario=None,
+                    motivo=motivo_completo,
+                    usuario=request.user if request.user.is_authenticated else None
+                )
+                if resultado['ok']:
+                    messages.success(request, resultado['mensaje'])
+                    return render(request, 'inventario/partials/toast_refresh.html', {'mensaje': resultado['mensaje']})
+            except Exception as e:
+                form.add_error(None, str(e))
+        return render(request, 'inventario/partials/consumo_modal.html', {'form': form})
+
 
