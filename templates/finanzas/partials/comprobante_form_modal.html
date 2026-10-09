@@ -1,4 +1,4 @@
-<!-- Modal Carga de Comprobante Fiscal (Factura A, B, C) -->
+﻿<!-- Modal Carga de Comprobante Fiscal (Factura A, B, C) -->
 <div 
   x-show="modalComprobante" 
   @cerrar-modal="modalComprobante = false"
@@ -329,19 +329,19 @@
               <template x-for="(item, index) in items" :key="index">
                 <div class="flex flex-wrap sm:flex-nowrap gap-2 items-start bg-white p-2 rounded-xl border border-slate-200">
                   <div class="w-full sm:w-1/3">
-                    <input type="text" name="item_desc[]" x-model="item.desc" placeholder="Descripción..." required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+                    <input type="text" name="item_desc[]" x-model="item.desc" placeholder="Descripción..." :required="esOficial" :disabled="!esOficial" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
                   </div>
                   <div class="w-1/3 sm:w-20">
-                    <input type="number" step="0.01" name="item_cant[]" x-model="item.cant" placeholder="Cant" required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
+                    <input type="text" inputmode="decimal" step="0.01" name="item_cant[]" x-model="item.cant" placeholder="Cant" :required="esOficial" :disabled="!esOficial" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
                   </div>
                   <div class="w-1/3 sm:w-20">
-                    <input type="text" name="item_unidad[]" x-model="item.un" placeholder="U.M." class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
+                    <input type="text" name="item_unidad[]" x-model="item.un" placeholder="U.M." :disabled="!esOficial" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg">
                   </div>
                   <div class="w-1/3 sm:w-24">
-                    <input type="number" step="0.0001" name="item_precio[]" x-model="item.precio" placeholder="Precio U." required class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
+                    <input type="text" inputmode="decimal" step="0.0001" name="item_precio[]" x-model="item.precio" placeholder="Precio U." :required="esOficial" :disabled="!esOficial" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-mono">
                   </div>
                   <div class="w-1/2 sm:w-24">
-                    <select name="item_iva[]" x-model="item.iva" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-semibold">
+                    <select name="item_iva[]" x-model="item.iva" :disabled="!esOficial" class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-semibold">
                       <option value="21">IVA 21%</option>
                       <option value="10.5">IVA 10.5%</option>
                       <option value="27">IVA 27%</option>
@@ -370,19 +370,19 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <label class="block text-[10px] font-semibold text-slate-600 mb-1">Percep. Ganancias</label>
-                <input type="number" step="0.01" name="percepcion_ganancias" x-model="percepGanancias" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+                <input type="text" inputmode="decimal" step="0.01" name="percepcion_ganancias" x-model="percepGanancias" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
               <div>
                 <label class="block text-[10px] font-semibold text-slate-600 mb-1">Percep. IIBB</label>
-                <input type="number" step="0.01" name="percepcion_iibb" x-model="percepIIBB" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+                <input type="text" inputmode="decimal" step="0.01" name="percepcion_iibb" x-model="percepIIBB" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
               <div>
                 <label class="block text-[10px] font-semibold text-slate-600 mb-1">Imp. Municipales</label>
-                <input type="number" step="0.01" name="impuestos_municipales" x-model="impMunicipales" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+                <input type="text" inputmode="decimal" step="0.01" name="impuestos_municipales" x-model="impMunicipales" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
               <div>
                 <label class="block text-[10px] font-semibold text-slate-600 mb-1">Conceptos Exentos</label>
-                <input type="number" step="0.01" name="exento" x-model="exento" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
+                <input type="text" inputmode="decimal" step="0.01" name="exento" x-model="exento" class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-xs">
               </div>
             </div>
 
@@ -452,3 +452,4 @@
     </div>
   </div>
 </div>
+

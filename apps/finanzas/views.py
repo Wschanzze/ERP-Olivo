@@ -1679,7 +1679,7 @@ class PagoProveedorView(View):
 
         # ─── Pago convencional (transferencia, efectivo, etc.) ────────────
         cuenta_id = request.POST.get('cuenta_id')
-        importe = Decimal(request.POST.get('importe', '0'))
+        importe = Decimal(str(request.POST.get('importe', '0') or '0').replace(',', '.'))
         cuenta = get_object_or_404(Cuenta, id=cuenta_id)
 
         registrar_movimiento_financiero(
@@ -1705,7 +1705,7 @@ class CobroClienteView(View):
     def post(self, request):
         cliente_id = request.POST.get('cliente_id')
         cuenta_id = request.POST.get('cuenta_id')
-        importe = Decimal(request.POST.get('importe', '0'))
+        importe = Decimal(str(request.POST.get('importe', '0') or '0').replace(',', '.'))
         fecha_str = request.POST.get('fecha')
         concepto = request.POST.get('concepto', 'Cobranza de Cliente')
         comprobante_nro = request.POST.get('comprobante_nro', '')
@@ -1735,7 +1735,7 @@ class ComprobanteCuentaCorrienteView(View):
     """Registra una Factura de Compra (Proveedor) o Factura de Venta (Cliente) en Cuenta Corriente."""
     def post(self, request):
         entidad_id = request.POST.get('entidad_id')
-        importe = Decimal(request.POST.get('importe', '0'))
+        importe = Decimal(str(request.POST.get('importe', '0') or '0').replace(',', '.'))
         tipo_comprobante = request.POST.get('tipo_comprobante', 'FACTURA')
         comprobante_nro = request.POST.get('comprobante_nro', '')
         concepto = request.POST.get('concepto', '')
@@ -1776,7 +1776,7 @@ class ArqueoCajaView(View):
     """Procesa el arqueo de caja físico y genera ajuste automático si se solicita."""
     def post(self, request):
         cuenta_id = request.POST.get('cuenta_id')
-        monto_fisico = Decimal(request.POST.get('monto_fisico', '0'))
+        monto_fisico = Decimal(str(request.POST.get('monto_fisico', '0') or '0').replace(',', '.'))
         observaciones = request.POST.get('observaciones', '')
         ajustar = request.POST.get('ajustar_saldo') in ('true', 'on', '1', True)
         
@@ -1934,15 +1934,15 @@ class ComprobanteFiscalCreateView(View):
 
             condicion_iva = request.POST.get('condicion_iva') or ComprobanteFiscal.CondicionIVA.RESPONSABLE_INSCRIPTO
             moneda = request.POST.get('moneda', 'ARS')
-            tipo_cambio = Decimal(request.POST.get('tipo_cambio') or '1.0')
+            tipo_cambio = Decimal(str(request.POST.get('tipo_cambio') or '1.0').replace(',', '.'))
 
-            exento = Decimal(request.POST.get('exento') or '0.00')
-            no_gravado = Decimal(request.POST.get('no_gravado') or '0.00')
-            percep_iibb = Decimal(request.POST.get('percepcion_iibb') or '0.00')
-            percep_iva = Decimal(request.POST.get('percepcion_iva') or '0.00')
-            percep_gan = Decimal(request.POST.get('percepcion_ganancias') or '0.00')
-            imp_muni = Decimal(request.POST.get('impuestos_municipales') or '0.00')
-            imp_int = Decimal(request.POST.get('impuestos_internos') or '0.00')
+            exento = Decimal(str(request.POST.get('exento') or '0.00').replace(',', '.'))
+            no_gravado = Decimal(str(request.POST.get('no_gravado') or '0.00').replace(',', '.'))
+            percep_iibb = Decimal(str(request.POST.get('percepcion_iibb') or '0.00').replace(',', '.'))
+            percep_iva = Decimal(str(request.POST.get('percepcion_iva') or '0.00').replace(',', '.'))
+            percep_gan = Decimal(str(request.POST.get('percepcion_ganancias') or '0.00').replace(',', '.'))
+            imp_muni = Decimal(str(request.POST.get('impuestos_municipales') or '0.00').replace(',', '.'))
+            imp_int = Decimal(str(request.POST.get('impuestos_internos') or '0.00').replace(',', '.'))
 
             cuenta_corriente = get_object_or_404(CuentaCorriente, pk=cuenta_corriente_id)
             cuenta_contable_id = request.POST.get('cuenta_contable_id') or None
@@ -1987,14 +1987,14 @@ class ComprobanteFiscalCreateView(View):
                                 comprobante=comprobante,
                                 orden=i,
                                 descripcion=descripciones[i].strip(),
-                                cantidad=Decimal(cantidades[i] or '1.00'),
+                                cantidad=Decimal(str(cantidades[i] or '1.00').replace(',', '.')),
                                 unidad_medida=unidades[i] if (i < len(unidades) and unidades[i]) else 'unidades',
-                                precio_unitario=Decimal(precios[i] or '0.00'),
+                                precio_unitario=Decimal(str(precios[i] or '0.00').replace(',', '.')),
                                 alicuota_iva=ivas[i] if (i < len(ivas) and ivas[i]) else '21'
                             )
                 comprobante.recalcular_desde_detalles()
             else:
-                comprobante.exento = Decimal(request.POST.get('exento_interno') or '0.00')
+                comprobante.exento = Decimal(str(request.POST.get('exento_interno') or '0.00').replace(',', '.'))
                 comprobante.total = comprobante.exento
                 comprobante.saldo_pendiente = comprobante.total
                 comprobante.save(update_fields=['exento', 'total', 'saldo_pendiente'])
@@ -2127,7 +2127,7 @@ class ComprobantePagoCobroView(View):
                 return redirect('finanzas:orden_pago_print', pk=orden.id)
 
             # ─── Modo normal: transferencia, efectivo, cheque propio ──────
-            importe = Decimal(request.POST.get('importe') or '0.00')
+            importe = Decimal(str(request.POST.get('importe') or '0.00').replace(',', '.'))
             cuenta_financiera_id = request.POST.get('cuenta_financiera_id')
             cuenta_financiera = get_object_or_404(Cuenta, pk=cuenta_financiera_id)
 
@@ -2203,7 +2203,7 @@ class ArqueoCajaCreateView(View):
             cuenta_id = request.POST.get('cuenta_id')
             fecha = request.POST.get('fecha') or timezone.now().date()
             hora = request.POST.get('hora') or '18:00'
-            saldo_real_contado = Decimal(request.POST.get('saldo_real_contado') or '0.00')
+            saldo_real_contado = Decimal(str(request.POST.get('saldo_real_contado') or '0.00').replace(',', '.'))
             ajustar_saldo = request.POST.get('ajustar_saldo') == '1'
             observaciones = request.POST.get('observaciones', '').strip()
 
@@ -2577,6 +2577,7 @@ class ExportarOrdenesPagoExcelView(View):
             ("Concepto", "concepto"),
         ]
         return export_to_excel(qs, columnas, "Órdenes de Pago y Recibos", "ordenes_pago_recibos")
+
 
 
 
