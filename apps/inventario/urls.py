@@ -1,5 +1,6 @@
-﻿from django.urls import path
+from django.urls import path
 from . import views
+from . import views_aprobaciones
 
 app_name = 'inventario'
 
@@ -39,6 +40,11 @@ urlpatterns = [
     # Órdenes de Compra
     path('ordenes-compra/', views.OrdenesCompraListView.as_view(), name='ordenes_compra_list'),
     path('ordenes-compra/crear/', views.OrdenCompraCreateView.as_view(), name='oc_create'),
+    
+    # Kanban de Aprobaciones
+    path('aprobaciones/<str:tipo_doc>/', views_aprobaciones.TableroAprobacionesView.as_view(), name='tablero_aprobaciones'),
+    path('aprobaciones/<str:tipo_doc>/<int:pk>/mover/<str:destino>/', views_aprobaciones.SolicitarMovimientoAprobacionView.as_view(), name='aprobacion_mover'),
+    
     path('ordenes-compra/<int:pk>/', views.OrdenCompraDetailView.as_view(), name='oc_detalle'),
     path('ordenes-compra/<int:pk>/imprimir/', views.OrdenCompraPrintView.as_view(), name='oc_imprimir'),
     path('ordenes-compra/<int:pk>/aprobar/', views.aprobar_oc_htmx, name='oc_aprobar'),

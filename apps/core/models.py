@@ -241,4 +241,48 @@ class Usuario(AbstractUser):
     def puede_ver_almazara(self):
         return self.puede_acceder_modulo('inventario')
 
+    @property
+    def puede_aprobar_documentos(self):
+        """Puede aprobar / anular / pedir represupuesto de OC y Órdenes de Pago."""
+        return self.is_active and self.is_contable
+
+
+class HistorialAprobacion(TimeStampedModel):
+    """
+    Bitácora de auditoría del circuito de aprobaciones (tablero kanban).
+    Es genérica por tipo de documento: hoy registra Órdenes de Compra (OC)
+    y está preparada para Órdenes de Pago (OP) del módulo Finanzas.
+    """
+    class TipoDocumento(models.TextChoices):
+        ORDEN_COMPRA = 'OC', _('Orden de Compra')
+        ORDEN_PAGO = 'OP', _('Orden de Pago')
+
+    tipo_documento = models.CharField(max_length=5, choices=TipoDocumento.choices, verbose_name=_("Tipo de Documento"))
+    objeto_id = models.PositiveBigIntegerField(verbose_name=_("ID del Documento"))
+    referencia = models.CharField(max_length=60, verbose_name=_("N° de Documento"))
+    columna_origen = models.CharField(max_length=30, verbose_name=_("Columna Origen"))
+    columna_destino = models.CharField(max_length=30, verbose_name=_("Columna Destino"))
+    estado_anterior = models.CharField(max_length=30, verbose_name=_("Estado Anterior"))
+    estado_nuevo = models.CharField(max_length=30, verbose_name=_("Estado Nuevo"))
+    motivo = models.TextField(blank=True, verbose_name=_("Motivo / Comentario"))
+    usuario = models.ForeignKey(
+        'core.Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='aprobaciones_realizadas',
+        verbose_name=_("Usuario")
+    )
+
+    class Meta:
+        verbose_name = _("Historial de Aprobación")
+        verbose_name_plural = _("Historial de Aprobaciones")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tipo_documento', 'objeto_id'], name='core_hist_aprob_doc_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_documento_display()} {self.referencia}: {self.columna_origen} → {self.columna_destino}"
+
 

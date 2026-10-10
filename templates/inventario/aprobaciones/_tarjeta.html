@@ -1,0 +1,46 @@
+{% load humanize %}
+<div class="bg-white p-3 rounded shadow-sm border-l-4 border-{{ col_tono|default:'slate' }}-500 
+            {% if not doc.motivo_bloqueo and tablero.puede_mover %}cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow{% else %}cursor-not-allowed opacity-80{% endif %} relative"
+     draggable="{% if not doc.motivo_bloqueo and tablero.puede_mover %}true{% else %}false{% endif %}"
+     x-on:dragstart="dragStart($event, '{{ doc.pk }}')"
+     id="card-{{ doc.pk }}">
+    
+    <div class="flex justify-between items-start mb-2">
+        <a href="{{ doc.url_detalle }}" class="font-bold text-sm text-indigo-600 hover:text-indigo-800" target="_blank">{{ doc.referencia }}</a>
+        <span class="text-xs text-gray-500">{{ doc.fecha|date:"d/m/Y" }}</span>
+    </div>
+    
+    <p class="text-sm font-medium text-gray-800 truncate" title="{{ doc.titulo }}">{{ doc.titulo }}</p>
+    {% if doc.subtitulo %}
+    <p class="text-xs text-gray-600 truncate">{{ doc.subtitulo }}</p>
+    {% endif %}
+    
+    <div class="mt-2 flex justify-between items-center">
+        <span class="text-sm font-semibold">${{ doc.importe|intcomma }}</span>
+        
+        <div class="flex items-center space-x-1 flex-wrap justify-end gap-y-1">
+            {% for eti_texto, eti_tono in doc.etiquetas %}
+                <span class="bg-{{ eti_tono }}-100 text-{{ eti_tono }}-800 text-[10px] px-1.5 py-0.5 rounded font-medium">
+                    {{ eti_texto }}
+                </span>
+            {% endfor %}
+            
+            {% if doc.motivo_bloqueo %}
+                <span class="text-xs text-red-500 font-medium ml-1" title="{{ doc.motivo_bloqueo }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if doc.nota %}
+    <div class="mt-2 text-xs text-gray-500 italic border-t pt-1 border-gray-100">
+        {{ doc.nota }}
+    </div>
+    {% endif %}
+    {% if doc.meta %}
+    <div class="mt-1 text-[10px] text-gray-400">
+        {{ doc.meta }}
+    </div>
+    {% endif %}
+</div>

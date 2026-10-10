@@ -356,6 +356,22 @@ class OrdenDeCompra(TimeStampedModel):
     observaciones = models.TextField(blank=True, verbose_name=_("Observaciones"))
     total_estimado_ars = models.DecimalField(max_digits=14, decimal_places=2, default=0.00, verbose_name=_("Total Estimado (ARS)"))
 
+    # ── Circuito de aprobación (Tablero Kanban) ──────────────────────────────
+    # "Represupuesto" no es un estado propio: la OC vuelve a BORRADOR (Pendiente)
+    # con esta etiqueta hasta que se apruebe o anule.
+    requiere_represupuesto = models.BooleanField(default=False, verbose_name=_("Requiere Represupuesto"))
+    motivo_represupuesto = models.TextField(blank=True, verbose_name=_("Motivo del Represupuesto"))
+    motivo_anulacion = models.TextField(blank=True, verbose_name=_("Motivo de Anulación"))
+    aprobada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ordenes_compra_aprobadas',
+        verbose_name=_("Aprobada por")
+    )
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True, verbose_name=_("Fecha de Aprobación"))
+
     class Meta:
         verbose_name = _("Orden de Compra")
         verbose_name_plural = _("Órdenes de Compra")
@@ -368,6 +384,11 @@ class OrdenDeCompra(TimeStampedModel):
         total = sum(item.subtotal_ars for item in self.items.all())
         self.total_estimado_ars = total
         self.save(update_fields=['total_estimado_ars', 'updated_at'])
+
+    @property
+    def tiene_recepciones_activas(self):
+        """True si existe alguna recepción no anulada (bloquea cambios de aprobación)."""
+        return self.recepciones.exclude(estado=RecepcionMercaderia.Estado.ANULADA).exists()
 
 
 class ItemOrdenDeCompra(TimeStampedModel):

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Tablero de Aprobaciones - {{ tipo_doc|upper }}{% endblock %}
+
+{% block content %}
+<div class="p-6 bg-gray-50 min-h-screen">
+    <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">
+            Aprobaciones: {{ adaptador.nombre_modelo }}
+        </h1>
+        <div class="flex gap-4 items-center">
+            <span class="text-sm font-medium text-gray-500">
+                Resumen: 
+                <span class="text-indigo-600 font-bold ml-1">{{ tablero.resumen.pendientes }} Pendientes</span> | 
+                <span class="text-emerald-600 font-bold ml-1">{{ tablero.resumen.aprobadas }} Aprobadas</span> | 
+                <span class="text-rose-600 font-bold ml-1">{{ tablero.resumen.anuladas }} Anuladas</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div x-data="kanbanBoard()" class="flex space-x-4 overflow-x-auto pb-4 items-start">
+        {% for col_data in tablero.columnas %}
+        <div class="bg-gray-100 rounded-lg shadow-sm w-80 flex-shrink-0 flex flex-col max-h-[80vh]"
+             x-on:dragover.prevent="dragOver($event)"
+             x-on:drop="drop($event, '{{ col_data.columna.clave }}')">
+            
+            <div class="p-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                <h3 class="font-semibold text-gray-700 flex justify-between items-center">
+                    {{ col_data.columna.titulo }}
+                    <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">{{ col_data.cantidad }}</span>
+                </h3>
+            </div>
+            
+            <!-- Area de soltar / Contenido de la columna -->
+            <div class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[150px]">
+                {% if col_data.columna.solo_destino %}
+                    {% for doc in col_data.en_espera %}
+                        {% include "inventario/aprobaciones/_tarjeta.html" with doc=doc col_tono=col_data.columna.tono %}
+                    {% endfor %}
+                    {% if not col_data.en_espera %}
+                    <div class="text-center py-4 text-sm text-gray-400 italic flex items-center justify-center flex-col gap-2">
+                        <i class="fas fa-inbox text-gray-300 text-2xl"></i>
+                        Soltar aquí para {{ col_data.columna.titulo|lower }}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% for doc in col_data.tarjetas %}
+                        {% include "inventario/aprobaciones/_tarjeta.html" with doc=doc col_tono=col_data.columna.tono %}
+                    {% endfor %}
+                    {% if not col_data.tarjetas %}
+                    <div class="text-center py-4 text-sm text-gray-400 italic">
+                        Sin documentos
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Container para HTMX -->
+<div id="modal-container"></div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('kanbanBoard', () => ({
+        draggedId: null,
+        
+        dragStart(event, id) {
+            this.draggedId = id;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', id);
+        },
+        
+        dragOver(event) {
+            event.dataTransfer.dropEffect = 'move';
+        },
+        
+        drop(event, targetColId) {
+            event.preventDefault();
+            const id = this.draggedId;
+            if (!id) return;
+            
+            // Llama a HTMX para cargar el modal de confirmación
+            htmx.ajax('GET', `/inventario/aprobaciones/{{ tipo_doc }}/${id}/mover/${targetColId}/`, {
+                target: '#modal-container',
+                swap: 'innerHTML'
+            });
+            
+            this.draggedId = null;
+        }
+    }));
+});
+</script>
+{% endblock %}
